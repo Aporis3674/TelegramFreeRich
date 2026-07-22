@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""Build script for TelegramFreeRich editor."""
+import os
+
+html = r'''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1804,3 +1808,12 @@ async function sendMessage() {
 </script>
 </body>
 </html>
+'''
+
+output_path = '/root/TelegramFreeRich/index.html'
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(html)
+
+# Count lines
+line_count = html.count('\n') + 1
+print(f'Written {len(html)} bytes, {line_count} lines to {output_path}')
