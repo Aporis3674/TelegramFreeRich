@@ -722,8 +722,17 @@ html, body {
 .tg-spoiler-media img, .tg-spoiler-media video { max-width: 100%; border-radius: 8px; display: block; }
 .tg-collage { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; margin: 12px 0; border-radius: 8px; overflow: hidden; }
 .tg-collage img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
-.tg-slideshow { display: flex; gap: 4px; overflow-x: auto; margin: 12px 0; padding-bottom: 4px; scroll-snap-type: x mandatory; }
-.tg-slideshow img, .tg-slideshow video { min-width: 200px; max-width: 300px; border-radius: 8px; scroll-snap-align: start; flex-shrink: 0; }
+.tg-slideshow-wrap { position: relative; margin: 12px 0; border-radius: 8px; overflow: hidden; background: var(--surface2); }
+.tg-slideshow-track { display: flex; transition: transform 0.3s ease; }
+.tg-slideshow-slide { min-width: 100%; display: flex; align-items: center; justify-content: center; }
+.tg-slideshow-slide img, .tg-slideshow-slide video { width: 100%; max-height: 300px; object-fit: contain; border-radius: 0; }
+.tg-slideshow-prev, .tg-slideshow-next { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; transition: background 0.2s; }
+.tg-slideshow-prev:hover, .tg-slideshow-next:hover { background: rgba(0,0,0,0.8); }
+.tg-slideshow-prev { left: 8px; }
+.tg-slideshow-next { right: 8px; }
+.tg-slideshow-dots { display: flex; justify-content: center; gap: 6px; padding: 8px 0; }
+.tg-slideshow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); cursor: pointer; transition: background 0.2s; }
+.tg-slideshow-dot.active { background: var(--accent); }
 .tg-figcaption { font-size: 13px; color: var(--text2); text-align: center; margin-top: 6px; font-style: italic; }
 .tg-map iframe { width: 100%; height: 200px; border: 1px solid var(--border); border-radius: 8px; }
 table.bordered { border-collapse: collapse; width: 100%; margin: 12px 0; }
@@ -1720,30 +1729,78 @@ function insertSlideshow() {
   const urls = prompt('Media URLs comma separated (images/videos):');
   if (!urls) return;
   const caption = prompt('Slideshow caption (optional):');
-  const div = document.createElement('div');
-  div.className = 'tg-slideshow';
-  urls.split(',').forEach(url => {
+  const container = document.createElement('div');
+  container.className = 'tg-slideshow-wrap';
+  const track = document.createElement('div');
+  track.className = 'tg-slideshow-track';
+  const items = urls.split(',');
+  items.forEach(function(url) {
     const u = url.trim();
+    const slide = document.createElement('div');
+    slide.className = 'tg-slideshow-slide';
     if (u.match(/\.(mp4|webm|ogg)$/i)) {
       const video = document.createElement('video');
       video.src = u;
       video.controls = true;
-      video.style.minWidth = '200px';
-      div.appendChild(video);
+      slide.appendChild(video);
     } else {
       const img = document.createElement('img');
       img.src = u;
       img.alt = 'slide';
-      div.appendChild(img);
+      slide.appendChild(img);
     }
+    track.appendChild(slide);
   });
+  container.appendChild(track);
+  var prevBtn = document.createElement('button');
+  prevBtn.className = 'tg-slideshow-prev';
+  prevBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  prevBtn.onclick = function(e) {
+    e.stopPropagation();
+    var idx = parseInt(container.dataset.current || '0');
+    container.dataset.current = Math.max(0, idx - 1);
+    track.style.transform = 'translateX(-' + (container.dataset.current * 100) + '%)';
+    updateDots();
+  };
+  var nextBtn = document.createElement('button');
+  nextBtn.className = 'tg-slideshow-next';
+  nextBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  nextBtn.onclick = function(e) {
+    e.stopPropagation();
+    var idx = parseInt(container.dataset.current || '0');
+    var max = items.length - 1;
+    container.dataset.current = Math.min(max, idx + 1);
+    track.style.transform = 'translateX(-' + (container.dataset.current * 100) + '%)';
+    updateDots();
+  };
+  container.appendChild(prevBtn);
+  container.appendChild(nextBtn);
+  var dots = document.createElement('div');
+  dots.className = 'tg-slideshow-dots';
+  function updateDots() {
+    var idx = parseInt(container.dataset.current || '0');
+    dots.querySelectorAll('.tg-slideshow-dot').forEach(function(d, j) { d.classList.toggle('active', j === idx); });
+  }
+  items.forEach(function(_, i) {
+    var dot = document.createElement('span');
+    dot.className = 'tg-slideshow-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = function(e) {
+      e.stopPropagation();
+      container.dataset.current = i;
+      track.style.transform = 'translateX(-' + (i * 100) + '%)';
+      updateDots();
+    };
+    dots.appendChild(dot);
+  });
+  container.appendChild(dots);
+  container.dataset.current = '0';
   if (caption) {
-    const cap = document.createElement('figcaption');
+    var cap = document.createElement('figcaption');
     cap.className = 'tg-figcaption';
     cap.textContent = caption;
-    div.appendChild(cap);
+    container.appendChild(cap);
   }
-  insertAtCursor(div);
+  insertAtCursor(container);
 }
 
 // ===== OSM MAP (replace Google Maps) =====
