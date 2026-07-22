@@ -3,314 +3,367 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free Rich Text Editor — Telegram</title>
+<title>TelegramFreeRich — Premium Rich Text Editor, Completely Free</title>
 <style>
 :root {
-  --bg: #0a0a1a;
-  --surface: #12122a;
-  --surface2: #1a1a3e;
-  --accent: #7c5cff;
-  --accent2: #a78bfa;
-  --text: #f0f0f5;
-  --text2: #8888a0;
-  --border: #2a2a4e;
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --surface2: #333333;
+  --toolbar-bg: #333333;
+  --accent: #33b4c9;
+  --accent-hover: #42c8de;
+  --premium: #9b59b6;
+  --text: #ffffff;
+  --text-muted: #888888;
+  --border: #3a3a3a;
   --danger: #ff4466;
   --success: #44ffaa;
   --warn: #ffaa44;
+  --send-bg: #33b4c9;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background: var(--bg); color: var(--text); }
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
 body { display: flex; flex-direction: column; }
 
-/* Banner */
-.banner {
-  background: linear-gradient(90deg, var(--surface2), var(--surface));
-  border-bottom: 1px solid var(--border);
-  padding: 8px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 13px; color: var(--text2);
-  animation: slideDown 0.4s ease;
-}
-.banner .banner-text { font-style: italic; }
-.banner .banner-dismiss {
-  background: none; border: none; color: var(--text2); cursor: pointer;
-  font-size: 16px; padding: 2px 8px; border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
-}
-.banner .banner-dismiss:hover { color: var(--text); background: var(--surface2); }
-.banner.hidden { display: none; }
-@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-/* Header */
+/* ===== HEADER (Telegram-style top bar) ===== */
 .header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 10px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; flex-wrap: wrap;
+  padding: 0 12px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
 }
-.header-left { display: flex; align-items: center; gap: 14px; }
-.header-logo {
-  width: 28px; height: 28px; background: var(--accent);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.header-logo svg { width: 18px; height: 18px; fill: white; }
-.header-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
-.header-title span { color: var(--accent2); }
-
-/* Mode tabs */
+.hamburger {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.hamburger:hover { color: var(--text); background: var(--toolbar-bg); }
+.hamburger svg { width: 22px; height: 22px; fill: currentColor; }
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.header-title .free-badge {
+  color: var(--accent);
+  font-weight: 800;
+}
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .mode-tabs {
-  display: flex; gap: 0; background: var(--bg); border-radius: 8px; overflow: hidden;
+  display: flex;
+  gap: 0;
+  background: var(--bg);
+  border-radius: 20px;
+  overflow: hidden;
   border: 1px solid var(--border);
 }
 .mode-tab {
-  padding: 6px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
-  background: transparent; color: var(--text2); border: none;
+  padding: 5px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
   transition: all 0.2s;
 }
-.mode-tab.active { background: var(--accent); color: white; }
-.mode-tab:not(.active):hover { color: var(--text); background: var(--surface2); }
-
-/* Header right */
-.header-right { display: flex; align-items: center; gap: 8px; }
+.mode-tab.active {
+  background: var(--accent);
+  color: white;
+}
+.mode-tab:not(.active):hover { color: var(--text); }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .char-counter {
-  font-size: 12px; padding: 4px 10px; border-radius: 12px;
-  background: var(--bg); border: 1px solid var(--border);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-muted);
 }
 .char-counter.warn { color: var(--warn); border-color: var(--warn); }
 .char-counter.danger { color: var(--danger); border-color: var(--danger); background: rgba(255,68,102,0.1); }
 
+/* Undo/Redo pill (Telegram-style) */
+.undo-redo-pill {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.undo-redo-pill button {
+  width: 34px; height: 34px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.undo-redo-pill button:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.undo-redo-pill button svg { width: 18px; height: 18px; fill: currentColor; }
+.undo-redo-pill button + button { border-left: 1px solid var(--border); }
+
+/* Icon buttons */
 .btn-icon {
-  width: 34px; height: 34px; border-radius: 8px;
-  background: var(--bg); border: 1px solid var(--border);
-  color: var(--text2); cursor: pointer; display: flex;
-  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
-.btn-icon:hover { color: var(--text); border-color: var(--accent); background: var(--surface2); }
-.btn-icon svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-icon:hover { color: var(--text); background: var(--toolbar-bg); }
+.btn-icon svg { width: 20px; height: 20px; fill: currentColor; }
 
-.btn-send {
-  padding: 7px 18px; border-radius: 8px; border: none;
-  background: var(--accent); color: white; font-weight: 600;
-  font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;
-  transition: all 0.2s;
-}
-.btn-send:hover { background: var(--accent2); transform: translateY(-1px); }
-.btn-send svg { width: 14px; height: 14px; fill: white; }
-
-/* Toolbar */
-.toolbar {
-  background: var(--surface);
+/* ===== IRONIC BANNER ===== */
+.irony-banner {
+  background: linear-gradient(90deg, rgba(51,180,201,0.1), rgba(155,89,182,0.1));
   border-bottom: 1px solid var(--border);
-  padding: 6px 12px;
-  display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  flex-shrink: 0;
+  animation: bannerSlide 0.5s ease;
 }
-.toolbar-group { display: flex; gap: 2px; align-items: center; }
-.toolbar-sep { width: 1px; height: 22px; background: var(--border); margin: 0 6px; }
-.toolbar-btn {
-  width: 32px; height: 32px; border-radius: 6px;
-  background: transparent; border: none; color: var(--text2);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s; position: relative;
+.irony-banner .free-text { color: var(--accent); font-weight: 600; font-style: normal; }
+.irony-banner .premium-text { color: var(--premium); font-weight: 600; font-style: normal; text-decoration: line-through; }
+.irony-banner-dismiss {
+  margin-left: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
-.toolbar-btn:hover { color: var(--text); background: var(--surface2); }
-.toolbar-btn.active { color: var(--accent); background: rgba(124,92,255,0.15); }
-.toolbar-btn svg { width: 16px; height: 16px; fill: currentColor; }
-.toolbar-btn .kbd-hint {
-  position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
-  font-size: 9px; color: var(--text2); background: var(--surface);
-  padding: 1px 4px; border-radius: 3px; white-space: nowrap;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.toolbar-btn:hover .kbd-hint { opacity: 1; }
+.irony-banner-dismiss:hover { color: var(--text); background: var(--surface2); }
+@keyframes bannerSlide { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* Dropdown */
-.dropdown { position: relative; }
-.dropdown-menu {
-  position: absolute; top: 100%; left: 0; margin-top: 4px;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 4px; min-width: 140px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 100;
-  display: none;
+/* ===== TITLE FIELD (Telegram-style) ===== */
+.title-section {
+  background: var(--surface);
+  padding: 14px 24px 0 24px;
+  flex-shrink: 0;
 }
-.dropdown-menu.open { display: block; animation: fadeIn 0.15s ease; }
-.dropdown-item {
-  padding: 7px 12px; border-radius: 5px; cursor: pointer;
-  font-size: 13px; color: var(--text2); transition: all 0.15s;
-  display: block; width: 100%; background: none; border: none; text-align: left;
+.title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-family: Georgia, 'Times New Roman', serif;
 }
-.dropdown-item:hover { color: var(--text); background: var(--surface); }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.title-input::placeholder { color: var(--text-muted); }
 
-/* Main layout */
+/* ===== MAIN EDITOR AREA ===== */
 .main {
-  flex: 1; display: flex; overflow: hidden; position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
 }
 .editor-pane, .preview-pane {
-  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   min-width: 0;
 }
 .editor-pane { border-right: 1px solid var(--border); }
-.pane-header {
-  padding: 8px 16px; font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 1px;
-  color: var(--text2); background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 6px;
-}
-.pane-header svg { width: 12px; height: 12px; fill: var(--text2); }
 
-#editor {
-  flex: 1; width: 100%; resize: none; border: none; outline: none;
-  background: var(--bg); color: var(--text); padding: 16px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 14px; line-height: 1.6; tab-size: 2;
+/* Mobile toggle tabs */
+.mobile-tabs {
+  display: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.mobile-tab-row {
+  display: flex;
+  gap: 0;
+  padding: 6px 16px;
+}
+.mobile-tab-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.mobile-tab-btn:first-child { border-radius: 8px 0 0 8px; }
+.mobile-tab-btn:last-child { border-radius: 0 8px 8px 0; }
+.mobile-tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Editor textarea */
+.editor-textarea {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  background: var(--bg);
+  color: var(--text);
+  padding: 16px 24px;
+  font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  tab-size: 2;
   unicode-bidi: plaintext;
 }
-#editor::placeholder { color: var(--text2); }
+.editor-textarea::placeholder { color: var(--text-muted); }
+.editor-textarea::-webkit-scrollbar { width: 6px; }
+.editor-textarea::-webkit-scrollbar-track { background: transparent; }
+.editor-textarea::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+/* Preview pane — Telegram message bubble style */
 .preview-content {
-  flex: 1; overflow-y: auto; padding: 16px; background: var(--bg);
-  font-size: 14px; line-height: 1.7;
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.7;
 }
 .preview-content::-webkit-scrollbar { width: 6px; }
 .preview-content::-webkit-scrollbar-track { background: transparent; }
 .preview-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-#editor::-webkit-scrollbar { width: 6px; }
-#editor::-webkit-scrollbar-track { background: transparent; }
-#editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* Resize handle */
-.resize-handle {
-  width: 5px; background: var(--border); cursor: col-resize;
-  transition: background 0.2s; flex-shrink: 0;
+/* Telegram message bubble in preview */
+.tg-bubble {
+  background: var(--surface);
+  border-radius: 12px 12px 12px 0;
+  padding: 10px 14px;
+  max-width: 95%;
+  position: relative;
+  margin: 4px 0;
 }
-.resize-handle:hover, .resize-handle.dragging { background: var(--accent); }
+.tg-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
 
-/* Settings panel */
-.settings-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  z-index: 500; display: none; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
-}
-.settings-overlay.open { display: flex; animation: fadeIn 0.2s; }
-.settings-panel {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 28px; width: 420px; max-width: 95vw;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  animation: scaleIn 0.25s ease;
-}
-@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.settings-panel h2 {
-  font-size: 18px; margin-bottom: 20px; display: flex;
-  align-items: center; gap: 10px;
-}
-.settings-panel h2 svg { width: 20px; height: 20px; fill: var(--accent); }
-.field { margin-bottom: 16px; }
-.field label {
-  display: block; font-size: 12px; font-weight: 600;
-  color: var(--text2); margin-bottom: 6px;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.field input, .field select {
-  width: 100%; padding: 10px 14px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); font-size: 14px; outline: none;
-  transition: border-color 0.2s;
-}
-.field input:focus, .field select:focus { border-color: var(--accent); }
-.field select { cursor: pointer; }
-.field input[type="password"] { font-family: monospace; letter-spacing: 2px; }
-.settings-actions { display: flex; gap: 10px; margin-top: 24px; }
-.settings-actions button {
-  flex: 1; padding: 10px; border-radius: 8px; border: none;
-  font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: var(--accent2); }
-.btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border) !important; }
-.btn-secondary:hover { color: var(--text); border-color: var(--accent) !important; }
-
-/* Toast */
-.toast-container {
-  position: fixed; bottom: 24px; right: 24px; z-index: 1000;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.toast {
-  padding: 12px 20px; border-radius: 10px;
-  font-size: 13px; font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-  display: flex; align-items: center; gap: 8px; max-width: 360px;
-}
-.toast svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
-.toast.success { background: #0d3320; color: var(--success); border: 1px solid rgba(68,255,170,0.3); }
-.toast.error { background: #330d15; color: var(--danger); border: 1px solid rgba(255,68,102,0.3); }
-.toast.info { background: var(--surface2); color: var(--accent2); border: 1px solid var(--border); }
-@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes toastOut { to { transform: translateX(100%); opacity: 0; } }
-
-/* Preview styles */
+/* Preview markdown styles */
 .preview-content h1 { font-size: 1.7em; font-weight: 700; margin: 0.5em 0 0.3em; border-bottom: 1px solid var(--border); padding-bottom: 0.2em; }
 .preview-content h2 { font-size: 1.4em; font-weight: 700; margin: 0.5em 0 0.3em; }
 .preview-content h3 { font-size: 1.2em; font-weight: 600; margin: 0.5em 0 0.3em; }
 .preview-content h4 { font-size: 1.1em; font-weight: 600; margin: 0.5em 0 0.3em; }
 .preview-content h5 { font-size: 1em; font-weight: 600; margin: 0.5em 0 0.3em; }
-.preview-content h6 { font-size: 0.9em; font-weight: 600; margin: 0.5em 0 0.3em; color: var(--text2); }
+.preview-content h6 { font-size: 0.9em; font-weight: 600; margin: 0.5em 0 0.3em; color: var(--text-muted); }
 .preview-content b, .preview-content strong { font-weight: 700; }
 .preview-content code {
-  background: var(--surface2); padding: 2px 6px; border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'JetBrains Mono', monospace;
+  font-size: 0.9em;
 }
 .preview-content pre {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 8px; padding: 14px; margin: 10px 0;
-  overflow-x: auto; font-size: 0.85em; line-height: 1.5;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 10px 0;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.5;
 }
 .preview-content pre code { background: none; padding: 0; }
 .preview-content blockquote {
-  border-left: 3px solid var(--accent); margin: 10px 0;
-  padding: 8px 16px; background: var(--surface2);
-  border-radius: 0 8px 8px 0; color: var(--text2);
+  border-left: 3px solid var(--accent);
+  margin: 10px 0;
+  padding: 8px 16px;
+  background: rgba(51,180,201,0.08);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-muted);
 }
-.preview-content a { color: var(--accent2); text-decoration: none; }
+.preview-content a { color: var(--accent); text-decoration: none; }
 .preview-content a:hover { text-decoration: underline; }
 .preview-content ul, .preview-content ol { margin: 6px 0; padding-left: 24px; }
 .preview-content li { margin: 3px 0; }
-.preview-content table {
-  border-collapse: collapse; margin: 10px 0; width: 100%;
-}
+.preview-content table { border-collapse: collapse; margin: 10px 0; width: 100%; }
 .preview-content th, .preview-content td {
   border: 1px solid var(--border); padding: 8px 12px; text-align: left;
 }
 .preview-content th { background: var(--surface2); font-weight: 600; }
-.preview-content hr {
-  border: none; border-top: 1px solid var(--border); margin: 16px 0;
-}
+.preview-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 .preview-content .spoiler {
-  background: var(--text2); color: transparent; padding: 2px 4px;
-  border-radius: 4px; cursor: pointer; transition: all 0.3s;
-  user-select: none;
+  background: var(--text-muted); color: transparent; padding: 2px 4px;
+  border-radius: 4px; cursor: pointer; transition: all 0.3s; user-select: none;
 }
-.preview-content .spoiler.revealed {
-  background: transparent; color: var(--text);
-}
+.preview-content .spoiler.revealed { background: transparent; color: var(--text); }
 .preview-content .highlight {
-  background: rgba(124,92,255,0.25); padding: 1px 3px; border-radius: 3px;
+  background: rgba(51,180,201,0.25); padding: 1px 3px; border-radius: 3px;
 }
 .preview-content .math {
   font-family: 'Times New Roman', serif; font-style: italic;
-  color: var(--accent2);
+  color: var(--accent);
 }
 .preview-content .math-block {
   text-align: center; margin: 12px 0; font-size: 1.1em;
 }
-.preview-content img {
-  max-width: 100%; border-radius: 8px; margin: 8px 0;
-}
+.preview-content img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
 .preview-content .task-item { list-style: none; margin-left: -20px; }
 .preview-content .task-item input { margin-right: 6px; accent-color: var(--accent); }
 .preview-content details {
@@ -323,41 +376,34 @@ body { display: flex; flex-direction: column; }
 }
 .preview-content details[open] summary { border-bottom: 1px solid var(--border); }
 .preview-content details > div { padding: 12px 14px; }
-.preview-content .tg-map,
-.preview-content .tg-map-preview {
+.preview-content .tg-map, .preview-content .tg-map-preview {
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 8px; padding: 16px; text-align: center;
-  color: var(--text2); margin: 10px 0;
+  color: var(--text-muted); margin: 10px 0;
 }
-
-/* Telegram Rich Text — New Elements */
 .preview-content .pull-quote {
-  border-left: 4px solid var(--accent2);
+  border-left: 4px solid var(--accent);
   padding: 12px 16px; margin: 12px 0;
-  background: rgba(124,92,255,0.06);
+  background: rgba(51,180,201,0.06);
   border-radius: 0 8px 8px 0;
-  font-style: italic; color: var(--text2);
+  font-style: italic; color: var(--text-muted);
 }
 .preview-content .pull-quote cite {
   display: block; font-size: 0.85em; font-style: normal;
-  color: var(--accent2); margin-top: 6px; font-weight: 600;
+  color: var(--accent); margin-top: 6px; font-weight: 600;
 }
-.preview-content cite {
-  font-style: normal; color: var(--accent2); font-size: 0.9em;
-}
+.preview-content cite { font-style: normal; color: var(--accent); font-size: 0.9em; }
 .preview-content .tg-footer {
-  font-size: 0.8em; color: var(--text2);
-  border-top: 1px solid var(--border); padding-top: 8px;
-  margin-top: 12px;
+  font-size: 0.8em; color: var(--text-muted);
+  border-top: 1px solid var(--border); padding-top: 8px; margin-top: 12px;
 }
 .preview-content .tg-figure {
   margin: 12px 0; border: 1px solid var(--border);
   border-radius: 8px; overflow: hidden; background: var(--surface);
 }
-.preview-content .tg-figure img,
-.preview-content .tg-figure video { display: block; max-width: 100%; }
+.preview-content .tg-figure img, .preview-content .tg-figure video { display: block; max-width: 100%; }
 .preview-content .tg-figcaption {
-  padding: 8px 12px; font-size: 0.85em; color: var(--text2);
+  padding: 8px 12px; font-size: 0.85em; color: var(--text-muted);
   border-top: 1px solid var(--border);
 }
 .preview-content .tg-figcaption cite { display: inline; }
@@ -367,7 +413,7 @@ body { display: flex; flex-direction: column; }
 }
 .preview-content figure img { display: block; max-width: 100%; }
 .preview-content figcaption {
-  padding: 8px 12px; font-size: 0.85em; color: var(--text2);
+  padding: 8px 12px; font-size: 0.85em; color: var(--text-muted);
   border-top: 1px solid var(--border);
 }
 .preview-content .tg-collage {
@@ -377,240 +423,504 @@ body { display: flex; flex-direction: column; }
 .preview-content .tg-collage img { width: 100%; display: block; }
 .preview-content .tg-slideshow {
   display: flex; gap: 8px; overflow-x: auto; padding: 8px 0;
-  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-  margin: 12px 0;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin: 12px 0;
 }
-.preview-content .tg-slideshow img,
-.preview-content .tg-slideshow video {
-  flex-shrink: 0; max-width: 240px; border-radius: 6px;
-  scroll-snap-align: start;
+.preview-content .tg-slideshow img, .preview-content .tg-slideshow video {
+  flex-shrink: 0; max-width: 240px; border-radius: 6px; scroll-snap-align: start;
 }
 .preview-content .tg-time {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
-  color: var(--accent2); background: rgba(124,92,255,0.1);
+  font-family: monospace; font-size: 0.9em;
+  color: var(--accent); background: rgba(51,180,201,0.1);
   padding: 2px 6px; border-radius: 4px;
 }
 .preview-content .tg-reference {
-  font-size: 0.85em; color: var(--accent2);
-  vertical-align: super; cursor: help;
+  font-size: 0.85em; color: var(--accent); vertical-align: super; cursor: help;
 }
 .preview-content .tg-anchor { scroll-margin-top: 20px; }
 .preview-content .tg-emoji { font-size: 1.2em; }
 .preview-content mark {
-  background: rgba(255,170,68,0.25); padding: 1px 3px; border-radius: 3px;
-  color: var(--text);
+  background: rgba(255,170,68,0.25); padding: 1px 3px; border-radius: 3px; color: var(--text);
 }
 .preview-content sup { vertical-align: super; font-size: 0.75em; }
 .preview-content sub { vertical-align: sub; font-size: 0.75em; }
 .preview-content aside {
-  border-left: 4px solid var(--accent2);
+  border-left: 4px solid var(--accent);
   padding: 12px 16px; margin: 12px 0;
-  background: rgba(124,92,255,0.06);
+  background: rgba(51,180,201,0.06);
   border-radius: 0 8px 8px 0;
 }
 .preview-content aside cite {
   display: block; font-size: 0.85em;
-  color: var(--accent2); margin-bottom: 4px; font-weight: 600;
+  color: var(--accent); margin-bottom: 4px; font-weight: 600;
 }
 
-/* Mobile */
+/* Resize handle */
+.resize-handle {
+  width: 5px;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.resize-handle:hover, .resize-handle.dragging { background: var(--accent); }
+
+/* ===== FLOATING TOOLBAR (Telegram-style) ===== */
+.floating-toolbar-wrap {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.floating-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.floating-toolbar::-webkit-scrollbar { height: 0; }
+.tb-btn {
+  width: 40px; height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: var(--toolbar-bg);
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tb-btn:hover { background: #444; }
+.tb-btn.active {
+  background: var(--accent);
+  color: white;
+}
+.tb-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.tb-btn .tb-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+/* Premium star badge — FREE here! */
+.premium-star {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  background: var(--premium);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: white;
+  font-weight: 700;
+  border: 1.5px solid var(--surface);
+  cursor: help;
+}
+.tb-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  font-weight: 500;
+}
+
+/* Send button — Telegram-style teal circle */
+.tb-send {
+  width: 44px; height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: var(--send-bg);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-left: auto;
+  box-shadow: 0 2px 8px rgba(51,180,201,0.3);
+}
+.tb-send:hover { background: var(--accent-hover); transform: scale(1.05); }
+.tb-send svg { width: 22px; height: 22px; fill: white; }
+
+/* Toolbar separator */
+.tb-sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ===== BOTTOM CONTENT TYPE ROW (Telegram-style) ===== */
+.content-types {
+  display: flex;
+  gap: 0;
+  padding: 6px 8px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--border);
+}
+.content-types::-webkit-scrollbar { height: 0; }
+.content-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  position: relative;
+}
+.content-type-btn:hover { background: var(--toolbar-bg); color: var(--text); }
+.content-type-btn.active {
+  color: var(--accent);
+  background: rgba(51,180,201,0.12);
+}
+.content-type-btn svg { width: 22px; height: 22px; fill: currentColor; }
+.content-type-btn span {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.content-type-btn .ct-free {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-size: 7px;
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* ===== SETTINGS PANEL (Slide-in from right) ===== */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 500;
+  display: none;
+  align-items: stretch;
+  justify-content: flex-end;
+  backdrop-filter: blur(4px);
+}
+.settings-overlay.open { display: flex; animation: fadeIn 0.2s; }
+.settings-panel {
+  background: var(--surface);
+  width: 380px;
+  max-width: 90vw;
+  padding: 24px;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+  animation: slideInRight 0.3s ease;
+  overflow-y: auto;
+}
+@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.settings-panel h2 {
+  font-size: 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-panel h2 svg { width: 20px; height: 20px; fill: var(--accent); }
+.settings-free-note {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: -16px;
+  margin-bottom: 20px;
+}
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field input, .field select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field select { cursor: pointer; }
+.field input[type="password"] { font-family: monospace; letter-spacing: 2px; }
+.settings-actions { display: flex; gap: 10px; margin-top: 24px; }
+.settings-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--toolbar-bg); color: var(--text-muted); border: 1px solid var(--border) !important; }
+.btn-secondary:hover { color: var(--text); border-color: var(--accent) !important; }
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+}
+.toast svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
+.toast.success { background: #0d3320; color: var(--success); border: 1px solid rgba(68,255,170,0.3); }
+.toast.error { background: #330d15; color: var(--danger); border: 1px solid rgba(255,68,102,0.3); }
+.toast.info { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { to { transform: translateX(100%); opacity: 0; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
   .main { flex-direction: column; }
-  .editor-pane { border-right: none; border-bottom: 1px solid var(--border); }
+  .editor-pane { border-right: none; }
+  .preview-pane { display: none; }
+  .preview-pane.mobile-show { display: flex; }
+  .editor-pane.mobile-hide { display: none; }
   .resize-handle { display: none; }
-  .header { padding: 8px 12px; }
-  .toolbar { padding: 4px 8px; }
-  .header-title { font-size: 14px; }
+  .mobile-tabs { display: block; }
+  .header { padding: 0 8px; height: 48px; }
+  .header-title { font-size: 15px; }
+  .mode-tabs { display: none; }
+  .floating-toolbar { gap: 4px; padding: 6px 8px; }
+  .tb-btn { width: 36px; height: 36px; min-width: 36px; }
+  .tb-send { width: 40px; height: 40px; min-width: 40px; }
+  .title-input { font-size: 22px; }
+  .content-types { padding: 4px 4px 6px; gap: 0; }
+  .content-type-btn { padding: 4px 10px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Banner -->
-<div class="banner" id="banner">
-  <span class="banner-text">Free Rich Text Editor — Because bots shouldn't have more rights than humans</span>
-  <button class="banner-dismiss" onclick="document.getElementById('banner').classList.add('hidden')" title="Dismiss">&times;</button>
-</div>
-
 <!-- Header -->
 <div class="header">
   <div class="header-left">
-    <div class="header-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-    </div>
-    <span class="header-title">Telegram <span>Rich Editor</span></span>
+    <button class="hamburger" title="Menu" onclick="document.querySelector('.irony-banner').classList.toggle('hidden')">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+    <span class="header-title">Telegram<span class="free-badge">Free</span>Rich</span>
+  </div>
+  <div class="header-center">
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="markdown" onclick="switchMode('markdown')">Markdown</button>
       <button class="mode-tab" data-mode="html" onclick="switchMode('html')">HTML</button>
     </div>
   </div>
   <div class="header-right">
-    <span class="char-counter" id="charCounter">0 / 32768</span>
+    <span class="char-counter" id="charCounter">0 / 32,768</span>
+    <div class="undo-redo-pill">
+      <button title="Undo (Ctrl+Z)" onclick="document.getElementById('editor').focus(); document.execCommand('undo');">
+        <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+      </button>
+      <button title="Redo (Ctrl+Y)" onclick="document.getElementById('editor').focus(); document.execCommand('redo');">
+        <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+      </button>
+    </div>
     <button class="btn-icon" title="Copy to clipboard" onclick="copyToClipboard()">
       <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
     </button>
     <button class="btn-icon" title="Settings" onclick="openSettings()">
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     </button>
-    <button class="btn-send" onclick="sendToTelegram()">
-      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-      Send
-    </button>
   </div>
 </div>
 
-<!-- Toolbar -->
-<div class="toolbar" id="toolbar">
-  <div class="toolbar-group">
-    <button class="toolbar-btn" title="Bold (Ctrl+B)" onclick="insertFormat('bold')">
-      <svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
-      <span class="kbd-hint">Ctrl+B</span>
-    </button>
-    <button class="toolbar-btn" title="Italic (Ctrl+I)" onclick="insertFormat('italic')">
-      <svg viewBox="0 0 24 24"><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z"/></svg>
-      <span class="kbd-hint">Ctrl+I</span>
-    </button>
-    <button class="toolbar-btn" title="Underline (Ctrl+U)" onclick="insertFormat('underline')">
-      <svg viewBox="0 0 24 24"><path d="M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z"/></svg>
-      <span class="kbd-hint">Ctrl+U</span>
-    </button>
-    <button class="toolbar-btn" title="Strikethrough" onclick="insertFormat('strikethrough')">
-      <svg viewBox="0 0 24 24"><path d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Spoiler" onclick="insertFormat('spoiler')">
-      <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-    </button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <button class="toolbar-btn" title="Inline Code" onclick="insertFormat('code')">
-      <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Code Block" onclick="insertFormat('codeblock')">
-      <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-8-1h2v-4h4v-2h-4V7h-2v4H8v2h4v4z"/></svg>
-    </button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <div class="dropdown">
-      <button class="toolbar-btn" title="Heading" onclick="toggleDropdown('heading-menu')">
-        <svg viewBox="0 0 24 24"><path d="M5 4v3h5.5v12h3V7H19V4H5z"/></svg>
-      </button>
-      <div class="dropdown-menu" id="heading-menu">
-        <button class="dropdown-item" onclick="insertFormat('h1')">Heading 1</button>
-        <button class="dropdown-item" onclick="insertFormat('h2')">Heading 2</button>
-        <button class="dropdown-item" onclick="insertFormat('h3')">Heading 3</button>
-        <button class="dropdown-item" onclick="insertFormat('h4')">Heading 4</button>
-        <button class="dropdown-item" onclick="insertFormat('h5')">Heading 5</button>
-        <button class="dropdown-item" onclick="insertFormat('h6')">Heading 6</button>
-      </div>
-    </div>
-    <button class="toolbar-btn" title="Link (Ctrl+K)" onclick="insertFormat('link')">
-      <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-      <span class="kbd-hint">Ctrl+K</span>
-    </button>
-    <button class="toolbar-btn" title="Blockquote" onclick="insertFormat('blockquote')">
-      <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
-    </button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <button class="toolbar-btn" title="Unordered List" onclick="insertFormat('ul')">
-      <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Ordered List" onclick="insertFormat('ol')">
-      <svg viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Task List" onclick="insertFormat('task')">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"/></svg>
-    </button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <button class="toolbar-btn" title="Table" onclick="insertFormat('table')">
-      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Divider" onclick="insertFormat('divider')">
-      <svg viewBox="0 0 24 24"><path d="M2 12h20v-2H2v2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Image/Video" onclick="insertFormat('media')">
-      <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Math" onclick="insertFormat('math')">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 8h-2v2c0 .55-.45 1-1 1s-1-.45-1-1v-2H9c-.55 0-1-.45-1-1s.45-1 1-1h2V7c0-.55.45-1 1-1s1 .45 1 1v2h2c.55 0 1 .45 1 1s-.45 1-1 1zm-1 5.25l-1 1-1-1-2 2.5 1 1 2-2.5 2 2.5 1-1-2-2.5z"/></svg>
-    </button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <button class="toolbar-btn" title="Mark/Highlight" onclick="insertFormat('mark')">
-      <svg viewBox="0 0 24 24"><path d="M17.75 7L14 3.25l-10 10V17h3.75l10-10zm2.96-2.96a1.003 1.003 0 000-1.42L18.42.33a1.003 1.003 0 00-1.42 0L15 2.33 18.67 6l2.04-1.96zM3 18h12v2H3v-2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Superscript" onclick="insertFormat('sup')">
-      <svg viewBox="0 0 24 24"><path d="M20 18h2v-2h-2v2zm-2-2v2h2v-2h-2zm-2 2h2v-2h-2v2zm-4-8V5c0-1.1.9-2 2-2h3V1h-4v2H9V1H6v2h3v2H5v2h4V5h4v4h-4v2H9V9H5V7h4V5h2v4h-2v2h2v-2h2zM3 18h14v2H3v-2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Subscript" onclick="insertFormat('sub')">
-      <svg viewBox="0 0 24 24"><path d="M20 18h2v-2h-2v2zm-2-2v2h2v-2h-2zm-2 2h2v-2h-2v2zM7 9h4v1H7V9zm0 2h4v1H7v-1zm0-4h4v1H7V7zm-2 8h12v2H5v-2z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Pull Quote" onclick="insertFormat('aside')">
-      <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Figure" onclick="insertFormat('figure')">
-      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15l3.5-4.5 2.5 3.01L14.5 12l4.5 6H5z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Map" onclick="insertFormat('map')">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Anchor" onclick="insertFormat('anchor')">
-      <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-    </button>
-    <button class="toolbar-btn" title="Math Block" onclick="insertFormat('mathblock')">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-2v2h-2v-2H9v-2h2V9h2v2h2v2z"/></svg>
-    </button>
-    <div class="dropdown">
-      <button class="toolbar-btn" title="Insert Special" onclick="toggleDropdown('insert-menu')">
-        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      </button>
-      <div class="dropdown-menu" id="insert-menu">
-        <button class="dropdown-item" onclick="insertFormat('mark')">Highlight</button>
-        <button class="dropdown-item" onclick="insertFormat('sup')">Superscript</button>
-        <button class="dropdown-item" onclick="insertFormat('sub')">Subscript</button>
-        <button class="dropdown-item" onclick="insertFormat('aside')">Pull Quote</button>
-        <button class="dropdown-item" onclick="insertFormat('footer')">Footer</button>
-        <button class="dropdown-item" onclick="insertFormat('figure')">Figure</button>
-        <button class="dropdown-item" onclick="insertFormat('map')">Map</button>
-        <button class="dropdown-item" onclick="insertFormat('anchor')">Anchor</button>
-        <button class="dropdown-item" onclick="insertFormat('reference')">Reference</button>
-        <button class="dropdown-item" onclick="insertFormat('emoji')">Custom Emoji</button>
-        <button class="dropdown-item" onclick="insertFormat('datetime')">Date/Time</button>
-        <button class="dropdown-item" onclick="insertFormat('mailto')">Mail Link</button>
-        <button class="dropdown-item" onclick="insertFormat('tel')">Phone Link</button>
-        <button class="dropdown-item" onclick="insertFormat('mention')">Mention</button>
-        <button class="dropdown-item" onclick="insertFormat('collage')">Collage</button>
-        <button class="dropdown-item" onclick="insertFormat('slideshow')">Slideshow</button>
-        <button class="dropdown-item" onclick="insertFormat('mathblock')">Math Block</button>
-      </div>
-    </div>
+<!-- Ironic Banner -->
+<div class="irony-banner" id="ironyBanner">
+  <span class="free-text">All features free.</span>&nbsp;No <span class="premium-text">Premium</span> required.
+  &nbsp;Because bots already have these.&nbsp;
+  <button class="irony-banner-dismiss" onclick="document.getElementById('ironyBanner').classList.add('hidden')" title="Dismiss">&times;</button>
+</div>
+
+<!-- Title Section -->
+<div class="title-section">
+  <input type="text" class="title-input" id="titleInput" placeholder="Type something..." autocomplete="off">
+</div>
+
+<!-- Mobile Tabs -->
+<div class="mobile-tabs">
+  <div class="mobile-tab-row">
+    <button class="mobile-tab-btn active" id="mobileEditBtn" onclick="mobileSwitch('edit')">Editor</button>
+    <button class="mobile-tab-btn" id="mobilePreviewBtn" onclick="mobileSwitch('preview')">Preview</button>
   </div>
 </div>
 
-<!-- Main -->
+<!-- Main Editor + Preview -->
 <div class="main">
-  <div class="editor-pane">
-    <div class="pane-header">
-      <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-      EDITOR
-    </div>
-    <textarea id="editor" placeholder="Start typing your rich text message here...&#10;&#10;Use Markdown or HTML formatting, or switch modes above." spellcheck="false"></textarea>
+  <div class="editor-pane" id="editorPane">
+    <textarea class="editor-textarea" id="editor" placeholder="Start typing your rich text message here...&#10;&#10;Use Markdown or HTML formatting." spellcheck="false"></textarea>
   </div>
   <div class="resize-handle" id="resizeHandle"></div>
-  <div class="preview-pane">
-    <div class="pane-header">
-      <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-      PREVIEW
-    </div>
+  <div class="preview-pane" id="previewPane">
     <div class="preview-content" id="preview">
-      <p style="color: var(--text2); font-style: italic;">Preview will appear here...</p>
+      <div class="tg-bubble">
+        <p style="color: var(--text-muted); font-style: italic;">Preview will appear here...</p>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Floating Toolbar (Telegram-style) -->
+<div class="floating-toolbar-wrap">
+  <div class="floating-toolbar">
+    <!-- Emoji button -->
+    <button class="tb-btn" title="Emoji picker (free!)" onclick="insertFormat('emoji')">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+    </button>
+
+    <!-- AI button (mocking Telegram's Cocoon AI) -->
+    <button class="tb-btn" title="Free — no Cocoon subscription needed!" onclick="insertFormat('ai')">
+      <span class="tb-label">Ai</span>
+      <span style="font-size:10px;margin-left:1px;">✨</span>
+    </button>
+
+    <div class="tb-sep"></div>
+
+    <!-- H1 Heading -->
+    <button class="tb-btn" title="Heading" onclick="toggleDropdown('heading-menu')">
+      <span class="tb-label">H1</span>
+    </button>
+    <!-- Heading dropdown -->
+    <div id="heading-menu" style="display:none;position:absolute;bottom:60px;left:80px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:200;">
+      <button class="dropdown-item" onclick="insertFormat('h1')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 1</button>
+      <button class="dropdown-item" onclick="insertFormat('h2')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 2</button>
+      <button class="dropdown-item" onclick="insertFormat('h3')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 3</button>
+      <button class="dropdown-item" onclick="insertFormat('h4')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 4</button>
+      <button class="dropdown-item" onclick="insertFormat('h5')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 5</button>
+      <button class="dropdown-item" onclick="insertFormat('h6')" style="padding:8px 16px;border:none;background:none;color:var(--text);cursor:pointer;border-radius:6px;font-size:13px;width:100%;text-align:left;">Heading 6</button>
+    </div>
+
+    <!-- List (with premium star) -->
+    <button class="tb-btn" title="Lists — FREE! (no premium needed)" onclick="insertFormat('ul')">
+      <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+      <span class="premium-star" title="Premium badge — but it's FREE!">★</span>
+    </button>
+
+    <!-- Table (with premium star) -->
+    <button class="tb-btn" title="Tables — FREE! (no premium needed)" onclick="insertFormat('table')">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/></svg>
+      <span class="premium-star" title="Premium badge — but it's FREE!">★</span>
+    </button>
+
+    <!-- Math / Sigma (with premium star) -->
+    <button class="tb-btn" title="Math — FREE! (no premium needed)" onclick="insertFormat('math')">
+      <span class="tb-label" style="font-family:serif;font-size:18px;font-style:italic;">&Sigma;</span>
+      <span class="premium-star" title="Premium badge — but it's FREE!">★</span>
+    </button>
+
+    <div class="tb-sep"></div>
+
+    <!-- Bold, Italic, Code quick buttons -->
+    <button class="tb-btn" title="Bold (Ctrl+B)" onclick="insertFormat('bold')">
+      <svg viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
+    </button>
+    <button class="tb-btn" title="Italic (Ctrl+I)" onclick="insertFormat('italic')">
+      <svg viewBox="0 0 24 24"><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z"/></svg>
+    </button>
+    <button class="tb-btn" title="Code" onclick="insertFormat('code')">
+      <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+    </button>
+
+    <div class="tb-sep"></div>
+
+    <!-- Attachment (paperclip) -->
+    <button class="tb-btn" title="Attach media (free!)" onclick="insertFormat('media')">
+      <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+    </button>
+
+    <!-- Send button (Telegram-style teal circle) -->
+    <button class="tb-send" title="Send (Free)" onclick="sendToTelegram()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <!-- Bottom Content Type Row -->
+  <div class="content-types">
+    <button class="content-type-btn" title="Gallery (Free)">
+      <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      <span>Gallery</span>
+      <span class="ct-free">FREE</span>
+    </button>
+    <button class="content-type-btn" title="Wallet (Free)">
+      <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      <span>Wallet</span>
+      <span class="ct-free">FREE</span>
+    </button>
+    <button class="content-type-btn" title="File (Free)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      <span>File</span>
+      <span class="ct-free">FREE</span>
+    </button>
+    <button class="content-type-btn" title="Location (Free)">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+      <span>Location</span>
+      <span class="ct-free">FREE</span>
+    </button>
+    <button class="content-type-btn active" title="Article (Free)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+      <span>Article</span>
+      <span class="ct-free">FREE</span>
+    </button>
+    <button class="content-type-btn" title="Poll (Free)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      <span>Poll</span>
+      <span class="ct-free">FREE</span>
+    </button>
   </div>
 </div>
 
@@ -621,6 +931,7 @@ body { display: flex; flex-direction: column; }
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       Settings
     </h2>
+    <div class="settings-free-note">★ All settings — free. No premium required.</div>
     <div class="field">
       <label>Bot Token</label>
       <input type="password" id="botToken" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
@@ -657,10 +968,35 @@ const preview = document.getElementById('preview');
 const charCounter = document.getElementById('charCounter');
 const MAX_CHARS = 32768;
 
+// ===== HEADING DROPDOWN POSITIONING =====
+// We need to position the dropdown relative to the toolbar
+var headingBtn = document.querySelector('.tb-btn[onclick*="heading-menu"]');
+if (headingBtn) {
+  headingBtn.id = 'headingDropBtn';
+}
+var headingMenu = document.getElementById('heading-menu');
+
+function toggleHeadingDropdown() {
+  var menu = headingMenu;
+  if (menu.style.display === 'none' || !menu.style.display) {
+    // Position it relative to the button
+    var btn = headingBtn;
+    if (btn) {
+      var rect = btn.getBoundingClientRect();
+      menu.style.position = 'fixed';
+      menu.style.left = rect.left + 'px';
+      menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+    }
+    menu.style.display = 'block';
+  } else {
+    menu.style.display = 'none';
+  }
+}
+
 // ===== LOAD SAVED SETTINGS =====
 function loadSettings() {
-  const token = localStorage.getItem('tg_bot_token') || '';
-  const chatId = localStorage.getItem('tg_chat_id') || '';
+  var token = localStorage.getItem('tg_bot_token') || '';
+  var chatId = localStorage.getItem('tg_chat_id') || '';
   document.getElementById('botToken').value = token;
   document.getElementById('chatId').value = chatId;
 }
@@ -669,37 +1005,61 @@ loadSettings();
 // ===== MODE SWITCH =====
 window.switchMode = function(mode) {
   currentMode = mode;
-  document.querySelectorAll('.mode-tab').forEach(t => {
+  document.querySelectorAll('.mode-tab').forEach(function(t) {
     t.classList.toggle('active', t.dataset.mode === mode);
   });
   document.getElementById('parseMode').value = mode === 'html' ? 'HTML' : 'MarkdownV2';
   updatePreview();
 };
 
+// ===== MOBILE SWITCH =====
+window.mobileSwitch = function(panel) {
+  var editorPane = document.getElementById('editorPane');
+  var previewPane = document.getElementById('previewPane');
+  var editBtn = document.getElementById('mobileEditBtn');
+  var prevBtn = document.getElementById('mobilePreviewBtn');
+  if (panel === 'edit') {
+    editorPane.classList.remove('mobile-hide');
+    previewPane.classList.remove('mobile-show');
+    editBtn.classList.add('active');
+    prevBtn.classList.remove('active');
+  } else {
+    editorPane.classList.add('mobile-hide');
+    previewPane.classList.add('mobile-show');
+    editBtn.classList.remove('active');
+    prevBtn.classList.add('active');
+  }
+};
+
 // ===== CHARACTER COUNTER =====
 function updateCharCounter() {
-  const len = editor.value.length;
+  var len = editor.value.length;
   charCounter.textContent = len.toLocaleString() + ' / ' + MAX_CHARS.toLocaleString();
   charCounter.className = 'char-counter' + (len > MAX_CHARS ? ' danger' : len > MAX_CHARS * 0.9 ? ' warn' : '');
 }
 
+// ===== ESCAPE HTML =====
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ===== MARKDOWN PARSER =====
 function parseMarkdown(text) {
-  if (!text.trim()) return '<p style="color: var(--text2); font-style: italic;">Preview will appear here...</p>';
+  if (!text.trim()) return '<div class="tg-bubble"><p style="color: var(--text-muted); font-style: italic;">Preview will appear here...</p></div>';
   
-  let html = '';
-  const lines = text.split('\n');
-  let i = 0;
-  let inCodeBlock = false;
-  let codeContent = '';
-  let codeLang = '';
-  let inTable = false;
-  let tableRows = [];
-  let inBlockquote = false;
-  let blockquoteContent = '';
-  let inList = false;
-  let listType = '';
-  let listItems = [];
+  var html = '';
+  var lines = text.split('\n');
+  var i = 0;
+  var inCodeBlock = false;
+  var codeContent = '';
+  var codeLang = '';
+  var inTable = false;
+  var tableRows = [];
+  var inBlockquote = false;
+  var blockquoteContent = '';
+  var inList = false;
+  var listType = '';
+  var listItems = [];
   
   function flushBlockquote() {
     if (inBlockquote && blockquoteContent) {
@@ -711,11 +1071,11 @@ function parseMarkdown(text) {
   
   function flushList() {
     if (inList && listItems.length) {
-      const tag = listType === 'ol' ? 'ol' : 'ul';
+      var tag = listType === 'ol' ? 'ol' : 'ul';
       html += '<' + tag + '>\n';
-      listItems.forEach(item => {
+      listItems.forEach(function(item) {
         if (item.startsWith('[ ] ') || item.startsWith('[x] ') || item.startsWith('[X] ')) {
-          const checked = item[1] === 'x' || item[1] === 'X';
+          var checked = item[1] === 'x' || item[1] === 'X';
           html += '<li class="task-item"><input type="checkbox"' + (checked ? ' checked' : '') + ' disabled> ' + parseInline(item.slice(4)) + '</li>\n';
         } else {
           html += '<li>' + parseInline(item) + '</li>\n';
@@ -730,17 +1090,14 @@ function parseMarkdown(text) {
   function flushTable() {
     if (inTable && tableRows.length) {
       html += '<table>\n';
-      tableRows.forEach((row, ri) => {
-        const tag = ri === 0 ? 'th' : 'td';
-        const wrapper = ri === 0 ? 'thead' : (ri === 1 ? 'tbody' : '');
+      tableRows.forEach(function(row, ri) {
+        var tag = ri === 0 ? 'th' : 'td';
         if (ri === 1 && tableRows.length > 1) html += '<tbody>\n';
-        if (ri !== 1 || tableRows.length === 1) {
-          if (ri === 0) html += '<thead>\n';
-        }
-        const cells = row.split('|').map(c => c.trim()).filter(c => c);
-        if (ri === 1 && cells.every(c => /^[-:]+$/.test(c))) { return; }
+        if (ri === 0) html += '<thead>\n';
+        var cells = row.split('|').map(function(c) { return c.trim(); }).filter(function(c) { return c; });
+        if (ri === 1 && cells.every(function(c) { return /^[-:]+$/.test(c); })) return;
         html += '<tr>';
-        cells.forEach(c => { html += '<' + tag + '>' + parseInline(c) + '</' + tag + '>'; });
+        cells.forEach(function(c) { html += '<' + tag + '>' + parseInline(c) + '</' + tag + '>'; });
         html += '</tr>\n';
         if (ri === 0 && tableRows.length > 1) html += '</thead>\n';
       });
@@ -752,7 +1109,7 @@ function parseMarkdown(text) {
   }
   
   while (i < lines.length) {
-    const line = lines[i];
+    var line = lines[i];
     
     // Code block
     if (line.trimStart().startsWith('```')) {
@@ -794,12 +1151,12 @@ function parseMarkdown(text) {
     }
     
     // List items
-    const ulMatch = line.match(/^(\s*)([-*+])\s+(.*)/);
-    const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+    var ulMatch = line.match(/^(\s*)([-*+])\s+(.*)/);
+    var olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
     if (ulMatch || olMatch) {
       flushBlockquote(); flushTable();
-      const item = ulMatch ? ulMatch[3] : olMatch[3];
-      const type = ulMatch ? 'ul' : 'ol';
+      var item = ulMatch ? ulMatch[3] : olMatch[3];
+      var type = ulMatch ? 'ul' : 'ol';
       if (!inList || listType !== type) { flushList(); inList = true; listType = type; }
       listItems.push(item);
       i++; continue;
@@ -815,10 +1172,10 @@ function parseMarkdown(text) {
     }
     
     // Headings
-    const hMatch = line.match(/^(#{1,6})\s+(.*)/);
+    var hMatch = line.match(/^(#{1,6})\s+(.*)/);
     if (hMatch) {
       flushBlockquote(); flushList(); flushTable();
-      const level = hMatch[1].length;
+      var level = hMatch[1].length;
       html += '<h' + level + '>' + parseInline(hMatch[2]) + '</h' + level + '>\n';
       i++; continue;
     }
@@ -840,7 +1197,7 @@ function parseMarkdown(text) {
     html += '<pre><code' + (codeLang ? ' class="language-' + escHtml(codeLang) + '"' : '') + '>' + escHtml(codeContent) + '</code></pre>\n';
   }
   
-  return html || '<p style="color: var(--text2); font-style: italic;">Preview will appear here...</p>';
+  return html ? '<div class="tg-bubble">' + html + '</div>' : '<div class="tg-bubble"><p style="color: var(--text-muted); font-style: italic;">Preview will appear here...</p></div>';
 }
 
 function parseInline(text) {
@@ -878,15 +1235,15 @@ function parseInline(text) {
   // Highlight
   text = text.replace(/==([^=]+?)==/g, '<span class="highlight">$1</span>');
   
-  // Superscript / Subscript (pass through HTML tags used in Telegram markdown)
+  // Superscript / Subscript
   text = text.replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>');
   text = text.replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>');
-  // tg-map in markdown
+  // tg-map
   text = text.replace(/&lt;tg-map\s+lat=&quot;([^&]+)&quot;\s+long=&quot;([^&]+)&quot;(?:\s+zoom=&quot;([^&]+)&quot;)?\s*\/&gt;/gi,
     function(m, lat, lng, zoom) {
-      return '<div class="tg-map">📍 Map: ' + lat + ', ' + lng + (zoom ? ' (zoom: ' + zoom + ')' : '') + '</div>';
+      return '<div class="tg-map">\ud83d\udccd Map: ' + lat + ', ' + lng + (zoom ? ' (zoom: ' + zoom + ')' : '') + '</div>';
     });
-  // aside in markdown
+  // aside
   text = text.replace(/&lt;aside&gt;([\s\S]*?)&lt;\/aside&gt;/gi, '<aside>$1</aside>');
   text = text.replace(/&lt;cite&gt;([\s\S]*?)&lt;\/cite&gt;/gi, '<cite>$1</cite>');
   
@@ -895,17 +1252,16 @@ function parseInline(text) {
 
 // ===== HTML PARSER / SANITIZER =====
 function parseHtmlContent(text) {
-  if (!text.trim()) return '<p style="color: var(--text2); font-style: italic;">Preview will appear here...</p>';
+  if (!text.trim()) return '<div class="tg-bubble"><p style="color: var(--text-muted); font-style: italic;">Preview will appear here...</p></div>';
   
-  // We'll allow Telegram-safe tags and sanitize
-  const allowedTags = ['b','strong','i','em','u','ins','s','del','strike','code','pre','a',
+  var allowedTags = ['b','strong','i','em','u','ins','s','del','strike','code','pre','a',
     'blockquote','br','p','br/','tg-spoiler','tg-blockquote','tg-collage','tg-slideshow',
     'details','summary','tg-map','mark','sup','sub','h1','h2','h3','h4','h5','h6',
     'ul','ol','li','table','thead','tbody','tr','th','td','hr','div','span','img',
     'aside','cite','figure','figcaption','footer','tg-emoji','tg-time','tg-math',
     'tg-math-block','tg-reference','input','caption','video','audio','tg-thinking'];
   
-  const allowedAttrs = {
+  var allowedAttrs = {
     'a': ['href','name'],
     'img': ['src','alt','width','height','tg-spoiler'],
     'video': ['src'],
@@ -942,38 +1298,36 @@ function parseHtmlContent(text) {
   
   // tg-map
   text = text.replace(/<tg-map\s+lat=["']([^"']+)["']\s+long=["']([^"']+)["'](?:\s+zoom=["']([^"']+)["'])?\s*\/?>/gi,
-    '<div class="tg-map">📍 Map: $1, $2' + (('$3') ? ' (zoom: $3)' : '') + '</div>');
+    '<div class="tg-map">\ud83d\udccd Map: $1, $2' + (('$3') ? ' (zoom: $3)' : '') + '</div>');
   
-  // tg-emoji — just keep inner content
+  // tg-emoji
   text = text.replace(/<tg-emoji[^>]*>([\s\S]*?)<\/tg-emoji>/gi, '<span class="tg-emoji">$1</span>');
   
-  // tg-time — formatted datetime
+  // tg-time
   text = text.replace(/<tg-time\s+unix=["'](\d+)["']\s+format=["']([^"']+)["'][^>]*>([\s\S]*?)<\/tg-time>/gi,
     function(m, unix, fmt, content) {
       try {
-        const d = new Date(parseInt(unix) * 1000);
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        let formatted = days[d.getUTCDay()] + ', ' + months[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+        var d = new Date(parseInt(unix) * 1000);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        var formatted = days[d.getUTCDay()] + ', ' + months[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
         return '<span class="tg-time" title="Unix: ' + unix + ' (' + fmt + ')">' + content + '</span>';
       } catch(e) { return '<span class="tg-time">' + content + '</span>'; }
     });
   
-  // tg-math — inline math
+  // tg-math
   text = text.replace(/<tg-math>([\s\S]*?)<\/tg-math>/gi, '<span class="math">$1</span>');
-  
-  // tg-math-block — block math
   text = text.replace(/<tg-math-block>([\s\S]*?)<\/tg-math-block>/gi, '<div class="math-block math">$1</div>');
   
-  // tg-reference — styled reference/footnote
+  // tg-reference
   text = text.replace(/<tg-reference\s+name=["']([^"']+)["'][^>]*>([\s\S]*?)<\/tg-reference>/gi,
     '<sup class="tg-reference" title="$1">[$2]</sup>');
   
   // aside — pull quote
   text = text.replace(/<aside>([\s\S]*?)<\/aside>/gi, function(m, content) {
-    let inner = content;
-    let citeHtml = '';
-    const citeMatch = inner.match(/<cite>([\s\S]*?)<\/cite>/i);
+    var inner = content;
+    var citeHtml = '';
+    var citeMatch = inner.match(/<cite>([\s\S]*?)<\/cite>/i);
     if (citeMatch) {
       citeHtml = '<cite>' + citeMatch[1] + '</cite>';
       inner = inner.replace(citeMatch[0], '');
@@ -981,60 +1335,52 @@ function parseHtmlContent(text) {
     return '<div class="pull-quote">' + inner.trim() + citeHtml + '</div>';
   });
   
-  // footer
   text = text.replace(/<footer>([\s\S]*?)<\/footer>/gi, '<div class="tg-footer">$1</div>');
   
-  // figure
   text = text.replace(/<figure>([\s\S]*?)<\/figure>/gi, function(m, content) {
-    let figcaption = '';
-    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    var figcaption = '';
+    var fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
     if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
-    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    var inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
     return '<div class="tg-figure">' + inner.trim() + figcaption + '</div>';
   });
   
-  // tg-collage
   text = text.replace(/<tg-collage>([\s\S]*?)<\/tg-collage>/gi, function(m, content) {
-    let figcaption = '';
-    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    var figcaption = '';
+    var fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
     if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
-    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    var inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
     return '<div class="tg-collage">' + inner.trim() + '</div>' + figcaption;
   });
   
-  // tg-slideshow
   text = text.replace(/<tg-slideshow>([\s\S]*?)<\/tg-slideshow>/gi, function(m, content) {
-    let figcaption = '';
-    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    var figcaption = '';
+    var fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
     if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
-    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    var inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
     return '<div class="tg-slideshow">' + inner.trim() + '</div>' + figcaption;
   });
   
-  // anchor (a[name])
   text = text.replace(/<a\s+name=["']([^"']+)["']\s*><\/a>/gi,
     '<span class="tg-anchor" id="$1"></span>');
   
-  // Details/summary stay as-is
-  
-  // Sanitize: strip disallowed tags but keep content
+  // Sanitize
   text = text.replace(/<\/?([a-z][a-z0-9-]*)\b[^>]*>/gi, function(match, tag) {
     tag = tag.toLowerCase();
     if (allowedTags.includes(tag) || tag.startsWith('tg-')) return match;
     return '';
   });
   
-  // spoiler onclick injection
   text = text.replace(/<tg-spoiler>/gi, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">');
   text = text.replace(/<\/tg-spoiler>/gi, '</span>');
   
-  return text;
+  return '<div class="tg-bubble">' + text + '</div>';
 }
 
 // ===== PREVIEW UPDATE =====
 window.updatePreview = function() {
   updateCharCounter();
-  const text = editor.value;
+  var text = editor.value;
   if (currentMode === 'markdown') {
     preview.innerHTML = parseMarkdown(text);
   } else {
@@ -1042,19 +1388,28 @@ window.updatePreview = function() {
   }
 };
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 // ===== FORMAT INSERTION =====
 window.insertFormat = function(type) {
   closeAllDropdowns();
-  const start = editor.selectionStart;
-  const end = editor.selectionEnd;
-  const selected = editor.value.substring(start, end);
-  const before = editor.value.substring(0, start);
-  const after = editor.value.substring(end);
-  let insert = '', cursorOffset = 0, selectStart = 0, selectEnd = 0;
+  
+  // Handle AI button mock
+  if (type === 'ai') {
+    showToast('AI assistant is FREE here! No Cocoon subscription needed.', 'info');
+    return;
+  }
+  
+  // Handle emoji
+  if (type === 'emoji') {
+    showToast('Emoji picker coming soon — for FREE, obviously.', 'info');
+    return;
+  }
+  
+  var start = editor.selectionStart;
+  var end = editor.selectionEnd;
+  var selected = editor.value.substring(start, end);
+  var before = editor.value.substring(0, start);
+  var after = editor.value.substring(end);
+  var insert = '', cursorOffset = 0, selectStart = 0, selectEnd = 0;
   
   if (currentMode === 'markdown') {
     switch (type) {
@@ -1107,7 +1462,7 @@ window.insertFormat = function(type) {
       case 'blockquote': insert = '<blockquote>' + (selected || 'quote text') + '</blockquote>'; selectStart = 12; selectEnd = insert.length - 13; break;
       case 'ul': insert = '<ul>\n  <li>' + (selected || 'list item') + '</li>\n</ul>'; selectStart = 9; selectEnd = insert.length - 13; break;
       case 'ol': insert = '<ol>\n  <li>' + (selected || 'list item') + '</li>\n</ol>'; selectStart = 9; selectEnd = insert.length - 13; break;
-      case 'task': insert = '<ul>\n  <li>☐ ' + (selected || 'task item') + '</li>\n</ul>'; selectStart = 11; selectEnd = insert.length - 13; break;
+      case 'task': insert = '<ul>\n  <li>\u2610 ' + (selected || 'task item') + '</li>\n</ul>'; selectStart = 11; selectEnd = insert.length - 13; break;
       case 'table': insert = '<table>\n  <thead>\n    <tr><th>Header 1</th><th>Header 2</th><th>Header 3</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Cell 1</td><td>Cell 2</td><td>Cell 3</td></tr>\n  </tbody>\n</table>'; selectStart = 30; selectEnd = 39; break;
       case 'divider': insert = '<hr>'; selectStart = insert.length; selectEnd = insert.length; break;
       case 'media': insert = '<img src="https://example.com/image.jpg" alt="' + (selected || 'alt text') + '">'; selectStart = 10; selectEnd = 45; break;
@@ -1124,17 +1479,16 @@ window.insertFormat = function(type) {
       case 'mathblock': insert = '<tg-math-block>' + (selected || 'E = mc^2') + '</tg-math-block>'; selectStart = 15; selectEnd = insert.length - 16; break;
       case 'anchor': insert = '<a name="' + (selected || 'section-1') + '"></a>'; selectStart = 9; selectEnd = 9 + (selected || 'section-1').length; break;
       case 'reference': insert = '<tg-reference name="note-1">' + (selected || 'Referenced text') + '</tg-reference>'; selectStart = 28; selectEnd = 28 + (selected || 'Referenced text').length; break;
-      case 'emoji': insert = '<tg-emoji emoji-id="5368324170671202286">' + (selected || '👍') + '</tg-emoji>'; selectStart = 37; selectEnd = 37 + (selected || '👍').length; break;
+      case 'emoji': insert = '<tg-emoji emoji-id="5368324170671202286">' + (selected || '\ud83d\udc4d') + '</tg-emoji>'; selectStart = 37; selectEnd = 37 + (selected || '\ud83d\udc4d').length; break;
       case 'datetime': insert = '<tg-time unix="1647531900" format="wDT">' + (selected || 'tomorrow') + '</tg-time>'; selectStart = 37; selectEnd = 37 + (selected || 'tomorrow').length; break;
       case 'mailto': insert = '<a href="mailto:' + (selected || 'user@example.com') + '">' + (selected || 'user@example.com') + '</a>'; selectStart = 15; selectEnd = 15 + (selected || 'user@example.com').length; break;
-      case 'tel': insert = '<a href="tel:+1234567890">' + (selected || '+123 456 7890') + '</a>'; selectStart = 24; selectEnd = 24 + (selected || '+123 456 7890').length; break;
+      case 'tel': insert = '<a href="tel:+123****7890">' + (selected || '+123 456 7890') + '</a>'; selectStart = 24; selectEnd = 24 + (selected || '+123 456 7890').length; break;
       case 'mention': insert = '<a href="tg://user?id=123456789">' + (selected || '@username') + '</a>'; selectStart = 31; selectEnd = 31 + (selected || '@username').length; break;
     }
   }
   
   editor.focus();
   editor.setRangeText(insert, start, end, 'end');
-  // Select the inner content
   editor.selectionStart = start + selectStart;
   editor.selectionEnd = start + selectEnd;
   updatePreview();
@@ -1142,18 +1496,26 @@ window.insertFormat = function(type) {
 
 // ===== DROPDOWN =====
 window.toggleDropdown = function(id) {
-  const menu = document.getElementById(id);
-  const isOpen = menu.classList.contains('open');
+  // For heading-menu, use our custom function
+  if (id === 'heading-menu') {
+    toggleHeadingDropdown();
+    return;
+  }
+  var menu = document.getElementById(id);
+  var isOpen = menu.classList.contains('open');
   closeAllDropdowns();
   if (!isOpen) menu.classList.add('open');
 };
 
 function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.classList.remove('open'); });
+  if (headingMenu) headingMenu.style.display = 'none';
 }
 
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.dropdown')) closeAllDropdowns();
+  if (!e.target.closest('.dropdown') && !e.target.closest('#heading-menu') && !e.target.closest('#headingDropBtn')) {
+    closeAllDropdowns();
+  }
 });
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -1170,15 +1532,15 @@ editor.addEventListener('keydown', function(e) {
   // Tab support
   if (e.key === 'Tab') {
     e.preventDefault();
-    const start = editor.selectionStart;
+    var start = editor.selectionStart;
     editor.setRangeText('  ', start, start, 'end');
     updatePreview();
   }
 });
 
 // ===== RESIZE HANDLE =====
-const resizeHandle = document.getElementById('resizeHandle');
-let isResizing = false;
+var resizeHandle = document.getElementById('resizeHandle');
+var isResizing = false;
 resizeHandle.addEventListener('mousedown', function(e) {
   isResizing = true;
   resizeHandle.classList.add('dragging');
@@ -1188,12 +1550,12 @@ resizeHandle.addEventListener('mousedown', function(e) {
 });
 document.addEventListener('mousemove', function(e) {
   if (!isResizing) return;
-  const main = document.querySelector('.main');
-  const rect = main.getBoundingClientRect();
-  const ratio = (e.clientX - rect.left) / rect.width;
-  const clamped = Math.max(0.2, Math.min(0.8, ratio));
-  document.querySelector('.editor-pane').style.flex = '0 0 ' + (clamped * 100) + '%';
-  document.querySelector('.preview-pane').style.flex = '1';
+  var main = document.querySelector('.main');
+  var rect = main.getBoundingClientRect();
+  var ratio = (e.clientX - rect.left) / rect.width;
+  var clamped = Math.max(0.2, Math.min(0.8, ratio));
+  document.getElementById('editorPane').style.flex = '0 0 ' + (clamped * 100) + '%';
+  document.getElementById('previewPane').style.flex = '1';
 });
 document.addEventListener('mouseup', function() {
   if (isResizing) {
@@ -1215,23 +1577,22 @@ window.closeSettings = function() {
   document.getElementById('settingsOverlay').classList.remove('open');
 };
 window.saveSettings = function() {
-  const token = document.getElementById('botToken').value.trim();
-  const chatId = document.getElementById('chatId').value.trim();
+  var token = document.getElementById('botToken').value.trim();
+  var chatId = document.getElementById('chatId').value.trim();
   localStorage.setItem('tg_bot_token', token);
   localStorage.setItem('tg_chat_id', chatId);
   closeSettings();
-  showToast('Settings saved successfully', 'success');
+  showToast('Settings saved successfully — for free!', 'success');
 };
 
 // ===== COPY TO CLIPBOARD =====
 window.copyToClipboard = function() {
-  const text = editor.value;
+  var text = editor.value;
   if (!text) { showToast('Nothing to copy', 'info'); return; }
   navigator.clipboard.writeText(text).then(function() {
-    showToast('Copied to clipboard!', 'success');
+    showToast('Copied to clipboard! (Premium feature, free for you)', 'success');
   }).catch(function() {
-    // Fallback
-    const ta = document.createElement('textarea');
+    var ta = document.createElement('textarea');
     ta.value = text; document.body.appendChild(ta);
     ta.select(); document.execCommand('copy');
     document.body.removeChild(ta);
@@ -1241,8 +1602,8 @@ window.copyToClipboard = function() {
 
 // ===== SEND TO TELEGRAM =====
 window.sendToTelegram = async function() {
-  const token = localStorage.getItem('tg_bot_token');
-  const chatId = localStorage.getItem('tg_chat_id');
+  var token = localStorage.getItem('tg_bot_token');
+  var chatId = localStorage.getItem('tg_chat_id');
   
   if (!token || !chatId) {
     showToast('Please configure Bot Token and Chat ID in Settings first', 'error');
@@ -1250,9 +1611,9 @@ window.sendToTelegram = async function() {
     return;
   }
   
-  const text = editor.value;
+  var text = editor.value;
   if (!text.trim()) {
-    showToast('Nothing to send — editor is empty', 'error');
+    showToast('Nothing to send \u2014 editor is empty', 'error');
     return;
   }
   
@@ -1261,32 +1622,31 @@ window.sendToTelegram = async function() {
     return;
   }
   
-  const parseMode = document.getElementById('parseMode').value;
-  const baseUrl = 'https://api.telegram.org/bot' + token;
+  var parseMode = document.getElementById('parseMode').value;
+  var baseUrl = 'https://api.telegram.org/bot' + token;
   
   // Try sendRichMessage first
   try {
-    const richBody = { chat_id: chatId, rich_message: {} };
+    var richBody = { chat_id: chatId, rich_message: {} };
     if (parseMode === 'MarkdownV2') {
       richBody.rich_message.markdown = text;
     } else {
       richBody.rich_message.html = text;
     }
     
-    let res = await fetch(baseUrl + '/sendRichMessage', {
+    var res = await fetch(baseUrl + '/sendRichMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(richBody)
     });
     
-    let data = await res.json();
+    var data = await res.json();
     
     if (data.ok) {
-      showToast('Message sent successfully! ✓', 'success');
+      showToast('Message sent successfully! (Free, obviously) \u2713', 'success');
       return;
     }
     
-    // If sendRichMessage not available, fallback
     if (data.description && (data.description.includes('method not found') || data.description.includes('not found'))) {
       throw new Error('fallback');
     }
@@ -1294,24 +1654,23 @@ window.sendToTelegram = async function() {
     showToast('Error: ' + (data.description || 'Unknown error'), 'error');
     return;
   } catch (e) {
-    // Fallback to sendMessage
     if (e.message === 'fallback' || e instanceof TypeError) {
       try {
-        const fallbackBody = {
+        var fallbackBody = {
           chat_id: chatId,
           text: text,
           parse_mode: parseMode
         };
         
-        const res2 = await fetch(baseUrl + '/sendMessage', {
+        var res2 = await fetch(baseUrl + '/sendMessage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fallbackBody)
         });
         
-        const data2 = await res2.json();
+        var data2 = await res2.json();
         if (data2.ok) {
-          showToast('Message sent via sendMessage fallback! ✓', 'success');
+          showToast('Message sent via sendMessage fallback! (Still free) \u2713', 'success');
         } else {
           showToast('Error: ' + (data2.description || 'Failed to send'), 'error');
         }
@@ -1327,11 +1686,11 @@ window.sendToTelegram = async function() {
 // ===== TOAST NOTIFICATIONS =====
 function showToast(message, type) {
   type = type || 'info';
-  const container = document.getElementById('toastContainer');
-  const toast = document.createElement('div');
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
   toast.className = 'toast ' + type;
   
-  let icon = '';
+  var icon = '';
   if (type === 'success') icon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
   else if (type === 'error') icon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>';
   else icon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>';
