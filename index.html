@@ -711,6 +711,26 @@ html, body {
   .send-btn { padding: 0 14px; font-size: 13px; height: 32px; }
   .settings-panel { width: 100%; max-width: 100%; }
 }
+
+/* ===== NEW FEATURE STYLES ===== */
+.tg-mention { color: var(--accent); text-decoration: none; font-weight: 500; }
+.tg-custom-emoji { font-size: 1.2em; }
+.tg-time { color: var(--text2); font-size: 0.9em; font-style: italic; }
+.tg-anchor { color: var(--accent2); font-size: 0.85em; text-decoration: none; }
+.tg-spoiler-media { position: relative; display: inline-block; filter: blur(10px); cursor: pointer; border-radius: 8px; overflow: hidden; transition: filter 0.3s; }
+.tg-spoiler-media:hover, .tg-spoiler-media.revealed { filter: none; }
+.tg-spoiler-media img, .tg-spoiler-media video { max-width: 100%; border-radius: 8px; display: block; }
+.tg-collage { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; margin: 12px 0; border-radius: 8px; overflow: hidden; }
+.tg-collage img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
+.tg-slideshow { display: flex; gap: 4px; overflow-x: auto; margin: 12px 0; padding-bottom: 4px; scroll-snap-type: x mandatory; }
+.tg-slideshow img, .tg-slideshow video { min-width: 200px; max-width: 300px; border-radius: 8px; scroll-snap-align: start; flex-shrink: 0; }
+.tg-figcaption { font-size: 13px; color: var(--text2); text-align: center; margin-top: 6px; font-style: italic; }
+.tg-map iframe { width: 100%; height: 200px; border: 1px solid var(--border); border-radius: 8px; }
+table.bordered { border-collapse: collapse; width: 100%; margin: 12px 0; }
+table.bordered th, table.bordered td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+table.bordered caption { font-size: 13px; color: var(--text2); margin-bottom: 4px; font-weight: 600; }
+table.striped tr:nth-child(even) { background: var(--surface2); }
+table th { background: var(--surface2); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -830,9 +850,35 @@ html, body {
 
       <div class="tb-divider"></div>
 
-      <!-- Group 5: Highlight -->
+      <!-- Group 5: Advanced inline -->
+      <button class="tb-btn" onclick="insertSubscript()" title="Subscript">
+        <span class="icon" style="font-size:12px">X₂</span>
+      </button>
+      <button class="tb-btn" onclick="insertSuperscript()" title="Superscript">
+        <span class="icon" style="font-size:12px">X²</span>
+      </button>
+      <button class="tb-btn" onclick="insertMention()" title="User mention">
+        <span class="icon" style="font-size:14px;font-weight:700">@</span>
+      </button>
+      <button class="tb-btn" onclick="insertCustomEmoji()" title="Custom emoji">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </button>
+      <button class="tb-btn" onclick="insertDateTime()" title="Date/Time">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </button>
+      <button class="tb-btn" onclick="insertAnchor()" title="Anchor">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/><path d="M5 12H2a10 10 0 0020 0h-3"/></svg>
+      </button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Group 6: Highlight + Clear -->
       <button class="tb-btn" onclick="insertHighlight()" title="Highlight (Ctrl+Shift+H)">
         <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+      <div class="tb-divider"></div>
+      <button class="tb-btn" onclick="clearAll()" title="Clear all" style="color:var(--danger)">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
       </button>
     </div>
   </div>
@@ -865,6 +911,9 @@ html, body {
   <button class="dropdown-item" onclick="insertMathBlock()"><span class="item-icon">∑</span><span class="item-label">Math Block</span></button>
   <button class="dropdown-item" onclick="insertBlock('footer')"><span class="item-icon">↓</span><span class="item-label">Footer</span></button>
   <button class="dropdown-item" onclick="insertFigureCaption()"><span class="item-icon">🖼</span><span class="item-label">Figure with Caption</span><span class="badge">★</span></button>
+  <button class="dropdown-item" onclick="insertSpoilerMedia()"><span class="item-icon">🙈</span><span class="item-label">Spoiler Media</span></button>
+  <button class="dropdown-item" onclick="insertCollage()"><span class="item-icon">🖼️</span><span class="item-label">Collage</span></button>
+  <button class="dropdown-item" onclick="insertSlideshow()"><span class="item-icon">🎬</span><span class="item-label">Slideshow</span></button>
   <div class="dropdown-divider"></div>
   <button class="dropdown-item" style="color:var(--text3);cursor:default;"><span class="item-icon">🤖</span><span class="item-label">AI Generate</span><span class="badge" style="background:var(--text3)">SOON</span></button>
 </div>
@@ -1163,19 +1212,7 @@ function insertMedia() {
   }
 }
 
-function insertMap() {
-  closeAllMenus();
-  const lat = prompt('Enter latitude:');
-  if (!lat) return;
-  const lon = prompt('Enter longitude:');
-  if (!lon) return;
-  const div = document.createElement('div');
-  div.className = 'tg-map';
-  div.dataset.lat = lat;
-  div.dataset.long = lon;
-  div.innerHTML = '📍 Location: ' + lat + ', ' + lon;
-  insertAtCursor(div);
-}
+// insertMap moved to OSM version below
 
 function insertFootnote() {
   closeAllMenus();
@@ -1521,6 +1558,330 @@ function copyOutput() {
   navigator.clipboard.writeText(currentOutput).then(() => showToast('Copied!', 'success')).catch(() => showToast('Copy failed', 'error'));
 }
 
+// ===== CLEAR ALL =====
+function clearAll() {
+  if (!confirm('Clear everything? This cannot be undone.')) return;
+  const editor = document.getElementById('editor');
+  editor.innerHTML = '';
+  footnoteCount = 0;
+  updateCharCount();
+  showToast('Cleared!', 'success');
+}
+
+// ===== SUBSCRIPT / SUPERSCRIPT =====
+function insertSubscript() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) {
+    const sub = document.createElement('sub');
+    sub.textContent = 'x';
+    range.insertNode(sub);
+    range.selectNodeContents(sub);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    const text = range.toString();
+    const sub = document.createElement('sub');
+    sub.textContent = text;
+    range.deleteContents();
+    range.insertNode(sub);
+  }
+}
+
+function insertSuperscript() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) {
+    const sup = document.createElement('sup');
+    sup.textContent = 'x';
+    range.insertNode(sup);
+    range.selectNodeContents(sup);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    const text = range.toString();
+    const sup = document.createElement('sup');
+    sup.textContent = text;
+    range.deleteContents();
+    range.insertNode(sup);
+  }
+}
+
+// ===== MENTION =====
+function insertMention() {
+  const username = prompt('Enter username (without @):');
+  if (!username) return;
+  const a = document.createElement('a');
+  a.href = 'tg://user?id=' + username;
+  a.className = 'tg-mention';
+  a.textContent = '@' + username;
+  a.contentEditable = 'false';
+  insertAtCursor(a);
+}
+
+// ===== CUSTOM EMOJI =====
+function insertCustomEmoji() {
+  const emojiId = prompt('Custom emoji ID (from @CustomEmoji bot):');
+  if (!emojiId) return;
+  const emoji = prompt('Display emoji (fallback text):');
+  if (!emoji) return;
+  const span = document.createElement('span');
+  span.className = 'tg-custom-emoji';
+  span.dataset.emojiId = emojiId;
+  span.textContent = emoji;
+  span.contentEditable = 'false';
+  insertAtCursor(span);
+}
+
+// ===== DATE/TIME =====
+function insertDateTime() {
+  const format = prompt('Format (w=w Date=Date wDT=Date+Time wT=Time):', 'wDT');
+  if (!format) return;
+  const unix = prompt('Unix timestamp (or leave empty for now):');
+  const span = document.createElement('span');
+  span.className = 'tg-time';
+  span.dataset.unix = unix || Math.floor(Date.now() / 1000);
+  span.dataset.format = format || 'wDT';
+  const now = new Date();
+  span.textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+  span.contentEditable = 'false';
+  insertAtCursor(span);
+}
+
+// ===== ANCHOR =====
+function insertAnchor() {
+  const name = prompt('Anchor name:');
+  if (!name) return;
+  const a = document.createElement('a');
+  a.name = name;
+  a.className = 'tg-anchor';
+  a.textContent = '\u2693 ' + name;
+  a.contentEditable = 'false';
+  insertAtCursor(a);
+}
+
+// ===== SPOILER MEDIA =====
+function insertSpoilerMedia() {
+  closeAllMenus();
+  const type = prompt('Media type (image/video/audio):', 'image');
+  if (!type) return;
+  const url = prompt('Media URL:');
+  if (!url) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tg-spoiler-media';
+  wrapper.title = 'Click to reveal';
+  if (type === 'image') {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'spoiler image';
+    wrapper.appendChild(img);
+  } else if (type === 'video') {
+    const video = document.createElement('video');
+    video.src = url;
+    video.controls = true;
+    wrapper.appendChild(video);
+  } else {
+    const audio = document.createElement('audio');
+    audio.src = url;
+    audio.controls = true;
+    wrapper.appendChild(audio);
+  }
+  insertAtCursor(wrapper);
+}
+
+// ===== COLLAGE =====
+function insertCollage() {
+  closeAllMenus();
+  const urls = prompt('Image URLs (comma separated):');
+  if (!urls) return;
+  const caption = prompt('Collage caption (optional):');
+  const div = document.createElement('div');
+  div.className = 'tg-collage';
+  urls.split(',').forEach(url => {
+    const img = document.createElement('img');
+    img.src = url.trim();
+    img.alt = 'collage';
+    div.appendChild(img);
+  });
+  if (caption) {
+    const cap = document.createElement('figcaption');
+    cap.className = 'tg-figcaption';
+    cap.textContent = caption;
+    div.appendChild(cap);
+  }
+  insertAtCursor(div);
+}
+
+// ===== SLIDESHOW =====
+function insertSlideshow() {
+  closeAllMenus();
+  const urls = prompt('Media URLs comma separated (images/videos):');
+  if (!urls) return;
+  const caption = prompt('Slideshow caption (optional):');
+  const div = document.createElement('div');
+  div.className = 'tg-slideshow';
+  urls.split(',').forEach(url => {
+    const u = url.trim();
+    if (u.match(/\.(mp4|webm|ogg)$/i)) {
+      const video = document.createElement('video');
+      video.src = u;
+      video.controls = true;
+      video.style.minWidth = '200px';
+      div.appendChild(video);
+    } else {
+      const img = document.createElement('img');
+      img.src = u;
+      img.alt = 'slide';
+      div.appendChild(img);
+    }
+  });
+  if (caption) {
+    const cap = document.createElement('figcaption');
+    cap.className = 'tg-figcaption';
+    cap.textContent = caption;
+    div.appendChild(cap);
+  }
+  insertAtCursor(div);
+}
+
+// ===== OSM MAP (replace Google Maps) =====
+function insertMap() {
+  closeAllMenus();
+  const lat = prompt('Latitude:');
+  if (!lat) return;
+  const lon = prompt('Longitude:');
+  if (!lon) return;
+  const div = document.createElement('div');
+  div.className = 'tg-map';
+  div.dataset.lat = lat;
+  div.dataset.long = lon;
+  const bbox = (parseFloat(lon)-0.01) + ',' + (parseFloat(lat)-0.01) + ',' + (parseFloat(lon)+0.01) + ',' + (parseFloat(lat)+0.01);
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + lat + ',' + lon;
+  iframe.style.cssText = 'width:100%;height:200px;border:1px solid var(--border);border-radius:8px;';
+  iframe.loading = 'lazy';
+  div.appendChild(iframe);
+  insertAtCursor(div);
+}
+
+// ===== TABLE PROPERTIES =====
+function toggleTableBordered() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  const table = node.closest('table');
+  if (!table) { showToast('Place cursor in a table first', 'error'); return; }
+  table.classList.toggle('bordered');
+  table.classList.toggle('striped');
+  showToast('Table style toggled', 'success');
+}
+
+function addTableCaption() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  const table = node.closest('table');
+  if (!table) { showToast('Place cursor in a table first', 'error'); return; }
+  const existing = table.querySelector('caption');
+  if (existing) { existing.remove(); showToast('Caption removed', 'success'); return; }
+  const text = prompt('Table caption:');
+  if (!text) return;
+  const caption = document.createElement('caption');
+  caption.textContent = text;
+  caption.style.cssText = 'caption-side:top;text-align:left;font-size:13px;color:var(--text2);padding:4px 0;';
+  table.insertBefore(caption, table.firstChild);
+  showToast('Caption added', 'success');
+}
+
+function mergeCells(direction) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  const td = node.closest('td, th');
+  if (!td) { showToast('Place cursor in a cell first', 'error'); return; }
+  if (direction === 'h') {
+    const next = td.nextElementSibling;
+    if (next && (next.tagName === 'TD' || next.tagName === 'TH')) {
+      td.colSpan = (td.colSpan || 1) + 1;
+      next.remove();
+      showToast('Cells merged', 'success');
+    }
+  } else {
+    const tr = td.closest('tr');
+    const idx = td.cellIndex;
+    const nextRow = tr.nextElementSibling;
+    if (nextRow) {
+      const below = nextRow.cells[idx];
+      if (below) {
+        td.rowSpan = (td.rowSpan || 1) + 1;
+        below.remove();
+        showToast('Cells merged', 'success');
+      }
+    }
+  }
+}
+
+function alignCell(align) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  const td = node.closest('td, th');
+  if (!td) { showToast('Place cursor in a cell first', 'error'); return; }
+  td.style.textAlign = align;
+}
+
+// ===== sendRichMessageDraft (typing/streaming) =====
+function sendDraft() {
+  const settings = JSON.parse(localStorage.getItem('tfr_settings') || '{}');
+  if (!settings.token || !settings.chatId) { showToast('Configure Bot Token and Chat ID in Settings first', 'error'); return; }
+  const mode = settings.parseMode || 'MarkdownV2';
+  const text = convertDOMToTelegram(mode);
+  if (!text.trim()) { showToast('Nothing to send', 'error'); return; }
+  const url = 'https://api.telegram.org/bot' + settings.token + '/sendMessage';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: settings.chatId,
+      text: text,
+      parse_mode: mode,
+      disable_notification: true
+    })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) showToast('Draft sent!', 'success');
+    else showToast('Error: ' + (d.description || 'Unknown'), 'error');
+  }).catch(() => showToast('Network error', 'error'));
+}
+
+// ===== editMessageText with rich_message =====
+function editLastMessage(messageId) {
+  const settings = JSON.parse(localStorage.getItem('tfr_settings') || '{}');
+  if (!settings.token || !settings.chatId) { showToast('Configure Bot Token and Chat ID first', 'error'); return; }
+  if (!messageId) { showToast('Provide a message_id to edit', 'error'); return; }
+  const mode = settings.parseMode || 'MarkdownV2';
+  const text = convertDOMToTelegram(mode);
+  const url = 'https://api.telegram.org/bot' + settings.token + '/editMessageText';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: settings.chatId,
+      message_id: messageId,
+      text: text,
+      parse_mode: mode
+    })
+  }).then(r => r.json()).then(d => {
+    if (d.ok) showToast('Message edited!', 'success');
+    else showToast('Error: ' + (d.description || 'Unknown'), 'error');
+  }).catch(() => showToast('Network error', 'error'));
+}
+
 // ===== DOM TO TELEGRAM CONVERTER =====
 function convertDOMToTelegram(mode) {
   const editor = document.getElementById('editor');
@@ -1578,6 +1939,31 @@ function nodeToMd(node) {
     case 'IMG': return '![' + (node.alt || 'image') + '](' + (node.src || '') + ')';
     case 'DIV': {
       if (node.classList.contains('tg-spoiler')) return '||' + inner + '||';
+      if (node.classList.contains('tg-collage')) {
+        const imgs = node.querySelectorAll('img');
+        const cap = node.querySelector('.tg-figcaption');
+        let r = '\n';
+        imgs.forEach(img => r += '![' + (img.alt || 'collage') + '](' + img.src + ')\n');
+        if (cap) r += '_' + cap.textContent + '_\n';
+        return r;
+      }
+      if (node.classList.contains('tg-slideshow')) {
+        const items = node.querySelectorAll('img, video, audio');
+        const cap = node.querySelector('.tg-figcaption');
+        let r = '\n';
+        items.forEach(item => {
+          if (item.tagName === 'IMG') r += '![' + (item.alt || 'slide') + '](' + item.src + ')\n';
+          else r += '[' + item.tagName + '](' + (item.src || '') + ')\n';
+        });
+        if (cap) r += '_' + cap.textContent + '_\n';
+        return r;
+      }
+      if (node.classList.contains('tg-spoiler-media')) {
+        const child = node.querySelector('img, video, audio');
+        if (!child) return inner;
+        if (child.tagName === 'IMG') return '||![' + (child.alt || 'image') + '](' + child.src + ')||';
+        return '||[' + child.tagName + '](' + (child.src || '') + ')||';
+      }
       if (node.classList.contains('tg-map')) {
         return '\n[📍 Location](https://maps.google.com/?q=' + (node.dataset.lat || '') + ',' + (node.dataset.long || '') + ')\n';
       }
@@ -1631,6 +2017,19 @@ function nodeToMd(node) {
     }
     case 'FIGCAPTION': return '';
     case 'FOOTER': return '\n' + inner.trim() + '\n';
+    case 'SUB': return '~' + inner + '~';
+    case 'SUP': {
+      if (node.classList.contains('footnote-ref')) return '^[' + node.textContent + ']';
+      return '^' + inner;
+    }
+    case 'SPAN': {
+      if (node.classList.contains('tg-spoiler')) return '||' + inner + '||';
+      if (node.classList.contains('tg-math')) return '$' + node.textContent + '$';
+      if (node.classList.contains('tg-mention')) return '[' + inner + '](tg://user?id=' + node.href.split('=').pop() + ')';
+      if (node.classList.contains('tg-custom-emoji')) return inner; // fallback text
+      if (node.classList.contains('tg-time')) return inner; // display text
+      return inner;
+    }
     case 'P': return '\n' + inner.trim() + '\n';
     case 'VIDEO': return '\n[Video](' + (node.src || '') + ')\n';
     case 'AUDIO': return '\n[Audio](' + (node.src || '') + ')\n';
