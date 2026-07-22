@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🆓 TelegramFreeRich
+# TelegramFreeRich
 
 ### Free Rich Text Editor for Telegram
 
@@ -20,7 +20,7 @@
 
 ---
 
-## 🤔 The Story
+## The Story
 
 Telegram recently introduced a **rich text editor** for composing formatted messages — headings, tables, lists, blockquotes, code blocks, and embedded media. Pretty cool, right?
 
@@ -34,18 +34,18 @@ So we built this. A free, open-source rich text editor that uses the same API Te
 
 ---
 
-## ✨ What Is This?
+## What Is This?
 
 Two things:
 
-### 1. 📝 Standalone Web Editor (`index.html`)
+### 1. Standalone Web Editor (`index.html`)
 
 A self-contained HTML file you open in any browser. No server needed. No install. No npm. Just double-click.
 
 - **Markdown editor** with live preview
-- **HTML editor** with full Telegram tag support
+- **HTML editor** with full Telegram rich tag support
 - **Toolbar** for quick formatting (bold, italic, code, tables, etc.)
-- **Direct send** to Telegram via Bot API
+- **Direct send** to Telegram via Bot API (`sendRichMessage`)
 - **Keyboard shortcuts** (Ctrl+B, Ctrl+I, etc.)
 - **32,768 character counter** with color warnings
 - **Spoiler toggle** in preview
@@ -53,19 +53,18 @@ A self-contained HTML file you open in any browser. No server needed. No install
 - **Offline** — works without internet (except sending)
 - **Mobile responsive** — works on your phone too
 
-### 2. 🤖 Cloudflare Worker Bot (`worker.js`)
+### 2. Cloudflare Worker Bot (`worker.js`)
 
 A lightweight bot that runs on Cloudflare's free tier. Send it any Markdown or HTML, get a rendered Rich Message back.
 
 - **No server, no database** — just one file
 - **Free Cloudflare Workers** tier is enough
-- **Bilingual** support (Markdown + HTML)
 - **Entity reconstruction** — rebuilds your formatting from Telegram's parsed entities
 - **Fallback handling** — gracefully degrades if `sendRichMessage` fails
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Web Editor
 
@@ -91,9 +90,11 @@ That's it. No installation. No build step. No dependency hell.
 
 ---
 
-## 📖 Supported Syntax
+## Supported Rich Text Features (Bot API 10.1)
 
-### Markdown (MarkdownV2)
+### Rich Markdown
+
+Based on GitHub Flavored Markdown with Telegram extensions. Supports nested inline formatting.
 
 | Feature | Syntax |
 |---------|--------|
@@ -106,48 +107,125 @@ That's it. No installation. No build step. No dependency hell.
 | `Code` | `` `code` `` |
 | Code Block | ` ```lang\ncode\n``` ` |
 | [Link](https://telegram.org) | `[text](url)` |
-| # Heading | `# H1` through `###### H6` |
-| > Blockquote | `> text` |
-| - List | `- item` or `1. item` |
-| - [x] Task | `- [x] done` or `- [ ] todo` |
+| Heading | `# H1` through `###### H6` |
+| Paragraph | `> text` (blockquote) |
+| List | `- item` or `1. item` |
+| Task List | `- [x] done` or `- [ ] todo` |
 | Table | `\| A \| B \|` |
-| --- Divider | `---` |
-| Media | `![caption](url)` |
-| Math | `$E=mc^2$` or `$$block$$` |
+| Divider | `---` |
+| Media | `![caption](url)` (auto-detect by type) |
+| Math Inline | `$E=mc^2$` |
+| Math Block | `$$\sum x_i$$` |
+| Anchor | `[name](#anchor)` |
+| Footnote | `[text][note-1]` with `[note-1]: reference` |
 
-### HTML Tags
+### Rich HTML Tags
+
+Full tag set supported by `sendRichMessage` via the `html` field:
+
+#### Inline Formatting
 
 | Tag | Purpose |
 |-----|---------|
 | `<b>` / `<strong>` | Bold |
 | `<i>` / `<em>` | Italic |
 | `<u>` / `<ins>` | Underline |
-| `<s>` / `<del>` | Strikethrough |
-| `<tg-spoiler>` | Spoiler |
-| `<mark>` | Highlight |
+| `<s>` / `<strike>` / `<del>` | Strikethrough |
 | `<code>` | Inline code |
-| `<pre><code class="lang">` | Code block |
-| `<blockquote>` | Blockquote |
-| `<details><summary>` | Collapsible |
-| `<a href="...">` | Link |
-| `<sup>` / `<sub>` | Super/Subscript |
-| `<tg-collage>` | Photo collage |
+| `<mark>` | Highlighted/marked text |
+| `<sub>` | Subscript |
+| `<sup>` | Superscript |
+| `<tg-spoiler>` | Spoiler (click to reveal) |
+
+#### Links and References
+
+| Tag | Purpose |
+|-----|---------|
+| `<a href="url">` | Inline link |
+| `<a href="mailto:...">` | Email link |
+| `<a href="tel:...">` | Phone link |
+| `<a href="tg://user?id=...">` | User mention |
+| `<a href="#anchor">` | In-document link |
+| `<a name="anchor">` | Anchor target |
+| `<tg-reference name="note-1">` | Referenced/footnote text |
+
+#### Date-Time and Emoji
+
+| Tag | Purpose |
+|-----|---------|
+| `<tg-time unix="..." format="...">` | Date-time with locale-aware formatting |
+| `<tg-emoji emoji-id="...">` | Custom emoji by ID |
+| `<tg-math>` | Inline LaTeX math |
+
+#### Block Elements
+
+| Tag | Purpose |
+|-----|---------|
+| `<h1>` to `<h6>` | Section headings |
+| `<p>` | Paragraph |
+| `<footer>` | Footer text |
+| `<hr/>` | Horizontal divider |
+| `<pre>` | Pre-formatted code block |
+| `<pre><code class="lang">` | Syntax-highlighted code block |
+| `<blockquote>` with `<cite>` | Block quotation with attribution |
+| `<aside>` with `<cite>` | Pull quotation |
+| `<details>` with `<summary>` | Collapsible section (add `open` to expand by default) |
+
+#### Lists
+
+| Tag | Purpose |
+|-----|---------|
+| `<ul><li>` | Unordered list |
+| `<ol><li>` | Ordered list |
+| `<ol start="3" type="a" reversed>` | Ordered with start/type/reverse |
+| `<li value="7" type="i">` | List item with explicit value |
+| `<li><input type="checkbox" checked>` | Task list / checklist |
+
+#### Media Blocks
+
+| Tag | Purpose |
+|-----|---------|
+| `<img src="url"/>` | Photo |
+| `<video src="url">` | Video |
+| `<audio src="url">` | Audio / Voice note |
+| `<figure>` + `<figcaption>` + `<cite>` | Media with caption and credit |
+| `<figure img tg-spoiler/>` | Spoiler media |
+| `<tg-map lat="" long="" zoom=""/>` | Embedded OpenStreetMap |
+| `<tg-collage>` | Photo/video collage |
 | `<tg-slideshow>` | Media slideshow |
-| `<tg-map>` | Embedded map |
-| `<tg-math-block>` | Math expression |
+
+#### Tables
+
+| Tag | Purpose |
+|-----|---------|
+| `<table>` | Basic table |
+| `<table bordered striped>` | Table with borders and striped rows |
+| `<caption>` | Table caption |
+| `<th colspan="2" rowspan="3" align="center">` | Header cell with span/alignment |
+| `<td valign="top">` | Cell with vertical alignment |
+
+#### Math
+
+| Tag | Purpose |
+|-----|---------|
+| `<tg-math>` | Inline LaTeX expression |
+| `<tg-math-block>` | Block LaTeX expression |
 
 ---
 
-## 🎭 The Contradiction, Summarized
+## The Contradiction, Summarized
 
 | | Premium User | Bot (Free) |
 |---|:---:|:---:|
-| Send bold text | ✅ | ✅ |
-| Rich text editor | 💰 Premium | ✅ Free |
-| Tables in messages | 💰 Premium | ✅ Free |
-| Headings | 💰 Premium | ✅ Free |
-| Code blocks | 💰 Premium | ✅ Free |
-| Media in text | 💰 Premium | ✅ Free |
+| Send bold text | Yes | Yes |
+| Rich text editor | Premium ($5/mo) | Free |
+| Tables in messages | Premium ($5/mo) | Free |
+| Headings | Premium ($5/mo) | Free |
+| Code blocks | Premium ($5/mo) | Free |
+| Media in text | Premium ($5/mo) | Free |
+| Collapsible sections | Premium ($5/mo) | Free |
+| LaTeX math | Premium ($5/mo) | Free |
+| Maps | Premium ($5/mo) | Free |
 | Needs a phone | Yes | No |
 | Is alive | Yes | No |
 | Can feel pain | Yes | No |
@@ -159,7 +237,7 @@ Our response: We call it **TelegramFreeRich**. And it works.
 
 ---
 
-## 🛠 Tech Details
+## Tech Details
 
 - **Bot API Version:** 10.1
 - **Methods Used:** `sendRichMessage`, `sendRichMessageDraft`, `editMessageText`
@@ -170,7 +248,7 @@ Our response: We call it **TelegramFreeRich**. And it works.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TelegramFreeRich/
@@ -182,7 +260,7 @@ TelegramFreeRich/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 PRs welcome. Especially:
 - Better LaTeX rendering
@@ -193,13 +271,13 @@ PRs welcome. Especially:
 
 ---
 
-## 📄 License
+## License
 
 MIT — use it, fork it, sell it (good luck), or just point it at Telegram and laugh.
 
 ---
 
-## 🙏 Credits
+## Credits
 
 - [Telegram Bot API](https://core.telegram.org/bots/api) — for giving bots what they gave humans for free
 - [TeleRich](https://github.com/DarknessShade/TeleRich) — inspiration for the bot side
@@ -209,7 +287,7 @@ MIT — use it, fork it, sell it (good luck), or just point it at Telegram and l
 
 <div align="center">
 
-**Made with ❤️ and $0**
+**Made with $0 and a good sense of irony**
 
 *"The best things in life are free. The second-best things are also free, if you use a bot."*
 

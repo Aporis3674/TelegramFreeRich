@@ -323,10 +323,94 @@ body { display: flex; flex-direction: column; }
 }
 .preview-content details[open] summary { border-bottom: 1px solid var(--border); }
 .preview-content details > div { padding: 12px 14px; }
-.preview-content .tg-map {
+.preview-content .tg-map,
+.preview-content .tg-map-preview {
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 8px; padding: 16px; text-align: center;
   color: var(--text2); margin: 10px 0;
+}
+
+/* Telegram Rich Text — New Elements */
+.preview-content .pull-quote {
+  border-left: 4px solid var(--accent2);
+  padding: 12px 16px; margin: 12px 0;
+  background: rgba(124,92,255,0.06);
+  border-radius: 0 8px 8px 0;
+  font-style: italic; color: var(--text2);
+}
+.preview-content .pull-quote cite {
+  display: block; font-size: 0.85em; font-style: normal;
+  color: var(--accent2); margin-top: 6px; font-weight: 600;
+}
+.preview-content cite {
+  font-style: normal; color: var(--accent2); font-size: 0.9em;
+}
+.preview-content .tg-footer {
+  font-size: 0.8em; color: var(--text2);
+  border-top: 1px solid var(--border); padding-top: 8px;
+  margin-top: 12px;
+}
+.preview-content .tg-figure {
+  margin: 12px 0; border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; background: var(--surface);
+}
+.preview-content .tg-figure img,
+.preview-content .tg-figure video { display: block; max-width: 100%; }
+.preview-content .tg-figcaption {
+  padding: 8px 12px; font-size: 0.85em; color: var(--text2);
+  border-top: 1px solid var(--border);
+}
+.preview-content .tg-figcaption cite { display: inline; }
+.preview-content figure {
+  margin: 12px 0; border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; background: var(--surface);
+}
+.preview-content figure img { display: block; max-width: 100%; }
+.preview-content figcaption {
+  padding: 8px 12px; font-size: 0.85em; color: var(--text2);
+  border-top: 1px solid var(--border);
+}
+.preview-content .tg-collage {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px; margin: 12px 0; border-radius: 8px; overflow: hidden;
+}
+.preview-content .tg-collage img { width: 100%; display: block; }
+.preview-content .tg-slideshow {
+  display: flex; gap: 8px; overflow-x: auto; padding: 8px 0;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  margin: 12px 0;
+}
+.preview-content .tg-slideshow img,
+.preview-content .tg-slideshow video {
+  flex-shrink: 0; max-width: 240px; border-radius: 6px;
+  scroll-snap-align: start;
+}
+.preview-content .tg-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.9em;
+  color: var(--accent2); background: rgba(124,92,255,0.1);
+  padding: 2px 6px; border-radius: 4px;
+}
+.preview-content .tg-reference {
+  font-size: 0.85em; color: var(--accent2);
+  vertical-align: super; cursor: help;
+}
+.preview-content .tg-anchor { scroll-margin-top: 20px; }
+.preview-content .tg-emoji { font-size: 1.2em; }
+.preview-content mark {
+  background: rgba(255,170,68,0.25); padding: 1px 3px; border-radius: 3px;
+  color: var(--text);
+}
+.preview-content sup { vertical-align: super; font-size: 0.75em; }
+.preview-content sub { vertical-align: sub; font-size: 0.75em; }
+.preview-content aside {
+  border-left: 4px solid var(--accent2);
+  padding: 12px 16px; margin: 12px 0;
+  background: rgba(124,92,255,0.06);
+  border-radius: 0 8px 8px 0;
+}
+.preview-content aside cite {
+  display: block; font-size: 0.85em;
+  color: var(--accent2); margin-bottom: 4px; font-weight: 600;
 }
 
 /* Mobile */
@@ -455,6 +539,57 @@ body { display: flex; flex-direction: column; }
     <button class="toolbar-btn" title="Math" onclick="insertFormat('math')">
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 8h-2v2c0 .55-.45 1-1 1s-1-.45-1-1v-2H9c-.55 0-1-.45-1-1s.45-1 1-1h2V7c0-.55.45-1 1-1s1 .45 1 1v2h2c.55 0 1 .45 1 1s-.45 1-1 1zm-1 5.25l-1 1-1-1-2 2.5 1 1 2-2.5 2 2.5 1-1-2-2.5z"/></svg>
     </button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <button class="toolbar-btn" title="Mark/Highlight" onclick="insertFormat('mark')">
+      <svg viewBox="0 0 24 24"><path d="M17.75 7L14 3.25l-10 10V17h3.75l10-10zm2.96-2.96a1.003 1.003 0 000-1.42L18.42.33a1.003 1.003 0 00-1.42 0L15 2.33 18.67 6l2.04-1.96zM3 18h12v2H3v-2z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Superscript" onclick="insertFormat('sup')">
+      <svg viewBox="0 0 24 24"><path d="M20 18h2v-2h-2v2zm-2-2v2h2v-2h-2zm-2 2h2v-2h-2v2zm-4-8V5c0-1.1.9-2 2-2h3V1h-4v2H9V1H6v2h3v2H5v2h4V5h4v4h-4v2H9V9H5V7h4V5h2v4h-2v2h2v-2h2zM3 18h14v2H3v-2z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Subscript" onclick="insertFormat('sub')">
+      <svg viewBox="0 0 24 24"><path d="M20 18h2v-2h-2v2zm-2-2v2h2v-2h-2zm-2 2h2v-2h-2v2zM7 9h4v1H7V9zm0 2h4v1H7v-1zm0-4h4v1H7V7zm-2 8h12v2H5v-2z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Pull Quote" onclick="insertFormat('aside')">
+      <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Figure" onclick="insertFormat('figure')">
+      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15l3.5-4.5 2.5 3.01L14.5 12l4.5 6H5z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Map" onclick="insertFormat('map')">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Anchor" onclick="insertFormat('anchor')">
+      <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+    </button>
+    <button class="toolbar-btn" title="Math Block" onclick="insertFormat('mathblock')">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-2v2h-2v-2H9v-2h2V9h2v2h2v2z"/></svg>
+    </button>
+    <div class="dropdown">
+      <button class="toolbar-btn" title="Insert Special" onclick="toggleDropdown('insert-menu')">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      </button>
+      <div class="dropdown-menu" id="insert-menu">
+        <button class="dropdown-item" onclick="insertFormat('mark')">Highlight</button>
+        <button class="dropdown-item" onclick="insertFormat('sup')">Superscript</button>
+        <button class="dropdown-item" onclick="insertFormat('sub')">Subscript</button>
+        <button class="dropdown-item" onclick="insertFormat('aside')">Pull Quote</button>
+        <button class="dropdown-item" onclick="insertFormat('footer')">Footer</button>
+        <button class="dropdown-item" onclick="insertFormat('figure')">Figure</button>
+        <button class="dropdown-item" onclick="insertFormat('map')">Map</button>
+        <button class="dropdown-item" onclick="insertFormat('anchor')">Anchor</button>
+        <button class="dropdown-item" onclick="insertFormat('reference')">Reference</button>
+        <button class="dropdown-item" onclick="insertFormat('emoji')">Custom Emoji</button>
+        <button class="dropdown-item" onclick="insertFormat('datetime')">Date/Time</button>
+        <button class="dropdown-item" onclick="insertFormat('mailto')">Mail Link</button>
+        <button class="dropdown-item" onclick="insertFormat('tel')">Phone Link</button>
+        <button class="dropdown-item" onclick="insertFormat('mention')">Mention</button>
+        <button class="dropdown-item" onclick="insertFormat('collage')">Collage</button>
+        <button class="dropdown-item" onclick="insertFormat('slideshow')">Slideshow</button>
+        <button class="dropdown-item" onclick="insertFormat('mathblock')">Math Block</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -743,6 +878,18 @@ function parseInline(text) {
   // Highlight
   text = text.replace(/==([^=]+?)==/g, '<span class="highlight">$1</span>');
   
+  // Superscript / Subscript (pass through HTML tags used in Telegram markdown)
+  text = text.replace(/&lt;sup&gt;([\s\S]*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>');
+  text = text.replace(/&lt;sub&gt;([\s\S]*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>');
+  // tg-map in markdown
+  text = text.replace(/&lt;tg-map\s+lat=&quot;([^&]+)&quot;\s+long=&quot;([^&]+)&quot;(?:\s+zoom=&quot;([^&]+)&quot;)?\s*\/&gt;/gi,
+    function(m, lat, lng, zoom) {
+      return '<div class="tg-map">📍 Map: ' + lat + ', ' + lng + (zoom ? ' (zoom: ' + zoom + ')' : '') + '</div>';
+    });
+  // aside in markdown
+  text = text.replace(/&lt;aside&gt;([\s\S]*?)&lt;\/aside&gt;/gi, '<aside>$1</aside>');
+  text = text.replace(/&lt;cite&gt;([\s\S]*?)&lt;\/cite&gt;/gi, '<cite>$1</cite>');
+  
   return text;
 }
 
@@ -754,12 +901,28 @@ function parseHtmlContent(text) {
   const allowedTags = ['b','strong','i','em','u','ins','s','del','strike','code','pre','a',
     'blockquote','br','p','br/','tg-spoiler','tg-blockquote','tg-collage','tg-slideshow',
     'details','summary','tg-map','mark','sup','sub','h1','h2','h3','h4','h5','h6',
-    'ul','ol','li','table','thead','tbody','tr','th','td','hr','div','span','img'];
+    'ul','ol','li','table','thead','tbody','tr','th','td','hr','div','span','img',
+    'aside','cite','figure','figcaption','footer','tg-emoji','tg-time','tg-math',
+    'tg-math-block','tg-reference','input','caption','video','audio','tg-thinking'];
   
   const allowedAttrs = {
-    'a': ['href'],
-    'img': ['src','alt','width','height'],
+    'a': ['href','name'],
+    'img': ['src','alt','width','height','tg-spoiler'],
+    'video': ['src'],
+    'audio': ['src'],
+    'figure': [],
+    'figcaption': [],
+    'cite': [],
     'tg-map': ['lat','long','zoom'],
+    'tg-emoji': ['emoji-id'],
+    'tg-time': ['unix','format'],
+    'tg-reference': ['name'],
+    'input': ['type','checked'],
+    'ol': ['start','type','reversed'],
+    'li': ['value','type'],
+    'td': ['colspan','rowspan','align','valign'],
+    'th': ['colspan','rowspan','align','valign'],
+    'table': ['bordered','striped'],
     'span': ['class'],
     'tg-blockquote': ['expandable'],
     'code': ['class'],
@@ -780,6 +943,77 @@ function parseHtmlContent(text) {
   // tg-map
   text = text.replace(/<tg-map\s+lat=["']([^"']+)["']\s+long=["']([^"']+)["'](?:\s+zoom=["']([^"']+)["'])?\s*\/?>/gi,
     '<div class="tg-map">📍 Map: $1, $2' + (('$3') ? ' (zoom: $3)' : '') + '</div>');
+  
+  // tg-emoji — just keep inner content
+  text = text.replace(/<tg-emoji[^>]*>([\s\S]*?)<\/tg-emoji>/gi, '<span class="tg-emoji">$1</span>');
+  
+  // tg-time — formatted datetime
+  text = text.replace(/<tg-time\s+unix=["'](\d+)["']\s+format=["']([^"']+)["'][^>]*>([\s\S]*?)<\/tg-time>/gi,
+    function(m, unix, fmt, content) {
+      try {
+        const d = new Date(parseInt(unix) * 1000);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        let formatted = days[d.getUTCDay()] + ', ' + months[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+        return '<span class="tg-time" title="Unix: ' + unix + ' (' + fmt + ')">' + content + '</span>';
+      } catch(e) { return '<span class="tg-time">' + content + '</span>'; }
+    });
+  
+  // tg-math — inline math
+  text = text.replace(/<tg-math>([\s\S]*?)<\/tg-math>/gi, '<span class="math">$1</span>');
+  
+  // tg-math-block — block math
+  text = text.replace(/<tg-math-block>([\s\S]*?)<\/tg-math-block>/gi, '<div class="math-block math">$1</div>');
+  
+  // tg-reference — styled reference/footnote
+  text = text.replace(/<tg-reference\s+name=["']([^"']+)["'][^>]*>([\s\S]*?)<\/tg-reference>/gi,
+    '<sup class="tg-reference" title="$1">[$2]</sup>');
+  
+  // aside — pull quote
+  text = text.replace(/<aside>([\s\S]*?)<\/aside>/gi, function(m, content) {
+    let inner = content;
+    let citeHtml = '';
+    const citeMatch = inner.match(/<cite>([\s\S]*?)<\/cite>/i);
+    if (citeMatch) {
+      citeHtml = '<cite>' + citeMatch[1] + '</cite>';
+      inner = inner.replace(citeMatch[0], '');
+    }
+    return '<div class="pull-quote">' + inner.trim() + citeHtml + '</div>';
+  });
+  
+  // footer
+  text = text.replace(/<footer>([\s\S]*?)<\/footer>/gi, '<div class="tg-footer">$1</div>');
+  
+  // figure
+  text = text.replace(/<figure>([\s\S]*?)<\/figure>/gi, function(m, content) {
+    let figcaption = '';
+    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
+    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    return '<div class="tg-figure">' + inner.trim() + figcaption + '</div>';
+  });
+  
+  // tg-collage
+  text = text.replace(/<tg-collage>([\s\S]*?)<\/tg-collage>/gi, function(m, content) {
+    let figcaption = '';
+    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
+    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    return '<div class="tg-collage">' + inner.trim() + '</div>' + figcaption;
+  });
+  
+  // tg-slideshow
+  text = text.replace(/<tg-slideshow>([\s\S]*?)<\/tg-slideshow>/gi, function(m, content) {
+    let figcaption = '';
+    const fcMatch = content.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    if (fcMatch) figcaption = '<div class="tg-figcaption">' + fcMatch[1] + '</div>';
+    let inner = content.replace(/<figcaption>[\s\S]*?<\/figcaption>/gi, '');
+    return '<div class="tg-slideshow">' + inner.trim() + '</div>' + figcaption;
+  });
+  
+  // anchor (a[name])
+  text = text.replace(/<a\s+name=["']([^"']+)["']\s*><\/a>/gi,
+    '<span class="tg-anchor" id="$1"></span>');
   
   // Details/summary stay as-is
   
@@ -846,6 +1080,13 @@ window.insertFormat = function(type) {
       case 'divider': insert = '\n---\n'; selectStart = insert.length; selectEnd = insert.length; break;
       case 'media': insert = '![' + (selected || 'alt text') + '](https://example.com/image.jpg)'; selectStart = 2; selectEnd = 2 + (selected || 'alt text').length; break;
       case 'math': insert = '$$' + (selected || 'E = mc^2') + '$$'; selectStart = 2; selectEnd = insert.length - 2; break;
+      case 'mark': insert = '==' + (selected || 'highlighted text') + '=='; selectStart = 2; selectEnd = insert.length - 2; break;
+      case 'sup': insert = '<sup>' + (selected || 'superscript') + '</sup>'; selectStart = 5; selectEnd = insert.length - 6; break;
+      case 'sub': insert = '<sub>' + (selected || 'subscript') + '</sub>'; selectStart = 5; selectEnd = insert.length - 6; break;
+      case 'aside': insert = '<aside><cite>Author</cite>Pull quote text</aside>'; selectStart = 20; selectEnd = 35; break;
+      case 'figure': insert = '![' + (selected || 'caption') + '](https://example.com/photo.jpg)'; selectStart = 2; selectEnd = 2 + (selected || 'caption').length; break;
+      case 'map': insert = '<tg-map lat="35.69" long="51.39" zoom="12"/>'; selectStart = insert.length; selectEnd = insert.length; break;
+      case 'mathblock': insert = '$$' + (selected || 'E = mc^2') + '$$'; selectStart = 2; selectEnd = insert.length - 2; break;
     }
   } else {
     switch (type) {
@@ -871,6 +1112,23 @@ window.insertFormat = function(type) {
       case 'divider': insert = '<hr>'; selectStart = insert.length; selectEnd = insert.length; break;
       case 'media': insert = '<img src="https://example.com/image.jpg" alt="' + (selected || 'alt text') + '">'; selectStart = 10; selectEnd = 45; break;
       case 'math': insert = '<span class="math">' + (selected || 'E = mc^2') + '</span>'; selectStart = 18; selectEnd = insert.length - 7; break;
+      case 'mark': insert = '<mark>' + (selected || 'highlighted text') + '</mark>'; selectStart = 6; selectEnd = insert.length - 7; break;
+      case 'sup': insert = '<sup>' + (selected || 'superscript') + '</sup>'; selectStart = 5; selectEnd = insert.length - 6; break;
+      case 'sub': insert = '<sub>' + (selected || 'subscript') + '</sub>'; selectStart = 5; selectEnd = insert.length - 6; break;
+      case 'aside': insert = '<aside>\n  <cite>Author</cite>\n  ' + (selected || 'Pull quote text') + '\n</aside>'; selectStart = 18; selectEnd = 18 + (selected || 'Pull quote text').length; break;
+      case 'footer': insert = '<footer>' + (selected || 'Footer text') + '</footer>'; selectStart = 8; selectEnd = insert.length - 9; break;
+      case 'figure': insert = '<figure>\n  <img src="https://example.com/photo.jpg"/>\n  <figcaption>' + (selected || 'Caption') + ' <cite>Credit</cite></figcaption>\n</figure>'; selectStart = 37; selectEnd = 37 + (selected || 'Caption').length; break;
+      case 'map': insert = '<tg-map lat="35.69" long="51.39" zoom="12"/>'; selectStart = insert.length; selectEnd = insert.length; break;
+      case 'collage': insert = '<tg-collage>\n  <img src="https://example.com/photo1.jpg"/>\n  <img src="https://example.com/photo2.jpg"/>\n  <figcaption>' + (selected || 'Collage caption') + '</figcaption>\n</tg-collage>'; selectStart = 72; selectEnd = 72 + (selected || 'Collage caption').length; break;
+      case 'slideshow': insert = '<tg-slideshow>\n  <img src="https://example.com/photo.jpg"/>\n  <video src="https://example.com/video.mp4"/>\n  <figcaption>' + (selected || 'Slideshow caption') + '</figcaption>\n</tg-slideshow>'; selectStart = 83; selectEnd = 83 + (selected || 'Slideshow caption').length; break;
+      case 'mathblock': insert = '<tg-math-block>' + (selected || 'E = mc^2') + '</tg-math-block>'; selectStart = 15; selectEnd = insert.length - 16; break;
+      case 'anchor': insert = '<a name="' + (selected || 'section-1') + '"></a>'; selectStart = 9; selectEnd = 9 + (selected || 'section-1').length; break;
+      case 'reference': insert = '<tg-reference name="note-1">' + (selected || 'Referenced text') + '</tg-reference>'; selectStart = 28; selectEnd = 28 + (selected || 'Referenced text').length; break;
+      case 'emoji': insert = '<tg-emoji emoji-id="5368324170671202286">' + (selected || '👍') + '</tg-emoji>'; selectStart = 37; selectEnd = 37 + (selected || '👍').length; break;
+      case 'datetime': insert = '<tg-time unix="1647531900" format="wDT">' + (selected || 'tomorrow') + '</tg-time>'; selectStart = 37; selectEnd = 37 + (selected || 'tomorrow').length; break;
+      case 'mailto': insert = '<a href="mailto:' + (selected || 'user@example.com') + '">' + (selected || 'user@example.com') + '</a>'; selectStart = 15; selectEnd = 15 + (selected || 'user@example.com').length; break;
+      case 'tel': insert = '<a href="tel:+1234567890">' + (selected || '+123 456 7890') + '</a>'; selectStart = 24; selectEnd = 24 + (selected || '+123 456 7890').length; break;
+      case 'mention': insert = '<a href="tg://user?id=123456789">' + (selected || '@username') + '</a>'; selectStart = 31; selectEnd = 31 + (selected || '@username').length; break;
     }
   }
   
