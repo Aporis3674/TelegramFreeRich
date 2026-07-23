@@ -916,7 +916,6 @@ function blocksToMarkdown(blocks) {
 
 // ===================== API =====================
 async function sendRichMessage(blocks) {
-  const token = state.settings.token;
   const chatId = state.settings.chatId;
   if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
 
@@ -929,7 +928,7 @@ async function sendRichMessage(blocks) {
   };
 
   try {
-    const res = await window.tgAPI.send(token, 'sendRichMessage', body);
+    const res = await window.app.api('sendRichMessage', body);
     if (res.ok) {
       toast('Message sent!', 'success');
     } else {
@@ -941,7 +940,6 @@ async function sendRichMessage(blocks) {
 }
 
 async function sendDraft(blocks) {
-  const token = state.settings.token;
   const chatId = state.settings.chatId;
   if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
 
@@ -954,7 +952,7 @@ async function sendDraft(blocks) {
   };
 
   try {
-    const res = await window.tgAPI.send(token, 'sendRichMessageDraft', body);
+    const res = await window.app.api('sendRichMessageDraft', body);
     if (res.ok) toast('Draft sent (30s)', 'info');
     else toast(`Draft error: ${res.description}`, 'error');
   } catch (e) {
@@ -963,7 +961,6 @@ async function sendDraft(blocks) {
 }
 
 async function editMessage(blocks) {
-  const token = state.settings.token;
   const chatId = state.settings.chatId;
   const msgId = state.editMessageId;
   if (!token || !chatId || !msgId) { toast('Settings or message ID incomplete', 'error'); return; }
@@ -978,7 +975,7 @@ async function editMessage(blocks) {
   };
 
   try {
-    const res = await window.tgAPI.send(token, 'editMessageText', body);
+    const res = await window.app.api('editMessageText', body);
     if (res.ok) toast('Message edited!', 'success');
     else toast(`Edit error: ${res.description}`, 'error');
   } catch (e) {
@@ -987,7 +984,6 @@ async function editMessage(blocks) {
 }
 
 async function testConnection() {
-  const token = state.settings.token;
   if (!token) { toast('Enter a bot token first', 'error'); return; }
 
   const statusEl = document.getElementById('connection-status');
@@ -995,7 +991,7 @@ async function testConnection() {
   statusEl.className = '';
 
   try {
-    const res = await window.tgAPI.send(token, 'getMe', {});
+    const res = await window.app.testConnection();
     if (res.ok) {
       statusEl.textContent = `Connected: @${res.result.username} (${res.result.first_name})`;
       statusEl.className = 'ok';
@@ -1026,26 +1022,35 @@ function handleSend() {
 }
 
 // ===================== SETTINGS =====================
-function loadSettings() {
+async function loadSettings() {
   try {
-    const saved = localStorage.getItem('tfr_settings');
-    if (saved) Object.assign(state.settings, JSON.parse(saved));
-  } catch {}
+    const s = await window.app.loadSettings();
+    state.settings.tokenSet = s.tokenSet;
+    state.settings.chatId = s.chatId || '';
+    state.settings.lang = s.lang || 'en';
+  } catch (e) {}
 }
 
-function saveSettings() {
-  state.settings.token = document.getElementById('input-token').value;
-  state.settings.chatId = document.getElementById('input-chat').value;
-  state.settings.lang = document.getElementById('input-lang').value;
-  localStorage.setItem('tfr_settings', JSON.stringify(state.settings));
-  toast('Settings saved', 'success');
-  document.getElementById('settings-overlay').classList.add('hidden');
+async function saveSettings() {
+  const token = document.getElementById('input-token').value;
+  const chatId = document.getElementById('input-chat').value;
+  const lang = document.getElementById('input-lang').value;
+  state.settings.chatId = chatId;
+  state.settings.lang = lang;
+  state.settings.tokenSet = !!token;
+  try {
+    await window.app.saveSettings({ token, chatId, lang });
+    toast('Settings saved (encrypted)', 'success');
+  } catch (e) {
+    toast('Failed to save settings: ' + e.message, 'error');
+  }
+  updatePreview();
 }
 
 function openSettings() {
-  document.getElementById('input-token').value = state.settings.token;
   document.getElementById('input-chat').value = state.settings.chatId;
   document.getElementById('input-lang').value = state.settings.lang;
+  document.getElementById('input-token').placeholder = state.settings.tokenSet ? '•••••••• (saved encrypted)' : 'Enter bot token';
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
