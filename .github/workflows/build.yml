@@ -26,6 +26,11 @@ jobs:
       - name: Build Windows installer
         run: npm run build
 
+      - name: Create source archive
+        shell: bash
+        run: |
+          git archive --format=zip HEAD -o source.zip
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -33,4 +38,5 @@ jobs:
             dist/*.exe
             dist/*.exe.blockmap
             dist/latest.yml
+            source.zip
           generate_release_notes: true
