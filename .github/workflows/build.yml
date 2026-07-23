@@ -31,12 +31,24 @@ jobs:
         run: |
           git archive --format=zip HEAD -o source.zip
 
+      - name: Extract changelog
+        id: changelog
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Extract section for this version from CHANGELOG.md
+          awk "/^## \\[${TAG}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md > release_notes.md
+          # Fallback if no section found
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${TAG}" > release_notes.md
+          fi
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release_notes.md
           files: |
             dist/*.exe
             dist/*.exe.blockmap
             dist/latest.yml
             source.zip
-          generate_release_notes: true
