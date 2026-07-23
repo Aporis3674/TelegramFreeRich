@@ -556,6 +556,10 @@ function applyInlineToSelected(type) {
   const selectedText = range.toString();
   if (!selectedText) return;
 
+  // Save reference to block BEFORE DOM mutation
+  const card = range.startContainer?.closest?.('.block-card');
+  const blkIdx = card ? state.blocks.findIndex(b => b.id === card.dataset.id) : -1;
+
   let wrapper;
   switch (type) {
     case 'bold': wrapper = document.createElement('strong'); break;
@@ -573,15 +577,12 @@ function applyInlineToSelected(type) {
   range.deleteContents();
   range.insertNode(wrapper);
 
-  // Update block state from the contenteditable element
-  const card = sel.anchorNode?.closest?.('.block-card');
-  if (card) {
-    const blk = state.blocks.find(b => b.id === card.dataset.id);
-    if (blk) {
-      const contentEl = card.querySelector('.block-content');
-      if (contentEl && contentEl.contentEditable === 'true') {
-        syncEditableBlock(blk, contentEl);
-      }
+  // Update block state after DOM mutation
+  if (blkIdx !== -1) {
+    const contentEl = card.querySelector('.block-content');
+    if (contentEl && contentEl.contentEditable === 'true') {
+      state.blocks[blkIdx].html = contentEl.innerHTML;
+      state.blocks[blkIdx].text = stripHtml(contentEl.innerHTML);
     }
   }
   updatePreview();
