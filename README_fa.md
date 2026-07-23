@@ -251,6 +251,10 @@ TelegramFreeRich/
 
 MIT
 
+## Known Issues
+
+- After deleting formatted text (bold, italic, etc.) in a block, new text may inherit the formatting. **Workaround:** create a new block.
+
 ---
 
 > بهترین چیزهای زندگی رایگان هستند. دومین چیزهای خوب هم رایگان هستند -- اگر از یه بات استفاده کنید.
