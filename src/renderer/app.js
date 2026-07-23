@@ -72,8 +72,13 @@ function stripHtml(html) {
 /** Update block text/html from a contenteditable element's innerHTML */
 function syncEditableBlock(block, el) {
   const html = el.innerHTML;
-  block.html = html;
-  block.text = stripHtml(html);
+  // If block text is empty, clear any leftover formatting tags
+  // (prevents cursor from inheriting bold/italic after deleting all text)
+  if (el.textContent.trim() === '' && html.trim() !== '') {
+    el.innerHTML = '';
+  }
+  block.html = el.innerHTML;
+  block.text = stripHtml(el.innerHTML);
 }
 
 // ===================== DOM EDITOR =====================
