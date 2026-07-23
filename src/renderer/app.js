@@ -557,8 +557,12 @@ function applyInlineToSelected(type) {
   if (!selectedText) return;
 
   // Save reference to block BEFORE DOM mutation
-  const card = range.startContainer?.closest?.('.block-card');
+  // Walk up from startContainer (text node) to find the .block-card element
+  let startEl = range.startContainer;
+  if (startEl && startEl.nodeType === 3) startEl = startEl.parentElement;
+  const card = startEl?.closest?.('.block-card');
   const blkIdx = card ? state.blocks.findIndex(b => b.id === card.dataset.id) : -1;
+  const contentEl = card ? card.querySelector('.block-content') : null;
 
   let wrapper;
   switch (type) {
@@ -578,12 +582,9 @@ function applyInlineToSelected(type) {
   range.insertNode(wrapper);
 
   // Update block state after DOM mutation
-  if (blkIdx !== -1) {
-    const contentEl = card.querySelector('.block-content');
-    if (contentEl && contentEl.contentEditable === 'true') {
-      state.blocks[blkIdx].html = contentEl.innerHTML;
-      state.blocks[blkIdx].text = stripHtml(contentEl.innerHTML);
-    }
+  if (blkIdx !== -1 && contentEl && contentEl.contentEditable === 'true') {
+    state.blocks[blkIdx].html = contentEl.innerHTML;
+    state.blocks[blkIdx].text = stripHtml(contentEl.innerHTML);
   }
   updatePreview();
 }
