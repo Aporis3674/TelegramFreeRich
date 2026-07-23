@@ -1,8 +1,15 @@
-# TelegramFreeRich
+<p align="center">
+  <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
+  <img src="https://img.shields.io/badge/React-18-61dafb?logo=react" alt="React 18">
+  <img src="https://img.shields.io/badge/Vite-5-646cff?logo=vite" alt="Vite 5">
+  <img src="https://img.shields.io/github/license/Aporis3674/TelegramFreeRich" alt="License">
+  <img src="https://img.shields.io/badge/Premium-Free-success" alt="Free">
+</p>
 
-Free Rich Text Editor for Telegram
+<h1 align="center">TelegramFreeRich</h1>
 
-> Because bots should not have more rights than humans.
+<p align="center"><strong>Free Rich Text Editor for Telegram</strong></p>
+<p align="center">Because bots should not have more rights than humans.</p>
 
 ---
 
