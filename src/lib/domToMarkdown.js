@@ -6,7 +6,16 @@
 
 export default function domToMarkdown(root) {
   const blocks = [];
+  footnoteCounter = 0;
+  footnotes = [];
   walk(root, blocks, {});
+  // Append footnotes at end
+  if (footnotes.length) {
+    blocks.push('\n');
+    footnotes.forEach(fn => {
+      blocks.push(`\n[^${fn.id}]: ${fn.text}\n`);
+    });
+  }
   return blocks.join('').replace(/\n{3,}/g, '\n\n').trim();
 }
 
@@ -91,6 +100,12 @@ function walk(node, blocks, state) {
   // Superscript
   if (tag === 'sup') {
     const inner = extractText(el);
+    // Check if this is a footnote reference
+    if (cls.includes('footnote') || el.getAttribute('data-fn')) {
+      const fnId = el.getAttribute('data-fn') || inner.replace(/[[\]^]/g, '');
+      blocks.push(`[^${fnId}]`);
+      return;
+    }
     blocks.push(inner ? `<sup>${inner}</sup>` : '');
     return;
   }
@@ -195,6 +210,23 @@ function walk(node, blocks, state) {
     if (inner) {
       blocks.push(`\n> ${inner}\n`);
     }
+    // Check for cite inside
+    const cite = el.querySelector('cite');
+    if (cite) {
+      const citeText = extractText(cite);
+      if (citeText) {
+        blocks.push(`\n<cite>${citeText}</cite>\n`);
+      }
+    }
+    return;
+  }
+
+  // Pull quote (aside)
+  if (tag === 'aside') {
+    const inner = extractText(el);
+    if (inner) {
+      blocks.push(`\n<aside>${inner}</aside>\n`);
+    }
     return;
   }
 
@@ -281,6 +313,17 @@ function walk(node, blocks, state) {
     return;
   }
 
+  // Classic footnote definition: div.footnotes > div.footnote-item
+  if (cls.includes('footnotes') && tag === 'div') {
+    const items = el.querySelectorAll('.footnote-item, .footnote');
+    items.forEach(item => {
+      const fnText = extractText(item);
+      const fnId = item.getAttribute('data-fn-id') || (++footnoteCounter).toString();
+      footnotes.push({ id: fnId, text: fnText });
+    });
+    return;
+  }
+
   // Fallback: recurse for any unknown element
   el.childNodes.forEach(child => walk(child, blocks, state));
 }
@@ -289,10 +332,16 @@ function processListItem(li, blocks, prefix) {
   const checkbox = li.querySelector('input[type="checkbox"]');
   if (checkbox) {
     const checked = checkbox.checked;
-    const inner = extractText(li);
+    // Get text excluding the checkbox itself
+    let inner = '';
+    li.childNodes.forEach(child => {
+      if (child.tagName !== 'INPUT' && child.type !== 'checkbox') {
+        inner += child.textContent || '';
+      }
+    });
+    inner = trimText(inner);
     const checkboxText = checked ? '- [x]' : '- [ ]';
     blocks.push(`\n${checkboxText} ${inner}\n`);
-    // Remove the leading dash from prefix logic
     return;
   }
 
@@ -313,13 +362,33 @@ function trimText(t) {
 function escapeMarkdown(text) {
   // Escape special markdown characters except those produced by our converter
   return text
-    .replace(/\\([\\`*_{}[\]()#+\-.!|~<>])/g, '\\$1')
-    .replace(/([\\`*_{}[\]()#+\-.!|])/g, '\\$1');
+    .replace(/\\([\\`*_{}\[\]()#+\-.!|~<>])/g, '\\$1')
+    .replace(/([\\`*_{}\[\]()#+\-.!|])/g, '\\$1');
+}
+
+// ===== FOOTNOTE STATE =====
+let footnoteCounter = 0;
+let footnotes = [];
+
+export function resetFootnotes() {
+  footnoteCounter = 0;
+  footnotes = [];
+}
+
+export function getFootnotes() {
+  return footnotes;
 }
 
 function convertTable(tableEl) {
-  const rows = tableEl.querySelectorAll(':scope > thead > tr, :scope > tbody > tr, :scope > tr');
+  const rows = tableEl.querySelectorAll('thead tr, tbody tr, tr');
   if (!rows.length) return '';
+
+  // Check for caption
+  const caption = tableEl.querySelector('caption');
+  let captionText = '';
+  if (caption) {
+    captionText = trimText(caption.textContent || '');
+  }
 
   const markdownRows = [];
   const colWidths = [];
@@ -370,7 +439,11 @@ function convertTable(tableEl) {
 
   const headerSep = '| ' + colWidths.map(w => '-'.repeat(w)).join(' | ') + ' |';
 
-  let result = formatRow(headerRow) + '\n' + headerSep;
+  let result = '';
+  if (captionText) {
+    result = `*${captionText}*\n`;
+  }
+  result += formatRow(headerRow) + '\n' + headerSep;
   bodyRows.forEach(row => {
     result += '\n' + formatRow(row);
   });

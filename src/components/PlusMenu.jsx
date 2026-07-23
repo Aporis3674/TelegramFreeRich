@@ -27,7 +27,11 @@ const menuItems = [
   { id: 'sup', label: 'Superscript', shortcut: '' },
   { id: 'div7', divider: true },
   { id: 'img', label: 'Insert Image', shortcut: '' },
-  { id: 'map', label: 'Map Placeholder', shortcut: '' },
+  { id: 'slideshow', label: 'Slideshow', shortcut: '' },
+  { id: 'map', label: 'Map', shortcut: '' },
+  { id: 'div8', divider: true },
+  { id: 'footnote', label: 'Footnote', shortcut: '' },
+  { id: 'pullquote', label: 'Pull Quote', shortcut: '' },
 ];
 
 const PlusMenu = forwardRef(({ onAction }, ref) => {

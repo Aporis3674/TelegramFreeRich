@@ -127,8 +127,12 @@ const buttons = [
   { key: 'hr', icon: 'hr', cmd: () => document.execCommand('insertHorizontalRule'), title: 'Divider' },
   'divider3',
   { key: 'image', icon: 'image', cmd: null, title: 'Image' },
+  { key: 'map', icon: 'math', cmd: () => document.execCommand('insertHTML', false, '<div class="tg-map" lat="35.6892" long="51.3890" zoom="14"><iframe src="about:blank" style="width:100%;height:200px;border:none;"></iframe></div><p></p>'), title: 'Map' },
+  { key: 'slideshow', icon: 'check', cmd: () => document.execCommand('insertHTML', false, '<div class="tg-slideshow-wrap"><div class="tg-slideshow-track"><div class="tg-slideshow-slide"><img src="https://picsum.photos/400/300"/></div></div></div><p></p>'), title: 'Slideshow' },
   { key: 'math', icon: 'math', cmd: () => document.execCommand('insertHTML', false, '<span class="tg-math">formula</span>'), title: 'Math' },
   { key: 'details', icon: 'details', cmd: () => document.execCommand('insertHTML', false, '<details><summary>Click to expand</summary><p>Content</p></details><p></p>'), title: 'Collapsible' },
+  { key: 'footnote', icon: 'sub', cmd: () => document.execCommand('insertHTML', false, '<sup class="footnote" data-fn="1">[1]</sup>'), title: 'Footnote' },
+  { key: 'pullquote', icon: 'spoiler', cmd: () => document.execCommand('insertHTML', false, '<aside>Pull quote text</aside><p></p>'), title: 'Pull Quote' },
 ];
 
 export default function Toolbar({ execCommand, showLinkDialog }) {

@@ -261,7 +261,16 @@ export default function App() {
         }
         break;
       case 'map':
-        insert('<div class="tg-map" lat="55.75" long="37.62" zoom="14">Map placeholder</div><p></p>');
+        insert('<div class="tg-map" lat="35.6892" long="51.3890" zoom="14"><iframe src="about:blank" style="width:100%;height:200px;border:none;"></iframe></div><p></p>');
+        break;
+      case 'slideshow':
+        insert('<div class="tg-slideshow-wrap"><div class="tg-slideshow-track"><div class="tg-slideshow-slide"><img src="https://picsum.photos/400/300"/></div><div class="tg-slideshow-slide"><img src="https://picsum.photos/401/300"/></div></div></div><p></p>');
+        break;
+      case 'footnote':
+        insert('<sup class="footnote" data-fn="1">[1]</sup>');
+        break;
+      case 'pullquote':
+        insert('<aside>Pull quote text<cite>Author</cite></aside><p></p>');
         break;
       default:
         break;
