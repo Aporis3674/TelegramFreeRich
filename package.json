@@ -6,10 +6,10 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder build --win",
-    "build:linux": "electron-builder build --linux"
+    "build": "electron-builder build --win --publish never",
+    "build:linux": "electron-builder build --linux --publish never"
   },
-  "publish": null,"build": {
+  "build": {
     "appId": "com.aporis.telegramfreerich",
     "productName": "TelegramFreeRich",
     "directories": {
