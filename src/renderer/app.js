@@ -471,6 +471,8 @@ function selectBlock(id) {
 // ===================== TOOLBAR =====================
 function initToolbar() {
   document.querySelectorAll('.tbtn').forEach(btn => {
+    // Prevent focus loss from contenteditable when clicking toolbar
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
     btn.addEventListener('click', () => handleToolbarCommand(btn));
   });
 }
