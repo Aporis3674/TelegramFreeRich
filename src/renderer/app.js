@@ -1,20 +1,23 @@
 /**
- * TelegramFreeRich — Main Renderer Script
- * Block-based WYSIWYG editor for Telegram Bot API 10.1
+ * TelegramFreeRich — Minimal Single-Pane Editor
+ * Floating bottom toolbar with 6 dropdown menus, inline rendering
  */
 
 // ===================== STATE =====================
 const state = {
-  blocks: [],          // Block[]
+  blocks: [],           // Block[]
   selectedBlockId: null,
-  sendMode: 'rich',    // rich | draft | edit
+  sendMode: 'rich',     // rich | draft | edit
   editMessageId: null,
   theme: 'dark',
   settings: {
     token: '',
+    tokenSet: false,
     chatId: '',
     lang: 'en',
   },
+  // UI state
+  openDropdown: null,   // 'formatting' | 'inline' | 'lists' | 'table' | 'link' | 'media' | null
 };
 
 let blockIdCounter = 0;
@@ -31,56 +34,93 @@ function createBlock(type, data = {}) {
     case 'code-block':
       return { ...base, language: data.language || '', text: data.text || '' };
     case 'bullet-list':
+    case 'ordered-list':
       return { ...base, items: data.items || [{ text: '' }] };
-    case 'numbered-list':
-      return { ...base, items: data.items || [{ text: '' }] };
-    case 'table':
-      return { ...base, cells: data.cells || [{ cells: ['H1', 'H2'], header: true }, { cells: ['1', '2'], header: false }] };
-    case 'blockquote':
-      return { ...base, text: data.text || '' };
-    case 'pull-quote':
-      return { ...base, text: data.text || '', cite: data.cite || '' };
-    case 'details':
-      return { ...base, summary: data.summary || 'Details', body: data.body || '', open: false };
-    case 'divider':
-      return { ...base };
-    case 'image':
-      return { ...base, url: data.url || '', caption: data.caption || '' };
-    case 'video':
-      return { ...base, url: data.url || '', caption: data.caption || '' };
-    case 'audio':
-      return { ...base, url: data.url || '', caption: data.caption || '' };
-    case 'slideshow':
-      return { ...base, images: data.images || [], caption: data.caption || '' };
-    case 'footer':
-      return { ...base, text: data.text || '' };
     case 'checklist':
       return { ...base, items: data.items || [{ text: '', checked: false }] };
+    case 'table':
+      return { ...base, cells: data.cells || [
+        { cells: ['Header 1', 'Header 2', 'Header 3'], header: true },
+        { cells: ['', '', ''], header: false },
+        { cells: ['', '', ''], header: false },
+      ]};
+    case 'blockquote':
+      return { ...base, text: data.text || '', html: data.html || '' };
+    case 'pull-quote':
+      return { ...base, text: data.text || '', html: data.html || '', cite: data.cite || '' };
+    case 'details':
+      return { ...base, summary: data.summary || 'Details', body: data.body || '', html: data.html || '', open: data.open || false };
+    case 'divider':
+      return { ...base };
+    case 'footer':
+      return { ...base, text: data.text || '' };
+    case 'image':
+    case 'video':
+    case 'audio':
+      return { ...base, url: data.url || '', caption: data.caption || '' };
     default:
       return { ...base };
   }
 }
 
 // ===================== HELPERS =====================
-/** Strip HTML tags to get plain text */
 function stripHtml(html) {
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   return tmp.textContent || '';
 }
 
-/** Update block text/html from a contenteditable element's innerHTML */
 function syncEditableBlock(block, el) {
   const html = el.innerHTML;
   block.html = html;
   block.text = stripHtml(html);
 }
 
-// ===================== DOM EDITOR =====================
-const editorContainer = () => document.getElementById('blocks-container');
+function getBlockIndex(id) {
+  return state.blocks.findIndex(b => b.id === id);
+}
 
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// DOM refs
+const blocksContainer = () => $('#blocks-container');
+const toastContainer = () => $('#toast-container');
+
+// Toolbar dropdowns
+const dropdowns = {
+  formatting: () => $('#dropdown-formatting'),
+  inline: () => $('#dropdown-inline'),
+  lists: () => $('#dropdown-lists'),
+  table: () => $('#dropdown-table'),
+  link: () => $('#dropdown-link'),
+  media: () => $('#dropdown-media'),
+};
+const toolbarBtns = {
+  formatting: () => $('#btn-formatting'),
+  inline: () => $('#btn-inline'),
+  lists: () => $('#btn-lists'),
+  table: () => $('#btn-table'),
+  link: () => $('#btn-link'),
+  media: () => $('#btn-media'),
+};
+
+// Link panel
+const linkTextInput = () => $('#link-text');
+const linkUrlInput = () => $('#link-url');
+const linkCreateBtn = () => $('#link-create');
+const linkCancelBtn = () => $('#link-cancel');
+
+// Action bar
+const sendBtn = () => $('#btn-send');
+const clearBtn = () => $('#btn-clear');
+
+// Settings
+const settingsOverlay = () => $('#settings-overlay');
+
+// ===================== RENDER =====================
 function renderBlocks() {
-  const container = editorContainer();
+  const container = blocksContainer();
   if (!container) return;
 
   container.innerHTML = '';
@@ -88,18 +128,19 @@ function renderBlocks() {
     container.appendChild(renderBlock(block, index));
   });
 
-  // Add "add block" button at bottom
+  // Add block button at bottom
   const addBtn = document.createElement('button');
   addBtn.id = 'add-block-btn';
-  addBtn.textContent = '+ Add Block';
+  addBtn.className = 'add-block-btn';
+  addBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Add Block</span>';
   addBtn.addEventListener('click', () => {
     state.blocks.push(createBlock('paragraph'));
     renderBlocks();
-    updatePreview();
+    updateCharCount();
   });
   container.appendChild(addBtn);
 
-  updatePreview();
+  updateCharCount();
 }
 
 function renderBlock(block, index) {
@@ -131,60 +172,44 @@ function renderBlock(block, index) {
       renderBlocks();
     }
   });
-
   card.appendChild(drag);
 
-  // Block content
+  // Content area
   const contentArea = document.createElement('div');
   contentArea.className = 'block-content';
 
   switch (block.type) {
     case 'paragraph':
-      contentArea.contentEditable = 'true';
-      contentArea.innerHTML = block.html || block.text || '';
-      contentArea.dataset.placeholder = 'Type something...';
-      contentArea.addEventListener('input', () => {
-        syncEditableBlock(block, contentArea);
-        updatePreview();
-      });
-      contentArea.addEventListener('focus', () => selectBlock(block.id));
-      break;
-
     case 'heading':
+    case 'blockquote':
       contentArea.contentEditable = 'true';
       contentArea.innerHTML = block.html || block.text || '';
-      contentArea.dataset.placeholder = `Heading ${block.size}`;
+      contentArea.dataset.placeholder = block.type === 'heading' ? `Heading ${block.size}` : 'Type something...';
       contentArea.addEventListener('input', () => {
         syncEditableBlock(block, contentArea);
-        updatePreview();
+        updateCharCount();
       });
       contentArea.addEventListener('focus', () => selectBlock(block.id));
+      contentArea.addEventListener('keydown', (e) => handleBlockKeydown(e, block, index));
       break;
 
     case 'code-block': {
       const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.flexDirection = 'column';
-      wrapper.style.width = '100%';
+      wrapper.style.cssText = 'display:flex;flex-direction:column;width:100%;';
 
       const langInput = document.createElement('input');
       langInput.type = 'text';
       langInput.placeholder = 'language (js, python, ...)';
       langInput.value = block.language;
-      langInput.style.cssText = 'padding:4px 8px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;outline:none;width:100%;';
-      langInput.addEventListener('input', () => {
-        block.language = langInput.value;
-        updatePreview();
-      });
+      langInput.style.cssText = 'padding:8px 12px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:12px;outline:none;width:100%;';
+      langInput.addEventListener('input', () => { block.language = langInput.value; updateCharCount(); });
 
       const codeArea = document.createElement('div');
       codeArea.contentEditable = 'true';
       codeArea.textContent = block.text;
-      codeArea.style.cssText = 'padding:8px 0;outline:none;font-family:monospace;min-height:40px;white-space:pre-wrap;tab-size:4;';
-      codeArea.addEventListener('input', () => {
-        block.text = codeArea.textContent;
-        updatePreview();
-      });
+      codeArea.style.cssText = 'padding:12px;outline:none;font-family:monospace;min-height:60px;white-space:pre-wrap;tab-size:4;';
+      codeArea.addEventListener('input', () => { block.text = codeArea.textContent; updateCharCount(); });
+      codeArea.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '    '); } });
 
       wrapper.appendChild(langInput);
       wrapper.appendChild(codeArea);
@@ -194,7 +219,7 @@ function renderBlock(block, index) {
     }
 
     case 'bullet-list':
-    case 'numbered-list': {
+    case 'ordered-list': {
       const listDiv = document.createElement('div');
       listDiv.className = 'list-items';
       const marker = block.type === 'bullet-list' ? '•' : '1.';
@@ -204,33 +229,50 @@ function renderBlock(block, index) {
         row.className = 'list-item';
         const m = document.createElement('span');
         m.className = 'list-marker';
-        m.textContent = block.type === 'numbered-list' ? `${counter++}.` : marker;
+        m.textContent = block.type === 'ordered-list' ? `${counter++}.` : marker;
         const inp = document.createElement('input');
         inp.type = 'text';
         inp.value = item.text;
         inp.placeholder = 'List item';
-        inp.addEventListener('input', () => {
-          block.items[i].text = inp.value;
-          updatePreview();
-        });
-        inp.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            block.items.splice(i + 1, 0, { text: '' });
-            renderBlocks();
-          }
-          if (e.key === 'Backspace' && inp.value === '' && block.items.length > 1) {
-            e.preventDefault();
-            block.items.splice(i, 1);
-            renderBlocks();
-          }
-        });
+        inp.addEventListener('input', () => { block.items[i].text = inp.value; updateCharCount(); });
+        inp.addEventListener('keydown', (e) => handleListKeydown(e, block, i));
         row.appendChild(m);
         row.appendChild(inp);
         listDiv.appendChild(row);
       });
       contentArea.appendChild(listDiv);
-      contentArea.style.padding = '8px 12px';
+      contentArea.style.padding = '8px 16px';
+      break;
+    }
+
+    case 'checklist': {
+      const clDiv = document.createElement('div');
+      clDiv.style.cssText = 'display:flex;flex-direction:column;gap:4px;width:100%;';
+      block.items.forEach((item, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = item.checked;
+        cb.style.cssText = 'accent-color:var(--accent);';
+        cb.addEventListener('change', () => { block.items[i].checked = cb.checked; updateCharCount(); });
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = item.text;
+        inp.placeholder = 'Todo item';
+        inp.style.cssText = 'flex:1;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;padding:4px 0;';
+        inp.addEventListener('input', () => { block.items[i].text = inp.value; updateCharCount(); });
+        row.appendChild(cb);
+        row.appendChild(inp);
+        clDiv.appendChild(row);
+      });
+      const addCl = document.createElement('button');
+      addCl.textContent = '+ Add Item';
+      addCl.style.cssText = 'font-size:11px;padding:4px;border:none;background:none;color:var(--text-dim);cursor:pointer;text-align:left;';
+      addCl.addEventListener('click', () => { block.items.push({ text: '', checked: false }); renderBlocks(); });
+      clDiv.appendChild(addCl);
+      contentArea.appendChild(clDiv);
+      contentArea.style.padding = '8px 16px';
       break;
     }
 
@@ -243,10 +285,7 @@ function renderBlock(block, index) {
           const cell = document.createElement(row.header ? 'th' : 'td');
           cell.contentEditable = 'true';
           cell.textContent = cellText;
-          cell.addEventListener('input', () => {
-            block.cells[ri].cells[ci] = cell.textContent;
-            updatePreview();
-          });
+          cell.addEventListener('input', () => { block.cells[ri].cells[ci] = cell.textContent; updateCharCount(); });
           tr.appendChild(cell);
         });
         table.appendChild(tr);
@@ -258,7 +297,7 @@ function renderBlock(block, index) {
       const addRow = document.createElement('button');
       addRow.textContent = '+ Row';
       addRow.addEventListener('click', () => {
-        const cols = block.cells[0]?.cells.length || 2;
+        const cols = block.cells[0]?.cells.length || 3;
         block.cells.push({ cells: Array(cols).fill(''), header: false });
         renderBlocks();
       });
@@ -275,30 +314,19 @@ function renderBlock(block, index) {
       break;
     }
 
-    case 'blockquote':
-      contentArea.contentEditable = 'true';
-      contentArea.innerHTML = block.html || block.text || '';
-      contentArea.dataset.placeholder = 'Blockquote text...';
-      contentArea.addEventListener('input', () => {
-        syncEditableBlock(block, contentArea);
-        updatePreview();
-      });
-      contentArea.addEventListener('focus', () => selectBlock(block.id));
-      break;
-
     case 'pull-quote': {
       contentArea.innerHTML = '';
       const pqText = document.createElement('div');
       pqText.contentEditable = 'true';
       pqText.innerHTML = block.html || block.text || '';
       pqText.dataset.placeholder = 'Pull quote text...';
-      pqText.addEventListener('input', () => { syncEditableBlock(block, pqText); updatePreview(); });
+      pqText.addEventListener('input', () => { syncEditableBlock(block, pqText); updateCharCount(); });
       const pqCite = document.createElement('div');
       pqCite.contentEditable = 'true';
       pqCite.textContent = block.cite;
       pqCite.dataset.placeholder = '— Author';
       pqCite.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
-      pqCite.addEventListener('input', () => { block.cite = pqCite.textContent; updatePreview(); });
+      pqCite.addEventListener('input', () => { block.cite = pqCite.textContent; updateCharCount(); });
       contentArea.appendChild(pqText);
       contentArea.appendChild(pqCite);
       break;
@@ -317,10 +345,7 @@ function renderBlock(block, index) {
       sumInput.value = block.summary;
       sumInput.placeholder = 'Summary';
       sumInput.style.cssText = 'flex:1;border:none;background:transparent;color:var(--accent);font-size:14px;font-weight:500;outline:none;';
-      sumInput.addEventListener('input', () => {
-        block.summary = sumInput.value;
-        updatePreview();
-      });
+      sumInput.addEventListener('input', () => { block.summary = sumInput.value; updateCharCount(); });
       header.appendChild(chevron);
       header.appendChild(sumInput);
       header.addEventListener('click', (e) => {
@@ -335,7 +360,7 @@ function renderBlock(block, index) {
       body.contentEditable = 'true';
       body.innerHTML = block.html || block.body || '';
       body.dataset.placeholder = 'Hidden content...';
-      body.addEventListener('input', () => { block.html = body.innerHTML; block.body = stripHtml(body.innerHTML); updatePreview(); });
+      body.addEventListener('input', () => { block.html = body.innerHTML; block.body = stripHtml(body.innerHTML); updateCharCount(); });
       details.appendChild(header);
       details.appendChild(body);
       contentArea.appendChild(details);
@@ -357,65 +382,16 @@ function renderBlock(block, index) {
       urlInp.value = block.url;
       urlInp.placeholder = `${block.type} URL (https://...)`;
       urlInp.style.cssText = 'flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      urlInp.addEventListener('input', () => { block.url = urlInp.value; updatePreview(); });
+      urlInp.addEventListener('input', () => { block.url = urlInp.value; updateCharCount(); });
       const capInp = document.createElement('input');
       capInp.type = 'text';
       capInp.value = block.caption;
       capInp.placeholder = 'Caption (optional)';
       capInp.style.cssText = 'flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      capInp.addEventListener('input', () => { block.caption = capInp.value; updatePreview(); });
+      capInp.addEventListener('input', () => { block.caption = capInp.value; updateCharCount(); });
       row.appendChild(urlInp);
       row.appendChild(capInp);
       contentArea.appendChild(row);
-      contentArea.style.padding = '8px';
-      break;
-    }
-
-    case 'slideshow': {
-      const slideDiv = document.createElement('div');
-      slideDiv.style.cssText = 'width:100%;';
-      
-      // Caption input
-      const capInp = document.createElement('input');
-      capInp.type = 'text';
-      capInp.value = block.caption || '';
-      capInp.placeholder = 'Slideshow caption (optional)';
-      capInp.style.cssText = 'width:100%;padding:4px 8px;margin-bottom:8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      capInp.addEventListener('input', () => { block.caption = capInp.value; updatePreview(); });
-      slideDiv.appendChild(capInp);
-      
-      // Cite input
-      const citeInp = document.createElement('input');
-      citeInp.type = 'text';
-      citeInp.value = block.cite || '';
-      citeInp.placeholder = 'Author/Source (optional)';
-      citeInp.style.cssText = 'width:100%;padding:4px 8px;margin-bottom:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      citeInp.addEventListener('input', () => { block.cite = citeInp.value; updatePreview(); });
-      slideDiv.appendChild(citeInp);
-      
-      block.images.forEach((img, i) => {
-        const imgRow = document.createElement('div');
-        imgRow.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;';
-        const imgInp = document.createElement('input');
-        imgInp.type = 'text';
-        imgInp.value = img.url || '';
-        imgInp.placeholder = `Media ${i + 1} URL (image/video)`;
-        imgInp.style.cssText = 'flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-        imgInp.addEventListener('input', () => { block.images[i].url = imgInp.value; updatePreview(); });
-        const rmBtn = document.createElement('button');
-        rmBtn.textContent = '×';
-        rmBtn.style.cssText = 'border:none;background:none;color:var(--danger);cursor:pointer;font-size:14px;';
-        rmBtn.addEventListener('click', () => { block.images.splice(i, 1); renderBlocks(); });
-        imgRow.appendChild(imgInp);
-        imgRow.appendChild(rmBtn);
-        slideDiv.appendChild(imgRow);
-      });
-      const addImg = document.createElement('button');
-      addImg.textContent = '+ Add Image';
-      addImg.style.cssText = 'font-size:11px;padding:4px 8px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;width:100%;margin-top:4px;';
-      addImg.addEventListener('click', () => { block.images.push({ url: '' }); renderBlocks(); });
-      slideDiv.appendChild(addImg);
-      contentArea.appendChild(slideDiv);
       contentArea.style.padding = '8px';
       break;
     }
@@ -424,42 +400,8 @@ function renderBlock(block, index) {
       contentArea.contentEditable = 'true';
       contentArea.textContent = block.text;
       contentArea.dataset.placeholder = 'Footer text...';
-      contentArea.addEventListener('input', () => {
-        block.text = contentArea.textContent;
-        updatePreview();
-      });
+      contentArea.addEventListener('input', () => { block.text = contentArea.textContent; updateCharCount(); });
       break;
-
-    case 'checklist': {
-      const clDiv = document.createElement('div');
-      clDiv.style.cssText = 'display:flex;flex-direction:column;gap:4px;width:100%;';
-      block.items.forEach((item, i) => {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = item.checked;
-        cb.style.cssText = 'accent-color:var(--accent);';
-        cb.addEventListener('change', () => { block.items[i].checked = cb.checked; updatePreview(); });
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.value = item.text;
-        inp.placeholder = 'Todo item';
-        inp.style.cssText = 'flex:1;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;padding:4px 0;';
-        inp.addEventListener('input', () => { block.items[i].text = inp.value; updatePreview(); });
-        row.appendChild(cb);
-        row.appendChild(inp);
-        clDiv.appendChild(row);
-      });
-      const addCl = document.createElement('button');
-      addCl.textContent = '+ Add Item';
-      addCl.style.cssText = 'font-size:11px;padding:4px;border:none;background:none;color:var(--text-dim);cursor:pointer;text-align:left;';
-      addCl.addEventListener('click', () => { block.items.push({ text: '', checked: false }); renderBlocks(); });
-      clDiv.appendChild(addCl);
-      contentArea.appendChild(clDiv);
-      contentArea.style.padding = '8px 12px';
-      break;
-    }
   }
 
   card.appendChild(contentArea);
@@ -472,71 +414,207 @@ function renderBlock(block, index) {
   delBtn.textContent = '×';
   delBtn.addEventListener('click', () => {
     state.blocks = state.blocks.filter(b => b.id !== block.id);
+    if (state.selectedBlockId === block.id) state.selectedBlockId = null;
     renderBlocks();
   });
   actions.appendChild(delBtn);
   card.appendChild(actions);
+
+  // Click to select
+  card.addEventListener('click', (e) => {
+    if (!e.target.closest('.block-actions') && !e.target.closest('.block-drag')) {
+      selectBlock(block.id);
+    }
+  });
 
   return card;
 }
 
 function selectBlock(id) {
   state.selectedBlockId = id;
-  document.querySelectorAll('.block-card').forEach(c => {
-    c.classList.toggle('selected', c.dataset.id === id);
-  });
+  $$('.block-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
 }
 
-// ===================== TOOLBAR =====================
+function handleBlockKeydown(e, block, index) {
+  if (e.key === 'Enter' && !e.shiftKey && block.type === 'paragraph') {
+    e.preventDefault();
+    const newBlock = createBlock('paragraph');
+    state.blocks.splice(index + 1, 0, newBlock);
+    renderBlocks();
+    setTimeout(() => selectBlock(newBlock.id), 0);
+  }
+  if (e.key === 'Backspace' && block.type === 'paragraph' && block.text === '' && state.blocks.length > 1) {
+    e.preventDefault();
+    state.blocks.splice(index, 1);
+    renderBlocks();
+  }
+}
+
+function handleListKeydown(e, block, i) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    block.items.splice(i + 1, 0, { text: '' });
+    renderBlocks();
+  }
+  if (e.key === 'Backspace' && e.target.value === '' && block.items.length > 1) {
+    e.preventDefault();
+    block.items.splice(i, 1);
+    renderBlocks();
+  }
+}
+
+// ===================== CHAR COUNT =====================
+function updateCharCount() {
+  const countEl = $('#char-count');
+  if (!countEl) return;
+  let total = 0;
+  state.blocks.forEach(b => { total += JSON.stringify(b).length; });
+  countEl.textContent = `${total.toLocaleString()} / 32,768`;
+}
+
+// ===================== TOOLBAR DROPDOWNS =====================
+function closeAllDropdowns() {
+  Object.keys(dropdowns).forEach(key => {
+    const el = dropdowns[key]();
+    if (el) el.classList.remove('open');
+  });
+  Object.keys(toolbarBtns).forEach(key => {
+    const btn = toolbarBtns[key]();
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  });
+  state.openDropdown = null;
+}
+
+function toggleDropdown(name) {
+  const dropdown = dropdowns[name]();
+  const btn = toolbarBtns[name]();
+  if (!dropdown || !btn) return;
+
+  const isOpen = dropdown.classList.contains('open');
+  closeAllDropdowns();
+
+  if (!isOpen) {
+    dropdown.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    state.openDropdown = name;
+
+    // Position dropdown above toolbar
+    const toolbarRect = $('.floating-toolbar').getBoundingClientRect();
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const spaceAbove = toolbarRect.top;
+    const spaceBelow = window.innerHeight - toolbarRect.bottom;
+
+    if (spaceAbove > dropdownRect.height + 16) {
+      dropdown.style.bottom = 'calc(100% + 8px)';
+      dropdown.style.top = 'auto';
+    } else {
+      dropdown.style.top = 'calc(100% + 8px)';
+      dropdown.style.bottom = 'auto';
+    }
+  }
+}
+
 function initToolbar() {
-  document.querySelectorAll('.tbtn').forEach(btn => {
-    // Prevent focus loss from contenteditable when clicking toolbar
-    btn.addEventListener('mousedown', (e) => e.preventDefault());
-    btn.addEventListener('click', () => handleToolbarCommand(btn));
+  // Toolbar button clicks
+  toolbarBtns.formatting()?.addEventListener('click', () => toggleDropdown('formatting'));
+  toolbarBtns.inline()?.addEventListener('click', () => toggleDropdown('inline'));
+  toolbarBtns.lists()?.addEventListener('click', () => toggleDropdown('lists'));
+  toolbarBtns.table()?.addEventListener('click', () => toggleDropdown('table'));
+  toolbarBtns.link()?.addEventListener('click', () => toggleDropdown('link'));
+  toolbarBtns.media()?.addEventListener('click', () => toggleDropdown('media'));
+
+  // Dropdown item clicks (event delegation)
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('.dropdown-item[role="menuitem"]');
+    if (!item) return;
+
+    const cmd = item.dataset.cmd;
+    const subCmd = item.dataset.level || item.dataset.subcmd;
+    if (cmd) handleToolbarCommand(cmd, subCmd);
+    closeAllDropdowns();
+  });
+
+  // Close dropdowns on outside click
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target.closest('.floating-toolbar') && !e.target.closest('.dropdown-menu')) {
+      closeAllDropdowns();
+    }
+  });
+
+  // Link panel
+  linkCreateBtn()?.addEventListener('click', createLink);
+  linkCancelBtn()?.addEventListener('click', () => {
+    linkTextInput().value = '';
+    linkUrlInput().value = '';
+    closeAllDropdowns();
+  });
+  linkTextInput()?.addEventListener('keydown', (e) => { if (e.key === 'Enter') createLink(); });
+  linkUrlInput()?.addEventListener('keydown', (e) => { if (e.key === 'Enter') createLink(); });
+
+  // Escape key closes dropdowns
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllDropdowns();
   });
 }
 
-function handleToolbarCommand(btn) {
-  const cmd = btn.dataset.cmd;
-
+function handleToolbarCommand(cmd, subCmd) {
   switch (cmd) {
+    // Formatting menu
+    case 'heading':
+      addBlock('heading', { size: parseInt(subCmd) || 2 });
+      break;
+    case 'paragraph':
+      addBlock('paragraph');
+      break;
+    case 'blockquote':
+      addBlock('blockquote');
+      break;
+    case 'pull-quote':
+      addBlock('pull-quote');
+      break;
+    case 'code-block':
+      addBlock('code-block');
+      break;
+    case 'footer':
+      addBlock('footer');
+      break;
+    case 'divider':
+      addBlock('divider');
+      break;
+
+    // Inline formatting
     case 'bold':
     case 'italic':
     case 'underline':
     case 'strikethrough':
     case 'code':
-      applyInlineToSelected(cmd);
-      break;
     case 'spoiler':
-      applyInlineToSelected('spoiler');
+    case 'subscript':
+    case 'superscript':
+    case 'marked':
+      applyInlineFormat(cmd);
       break;
-    case 'heading':
-      addBlock('heading', { size: parseInt(btn.dataset.level || '2') });
+
+    // Lists
+    case 'ordered-list':
+      addBlock('ordered-list');
       break;
     case 'bullet-list':
       addBlock('bullet-list');
       break;
-    case 'numbered-list':
-      addBlock('numbered-list');
-      break;
     case 'checklist':
       addBlock('checklist');
-      break;
-    case 'code-block':
-      addBlock('code-block');
-      break;
-    case 'table':
-      addBlock('table');
       break;
     case 'details':
       addBlock('details');
       break;
-    case 'divider':
-      addBlock('divider');
+
+    // Table
+    case 'table':
+      addBlock('table');
       break;
-    case 'footnote':
-      addBlock('footer');
-      break;
+
+    // Media
     case 'image':
       addBlock('image');
       break;
@@ -546,42 +624,37 @@ function handleToolbarCommand(btn) {
     case 'audio':
       addBlock('audio');
       break;
-    case 'slideshow':
-      addBlock('slideshow', { images: [{ url: '' }, { url: '' }] });
-      break;
   }
 }
 
 function addBlock(type, data = {}) {
   const idx = state.selectedBlockId
-    ? state.blocks.findIndex(b => b.id === state.selectedBlockId) + 1
+    ? getBlockIndex(state.selectedBlockId) + 1
     : state.blocks.length;
   state.blocks.splice(idx, 0, createBlock(type, data));
   renderBlocks();
-  // Focus the new block
   setTimeout(() => {
-    const cards = document.querySelectorAll('.block-card');
+    const cards = $$('.block-card');
     if (cards[idx]) {
-      const content = cards[idx].querySelector('[contenteditable], input');
-      if (content) content.focus();
+      const editable = cards[idx].querySelector('[contenteditable], input');
+      if (editable) editable.focus();
     }
   }, 0);
 }
 
-function applyInlineToSelected(type) {
+function applyInlineFormat(type) {
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const range = sel.getRangeAt(0);
   const selectedText = range.toString();
   if (!selectedText) return;
 
-  // Save reference to block BEFORE DOM mutation
-  // Walk up from startContainer (text node) to find the .block-card element
+  // Find the block element
   let startEl = range.startContainer;
-  if (startEl && startEl.nodeType === 3) startEl = startEl.parentElement;
-  const card = startEl?.closest?.('.block-card');
-  const blkIdx = card ? state.blocks.findIndex(b => b.id === card.dataset.id) : -1;
-  const contentEl = card ? card.querySelector('.block-content') : null;
+  if (startEl.nodeType === 3) startEl = startEl.parentElement;
+  const card = startEl?.closest('.block-card');
+  const blkIdx = card ? getBlockIndex(card.dataset.id) : -1;
+  const contentEl = card?.querySelector('.block-content');
 
   let wrapper;
   switch (type) {
@@ -594,223 +667,80 @@ function applyInlineToSelected(type) {
       wrapper = document.createElement('span');
       wrapper.className = 'tg-spoiler';
       break;
+    case 'subscript': wrapper = document.createElement('sub'); break;
+    case 'superscript': wrapper = document.createElement('sup'); break;
+    case 'marked': wrapper = document.createElement('mark'); break;
     default: return;
   }
   wrapper.textContent = selectedText;
   range.deleteContents();
   range.insertNode(wrapper);
 
-  // Update block state after DOM mutation
+  // Update block state
   if (blkIdx !== -1 && contentEl && contentEl.contentEditable === 'true') {
     state.blocks[blkIdx].html = contentEl.innerHTML;
     state.blocks[blkIdx].text = stripHtml(contentEl.innerHTML);
   }
-  updatePreview();
+  updateCharCount();
 }
 
-// ===================== PREVIEW =====================
-function updatePreview() {
-  const previewEl = document.getElementById('preview-content');
-  if (!previewEl) return;
+function createLink() {
+  const text = linkTextInput().value.trim();
+  const url = linkUrlInput().value.trim();
+  if (!url) { toast('Enter a URL', 'error'); return; }
 
-  previewEl.innerHTML = '';
-  let charCount = 0;
+  const linkHtml = `<a href="${escapeHtml(url)}">${escapeHtml(text || url)}</a>`;
 
-  state.blocks.forEach(block => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'block-hover';
+  const sel = window.getSelection();
+  if (sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    let startEl = range.startContainer;
+    if (startEl.nodeType === 3) startEl = startEl.parentElement;
+    const card = startEl?.closest('.block-card');
+    const contentEl = card?.querySelector('.block-content');
+    const blkIdx = card ? getBlockIndex(card.dataset.id) : -1;
 
-    switch (block.type) {
-      case 'paragraph':
-        // Render HTML to preserve inline formatting
-        wrapper.innerHTML = block.html || block.text || '';
-        break;
-      case 'heading': {
-        const h = document.createElement(`h${Math.min(block.size || 2, 6)}`);
-        h.innerHTML = block.html || block.text || '';
-        wrapper.appendChild(h);
-        break;
-      }
-      case 'code-block': {
-        const pre = document.createElement('pre');
-        const code = document.createElement('code');
-        code.textContent = block.text;
-        if (block.language) code.className = `language-${block.language}`;
-        pre.appendChild(code);
-        wrapper.appendChild(pre);
-        break;
-      }
-      case 'bullet-list': {
-        const ul = document.createElement('ul');
-        block.items.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = item.text;
-          ul.appendChild(li);
-        });
-        wrapper.appendChild(ul);
-        break;
-      }
-      case 'numbered-list': {
-        const ol = document.createElement('ol');
-        block.items.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = item.text;
-          ol.appendChild(li);
-        });
-        wrapper.appendChild(ol);
-        break;
-      }
-      case 'checklist': {
-        block.items.forEach(item => {
-          const row = document.createElement('div');
-          row.className = 'checklist-item';
-          const cb = document.createElement('input');
-          cb.type = 'checkbox';
-          cb.checked = item.checked;
-          cb.disabled = true;
-          const span = document.createElement('span');
-          span.textContent = item.text;
-          row.appendChild(cb);
-          row.appendChild(span);
-          wrapper.appendChild(row);
-        });
-        break;
-      }
-      case 'table': {
-        const table = document.createElement('table');
-        block.cells.forEach((row) => {
-          const tr = document.createElement('tr');
-          row.cells.forEach(cellText => {
-            const cell = document.createElement(row.header ? 'th' : 'td');
-            cell.textContent = cellText;
-            tr.appendChild(cell);
-          });
-          table.appendChild(tr);
-        });
-        wrapper.appendChild(table);
-        break;
-      }
-      case 'blockquote': {
-        const bq = document.createElement('blockquote');
-        bq.innerHTML = block.html || block.text || '';
-        wrapper.appendChild(bq);
-        break;
-      }
-      case 'pull-quote': {
-        const aside = document.createElement('aside');
-        aside.innerHTML = block.html || block.text || '';
-        if (block.cite) {
-          const cite = document.createElement('cite');
-          cite.textContent = `\n— ${block.cite}`;
-          aside.appendChild(cite);
-        }
-        wrapper.appendChild(aside);
-        break;
-      }
-      case 'details': {
-        const det = document.createElement('details');
-        det.open = block.open;
-        const sum = document.createElement('summary');
-        sum.textContent = block.summary;
-        const inner = document.createElement('div');
-        inner.className = 'details-inner';
-        inner.innerHTML = block.html || block.body || '';
-        det.appendChild(sum);
-        det.appendChild(inner);
-        wrapper.appendChild(det);
-        break;
-      }
-      case 'divider': {
-        const hr = document.createElement('hr');
-        wrapper.appendChild(hr);
-        break;
-      }
-      case 'image': {
-        if (block.url) {
-          const img = document.createElement('img');
-          img.src = block.url;
-          img.style.cssText = 'max-width:100%;border-radius:8px;';
-          wrapper.appendChild(img);
-        }
-        if (block.caption) {
-          const cap = document.createElement('div');
-          cap.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:4px;';
-          cap.textContent = block.caption;
-          wrapper.appendChild(cap);
-        }
-        break;
-      }
-      case 'video': {
-        if (block.url) {
-          const vid = document.createElement('video');
-          vid.src = block.url;
-          vid.controls = true;
-          vid.style.cssText = 'max-width:100%;border-radius:8px;';
-          wrapper.appendChild(vid);
-        }
-        break;
-      }
-      case 'audio': {
-        if (block.url) {
-          const aud = document.createElement('audio');
-          aud.src = block.url;
-          aud.controls = true;
-          aud.style.cssText = 'width:100%;';
-          wrapper.appendChild(aud);
-        }
-        break;
-      }
-      case 'slideshow': {
-        if (block.images.length) {
-          const slideshow = document.createElement('div');
-          slideshow.style.cssText = 'display:flex;gap:4px;overflow-x:auto;';
-          block.images.forEach(img => {
-            if (img.url) {
-              const ext = img.url.split('.').pop().toLowerCase();
-              if (['mp4','mov','webm','avi'].includes(ext)) {
-                const video = document.createElement('video');
-                video.src = img.url;
-                video.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
-                video.controls = true;
-                slideshow.appendChild(video);
-              } else {
-                const sImg = document.createElement('img');
-                sImg.src = img.url;
-                sImg.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
-                slideshow.appendChild(sImg);
-              }
-            }
-          });
-          wrapper.appendChild(slideshow);
-          // Show caption/cite in preview
-          if (block.caption) {
-            const cap = document.createElement('div');
-            cap.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
-            cap.innerHTML = block.caption + (block.cite ? `<cite style="font-style:normal;">${block.cite}</cite>` : '');
-            wrapper.appendChild(cap);
-          }
-        }
-        break;
-      }
-      case 'footer': {
-        const footer = document.createElement('div');
-        footer.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:8px;';
-        footer.textContent = block.text;
-        wrapper.appendChild(footer);
-        break;
-      }
+    const a = document.createElement('a');
+    a.href = url;
+    a.textContent = text || url;
+    range.deleteContents();
+    range.insertNode(a);
+    range.collapse(false);
+
+    if (blkIdx !== -1 && contentEl) {
+      state.blocks[blkIdx].html = contentEl.innerHTML;
+      state.blocks[blkIdx].text = stripHtml(contentEl.innerHTML);
+      updateCharCount();
     }
-
-    previewEl.appendChild(wrapper);
-    charCount += JSON.stringify(block).length;
-  });
-
-  document.getElementById('char-count').textContent =
-    `${charCount.toLocaleString()} / 32,768`;
+  } else {
+    // Insert at end of selected block or new paragraph
+    if (state.selectedBlockId) {
+      const blkIdx = getBlockIndex(state.selectedBlockId);
+      if (blkIdx !== -1) {
+        const block = state.blocks[blkIdx];
+        if (block.type === 'paragraph' || block.type === 'heading') {
+          block.html += (block.html ? ' ' : '') + linkHtml;
+        } else {
+          state.blocks.splice(blkIdx + 1, 0, createBlock('paragraph', { html: linkHtml }));
+        }
+        renderBlocks();
+      }
+    } else {
+      state.blocks.push(createBlock('paragraph', { html: linkHtml }));
+      renderBlocks();
+    }
+  }
+  linkTextInput().value = '';
+  linkUrlInput().value = '';
+  closeAllDropdowns();
+  toast('Link inserted', 'success');
 }
 
-// ===================== CONVERT TO MARKDOWN =====================
-/** Convert HTML to Telegram markdown */
+function escapeHtml(str) {
+  return str.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"').replace(/'/g, '&#039;');
+}
+
+// ===================== MARKDOWN CONVERSION =====================
 function htmlToMarkdown(html) {
   if (!html) return '';
   let md = html;
@@ -829,15 +759,18 @@ function htmlToMarkdown(html) {
   md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
   // Spoiler
   md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
+  // Sub/Sup/Mark - keep as HTML
+  md = md.replace(/<sub>(.*?)<\/sub>/gi, '<sub>$1</sub>');
+  md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
+  md = md.replace(/<mark>(.*?)<\/mark>/gi, '<mark>$1</mark>');
+  // Links
+  md = md.replace(/<a href="([^"]*)">(.*?)<\/a>/gi, '[$2]($1)');
   // Line breaks
   md = md.replace(/<br\s*\/?>/gi, '\n');
   // Strip remaining tags
   md = md.replace(/<[^>]+>/g, '');
   // Decode entities
-  md = md.replace(/&amp;/g, '&');
-  md = md.replace(/&lt;/g, '<');
-  md = md.replace(/&gt;/g, '>');
-  md = md.replace(/&nbsp;/g, ' ');
+  md = md.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/&nbsp;/g, ' ');
   return md;
 }
 
@@ -862,15 +795,11 @@ function blocksToMarkdown(blocks) {
         lines.push('');
         break;
       case 'bullet-list':
-        block.items.forEach(item => {
-          lines.push(`- ${item.text || ''}`);
-        });
+        block.items.forEach(item => lines.push(`- ${item.text || ''}`));
         lines.push('');
         break;
-      case 'numbered-list':
-        block.items.forEach((item, i) => {
-          lines.push(`${i + 1}. ${item.text || ''}`);
-        });
+      case 'ordered-list':
+        block.items.forEach((item, i) => lines.push(`${i + 1}. ${item.text || ''}`));
         lines.push('');
         break;
       case 'checklist':
@@ -893,13 +822,12 @@ function blocksToMarkdown(blocks) {
         break;
       }
       case 'blockquote':
-        (htmlToMarkdown(block.html) || block.text || '').split('\n').forEach(line => {
-          lines.push(`> ${line}`);
-        });
+        (htmlToMarkdown(block.html) || block.text || '').split('\n').forEach(line => lines.push(`> ${line}`));
         lines.push('');
         break;
       case 'pull-quote':
         lines.push(`<aside>${htmlToMarkdown(block.html) || block.text || ''}</aside>`);
+        if (block.cite) lines.push(`<cite>${block.cite}</cite>`);
         lines.push('');
         break;
       case 'details':
@@ -937,25 +865,6 @@ function blocksToMarkdown(blocks) {
           lines.push('');
         }
         break;
-      case 'slideshow':
-        if (block.images && block.images.length) {
-          lines.push('<tg-slideshow>');
-          block.images.forEach(img => {
-            if (!img.url) return;
-            const ext = img.url.split('.').pop().toLowerCase();
-            if (['mp4','mov','webm','avi'].includes(ext)) {
-              lines.push(`  <video src="${img.url}"/>`);
-            } else {
-              lines.push(`  <img src="${img.url}"/>`);
-            }
-          });
-          if (block.caption) {
-            lines.push(`  <figcaption>${block.caption}${block.cite ? `<cite>${block.cite}</cite>` : ''}</figcaption>`);
-          }
-          lines.push('</tg-slideshow>');
-          lines.push('');
-        }
-        break;
     }
   });
   return lines.join('\n').trim();
@@ -969,21 +878,13 @@ async function sendRichMessage(blocks) {
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
 
-  const body = {
-    chat_id: chatId,
-    rich_message: { markdown: markdown },
-  };
+  const body = { chat_id: chatId, rich_message: { markdown: markdown } };
 
   try {
     const res = await window.app.api('sendRichMessage', body);
-    if (res.ok) {
-      toast('Message sent!', 'success');
-    } else {
-      toast(`Error: ${res.description || 'Unknown error'}`, 'error');
-    }
-  } catch (e) {
-    toast(`API error: ${e.message}`, 'error');
-  }
+    if (res.ok) toast('Message sent!', 'success');
+    else toast(`Error: ${res.description || 'Unknown error'}`, 'error');
+  } catch (e) { toast(`API error: ${e.message}`, 'error'); }
 }
 
 async function sendDraft(blocks) {
@@ -993,18 +894,13 @@ async function sendDraft(blocks) {
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
 
-  const body = {
-    chat_id: chatId,
-    rich_message: { markdown: markdown },
-  };
+  const body = { chat_id: chatId, rich_message: { markdown: markdown } };
 
   try {
     const res = await window.app.api('sendRichMessageDraft', body);
     if (res.ok) toast('Draft sent (30s)', 'info');
     else toast(`Draft error: ${res.description}`, 'error');
-  } catch (e) {
-    toast(`API error: ${e.message}`, 'error');
-  }
+  } catch (e) { toast(`API error: ${e.message}`, 'error'); }
 }
 
 async function editMessage(blocks) {
@@ -1015,25 +911,19 @@ async function editMessage(blocks) {
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
 
-  const body = {
-    chat_id: chatId,
-    message_id: parseInt(msgId),
-    rich_message: { markdown: markdown },
-  };
+  const body = { chat_id: chatId, message_id: parseInt(msgId), rich_message: { markdown: markdown } };
 
   try {
     const res = await window.app.api('editMessageText', body);
     if (res.ok) toast('Message edited!', 'success');
     else toast(`Edit error: ${res.description}`, 'error');
-  } catch (e) {
-    toast(`API error: ${e.message}`, 'error');
-  }
+  } catch (e) { toast(`API error: ${e.message}`, 'error'); }
 }
 
 async function testConnection() {
   if (!state.settings.tokenSet) { toast('Enter a bot token first', 'error'); return; }
 
-  const statusEl = document.getElementById('connection-status');
+  const statusEl = $('#connection-status');
   statusEl.textContent = 'Testing...';
   statusEl.className = '';
 
@@ -1053,21 +943,6 @@ async function testConnection() {
   }
 }
 
-// ===================== SEND HANDLER =====================
-function handleSend() {
-  switch (state.sendMode) {
-    case 'rich':
-      sendRichMessage(state.blocks);
-      break;
-    case 'draft':
-      sendDraft(state.blocks);
-      break;
-    case 'edit':
-      editMessage(state.blocks);
-      break;
-  }
-}
-
 // ===================== SETTINGS =====================
 async function loadSettings() {
   try {
@@ -1079,26 +954,28 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  const token = document.getElementById('input-token').value;
-  const chatId = document.getElementById('input-chat').value;
-  const lang = document.getElementById('input-lang').value;
+  const token = $('#input-token').value;
+  const chatId = $('#input-chat').value;
+  const lang = $('#input-lang').value;
   state.settings.chatId = chatId;
   state.settings.lang = lang;
   state.settings.tokenSet = !!token;
   try {
     await window.app.saveSettings({ token, chatId, lang });
     toast('Settings saved (encrypted)', 'success');
-  } catch (e) {
-    toast('Failed to save settings: ' + e.message, 'error');
-  }
-  updatePreview();
+  } catch (e) { toast('Failed to save settings: ' + e.message, 'error'); }
+  closeSettings();
 }
 
 function openSettings() {
-  document.getElementById('input-chat').value = state.settings.chatId;
-  document.getElementById('input-lang').value = state.settings.lang;
-  document.getElementById('input-token').placeholder = state.settings.tokenSet ? '•••••••• (saved encrypted)' : 'Enter bot token';
-  document.getElementById('settings-overlay').classList.remove('hidden');
+  $('#input-chat').value = state.settings.chatId;
+  $('#input-lang').value = state.settings.lang;
+  $('#input-token').placeholder = state.settings.tokenSet ? '•••••••• (saved encrypted)' : 'Enter bot token';
+  settingsOverlay().classList.remove('hidden');
+}
+
+function closeSettings() {
+  settingsOverlay().classList.add('hidden');
 }
 
 // ===================== THEME =====================
@@ -1110,12 +987,12 @@ function toggleTheme() {
 }
 
 function updateThemeIcon() {
-  const btn = document.getElementById('btn-theme');
+  const btn = $('#btn-theme');
   if (!btn) return;
   if (state.theme === 'dark') {
-    btn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
   } else {
-    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   }
 }
 
@@ -1130,7 +1007,7 @@ function loadTheme() {
 
 // ===================== TOAST =====================
 function toast(msg, type = 'info') {
-  const container = document.getElementById('toast-container');
+  const container = toastContainer();
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.textContent = msg;
@@ -1138,12 +1015,28 @@ function toast(msg, type = 'info') {
   setTimeout(() => el.remove(), 3000);
 }
 
+// ===================== SEND HANDLER =====================
+function handleSend() {
+  switch (state.sendMode) {
+    case 'rich': sendRichMessage(state.blocks); break;
+    case 'draft': sendDraft(state.blocks); break;
+    case 'edit': editMessage(state.blocks); break;
+  }
+}
+
 // ===================== KEYBOARD SHORTCUTS =====================
 document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && e.key === 'b') { e.preventDefault(); applyInlineToSelected('bold'); }
-  if (e.ctrlKey && e.key === 'i') { e.preventDefault(); applyInlineToSelected('italic'); }
-  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); applyInlineToSelected('underline'); }
-  if (e.ctrlKey && e.key === 'e') { e.preventDefault(); applyInlineToSelected('code'); }
+  if (e.ctrlKey || e.metaKey) {
+    switch (e.key.toLowerCase()) {
+      case 'b': e.preventDefault(); applyInlineFormat('bold'); break;
+      case 'i': e.preventDefault(); applyInlineFormat('italic'); break;
+      case 'u': e.preventDefault(); applyInlineFormat('underline'); break;
+      case 'e': e.preventDefault(); applyInlineFormat('code'); break;
+      case 'k': e.preventDefault(); toggleDropdown('link'); break;
+      case 'enter': if (e.shiftKey) handleSend(); break;
+    }
+  }
+  if (e.key === 'Escape') closeAllDropdowns();
 });
 
 // ===================== INIT =====================
@@ -1152,45 +1045,39 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTheme();
   initToolbar();
 
-  // Add initial blocks
+  // Initial block
   if (state.blocks.length === 0) {
     state.blocks.push(createBlock('paragraph', { text: '' }));
   }
   renderBlocks();
 
-  // Send mode
-  document.querySelectorAll('input[name="send-mode"]').forEach(r => {
+  // Send mode (not in new UI, but keep for compatibility)
+  $$('input[name="send-mode"]').forEach(r => {
     r.addEventListener('change', () => {
       state.sendMode = r.value;
-      document.getElementById('message-id').style.display =
-        r.value === 'edit' ? 'block' : 'none';
+      const mid = $('#message-id');
+      if (mid) mid.style.display = r.value === 'edit' ? 'block' : 'none';
     });
   });
 
   // Buttons
-  document.getElementById('btn-send').addEventListener('click', handleSend);
-  document.getElementById('btn-clear').addEventListener('click', () => {
+  sendBtn()?.addEventListener('click', handleSend);
+  clearBtn()?.addEventListener('click', () => {
     state.blocks = [createBlock('paragraph')];
     renderBlocks();
     toast('Cleared', 'info');
   });
-  document.getElementById('btn-settings').addEventListener('click', openSettings);
-  document.getElementById('btn-close-settings').addEventListener('click', () => {
-    document.getElementById('settings-overlay').classList.add('hidden');
-  });
-  document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
-  document.getElementById('btn-test-connection').addEventListener('click', testConnection);
-  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+  $('#btn-settings')?.addEventListener('click', openSettings);
+  $('#btn-close-settings')?.addEventListener('click', closeSettings);
+  $('#btn-save-settings')?.addEventListener('click', saveSettings);
+  $('#btn-test-connection')?.addEventListener('click', testConnection);
+  $('#btn-theme')?.addEventListener('click', toggleTheme);
 
-  // Message ID input
-  document.getElementById('message-id').addEventListener('input', (e) => {
-    state.editMessageId = e.target.value;
-  });
+  // Message ID input (for edit mode)
+  $('#message-id')?.addEventListener('input', (e) => { state.editMessageId = e.target.value; });
 
   // Settings overlay close on background click
-  document.getElementById('settings-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'settings-overlay') {
-      document.getElementById('settings-overlay').classList.add('hidden');
-    }
+  settingsOverlay()?.addEventListener('click', (e) => {
+    if (e.target.id === 'settings-overlay') closeSettings();
   });
 });

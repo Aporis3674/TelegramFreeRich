@@ -22,6 +22,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": "dir",
+      "icon": "src/renderer/icon.png"
     }
   },
   "devDependencies": {
