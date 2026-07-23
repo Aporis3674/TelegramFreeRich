@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.0] - 2026-07-23
+
+### Security (Critical)
+- Token now stored via `electron safeStorage` (OS-level encryption, not plain text)
+- Settings saved to `userData/settings.enc` — encrypted on disk
+- Token NEVER leaves main process after initial save
+- Renderer no longer holds or passes token to API calls
+- Input field shows `•••••••• (saved encrypted)` instead of plain token
+
+### Architecture
+- All Telegram HTTP requests moved to main process only
+- `window.app.api(method, body)` — main process adds token internally
+- New IPC channels: `save-settings`, `load-settings`, `tg-test`
+- `loadSettings()` returns token existence flag (not the token itself)
+- Removed `localStorage` usage for sensitive settings
+
+### Removed
+- `window.tgAPI.send(token, ...)` — token parameter no longer passed from renderer
+- Plain-text settings in `localStorage`
+
 ## [1.0.0] - 2026-07-23
 
 ### Added
