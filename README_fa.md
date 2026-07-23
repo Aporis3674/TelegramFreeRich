@@ -7,6 +7,8 @@
 <p align="center"><strong>ویرایشگر متن غنی رایگان برای تلگرام</strong></p>
 <p align="center">چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</p>
 
+<p align="center"><a href="README.md">[ English ]</a></p>
+
 <p align="center">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/React-18-61dafb?logo=react" alt="React 18">

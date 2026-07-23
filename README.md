@@ -15,6 +15,8 @@
 <p align="center"><strong>Free Rich Text Editor for Telegram</strong></p>
 <p align="center">Because bots should not have more rights than humans.</p>
 
+<p align="center"><a href="README_fa.md">[ فارسی ]</a></p>
+
 ---
 
 ## What is this?
