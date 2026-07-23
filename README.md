@@ -28,6 +28,10 @@
   <a href="#build">Build from Source</a>
 </p>
 
+<p align="center">
+  <img src="screenshot.jpg" alt="TelegramFreeRich Screenshot" width="800">
+</p>
+
 ---
 
 ## Download
