@@ -374,13 +374,32 @@ function renderBlock(block, index) {
     case 'slideshow': {
       const slideDiv = document.createElement('div');
       slideDiv.style.cssText = 'width:100%;';
+      
+      // Caption input
+      const capInp = document.createElement('input');
+      capInp.type = 'text';
+      capInp.value = block.caption || '';
+      capInp.placeholder = 'Slideshow caption (optional)';
+      capInp.style.cssText = 'width:100%;padding:4px 8px;margin-bottom:8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      capInp.addEventListener('input', () => { block.caption = capInp.value; updatePreview(); });
+      slideDiv.appendChild(capInp);
+      
+      // Cite input
+      const citeInp = document.createElement('input');
+      citeInp.type = 'text';
+      citeInp.value = block.cite || '';
+      citeInp.placeholder = 'Author/Source (optional)';
+      citeInp.style.cssText = 'width:100%;padding:4px 8px;margin-bottom:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      citeInp.addEventListener('input', () => { block.cite = citeInp.value; updatePreview(); });
+      slideDiv.appendChild(citeInp);
+      
       block.images.forEach((img, i) => {
         const imgRow = document.createElement('div');
         imgRow.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;';
         const imgInp = document.createElement('input');
         imgInp.type = 'text';
         imgInp.value = img.url || '';
-        imgInp.placeholder = `Image ${i + 1} URL`;
+        imgInp.placeholder = `Media ${i + 1} URL (image/video)`;
         imgInp.style.cssText = 'flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
         imgInp.addEventListener('input', () => { block.images[i].url = imgInp.value; updatePreview(); });
         const rmBtn = document.createElement('button');
@@ -747,13 +766,29 @@ function updatePreview() {
           slideshow.style.cssText = 'display:flex;gap:4px;overflow-x:auto;';
           block.images.forEach(img => {
             if (img.url) {
-              const sImg = document.createElement('img');
-              sImg.src = img.url;
-              sImg.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
-              slideshow.appendChild(sImg);
+              const ext = img.url.split('.').pop().toLowerCase();
+              if (['mp4','mov','webm','avi'].includes(ext)) {
+                const video = document.createElement('video');
+                video.src = img.url;
+                video.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
+                video.controls = true;
+                slideshow.appendChild(video);
+              } else {
+                const sImg = document.createElement('img');
+                sImg.src = img.url;
+                sImg.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
+                slideshow.appendChild(sImg);
+              }
             }
           });
           wrapper.appendChild(slideshow);
+          // Show caption/cite in preview
+          if (block.caption) {
+            const cap = document.createElement('div');
+            cap.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
+            cap.innerHTML = block.caption + (block.cite ? `<cite style="font-style:normal;">${block.cite}</cite>` : '');
+            wrapper.appendChild(cap);
+          }
         }
         break;
       }
@@ -905,9 +940,20 @@ function blocksToMarkdown(blocks) {
         break;
       case 'slideshow':
         if (block.images && block.images.length) {
+          lines.push('<tg-slideshow>');
           block.images.forEach(img => {
-            if (img.url) lines.push(`![](${img.url})`);
+            if (!img.url) return;
+            const ext = img.url.split('.').pop().toLowerCase();
+            if (['mp4','mov','webm','avi'].includes(ext)) {
+              lines.push(`  <video src="${img.url}"/>`);
+            } else {
+              lines.push(`  <img src="${img.url}"/>`);
+            }
           });
+          if (block.caption) {
+            lines.push(`  <figcaption>${block.caption}${block.cite ? `<cite>${block.cite}</cite>` : ''}</figcaption>`);
+          }
+          lines.push('</tg-slideshow>');
           lines.push('');
         }
         break;
