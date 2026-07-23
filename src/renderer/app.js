@@ -491,13 +491,6 @@ function handleToolbarCommand(btn) {
     case 'spoiler':
       applyInlineToSelected('spoiler');
       break;
-    case 'highlight':
-      applyInlineToSelected('highlight');
-      break;
-    case 'subscript':
-    case 'superscript':
-      applyInlineToSelected(cmd);
-      break;
     case 'heading':
       addBlock('heading', { size: parseInt(btn.dataset.level || '2') });
       break;
@@ -574,11 +567,6 @@ function applyInlineToSelected(type) {
       wrapper = document.createElement('span');
       wrapper.className = 'tg-spoiler';
       break;
-    case 'highlight':
-      wrapper = document.createElement('mark');
-      break;
-    case 'subscript': wrapper = document.createElement('sub'); break;
-    case 'superscript': wrapper = document.createElement('sup'); break;
     default: return;
   }
   wrapper.textContent = selectedText;
@@ -784,99 +772,146 @@ function updatePreview() {
     `${charCount.toLocaleString()} / 32,768`;
 }
 
-// ===================== CONVERT TO API FORMAT =====================
-function blocksToAPI(blocks) {
-  return blocks.map(block => {
-    switch (block.type) {
-      case 'paragraph':
-        return { type: 'paragraph', text: block.text || '' };
-      case 'heading':
-        return { type: 'heading', text: block.text || '', size: block.size || 2 };
-      case 'code-block':
-        return { type: 'pre', text: block.text || '', language: block.language || undefined };
-      case 'bullet-list':
-      case 'numbered-list':
-        return {
-          type: 'list',
-          items: block.items.map(item => ({
-            blocks: [{ type: 'paragraph', text: item.text || '' }],
-          })),
-        };
-      case 'table':
-        return {
-          type: 'table',
-          cells: block.cells.map(row => row.cells.map((cellText, ci) => ({
-            text: cellText,
-            is_header: row.header,
-          }))),
-        };
-      case 'blockquote':
-        return {
-          type: 'blockquote',
-          blocks: [{ type: 'paragraph', text: block.text || '' }],
-        };
-      case 'pull-quote':
-        return { type: 'pullquote', text: block.text || '' };
-      case 'details':
-        return {
-          type: 'details',
-          summary: block.summary || '',
-          blocks: [{ type: 'paragraph', text: block.body || '' }],
-        };
-      case 'divider':
-        return { type: 'divider' };
-      case 'image':
-        return {
-          type: 'photo',
-          photo: { type: 'url', url: block.url || '' },
-        };
-      case 'video':
-        return {
-          type: 'video',
-          video: { type: 'url', url: block.url || '' },
-        };
-      case 'audio':
-        return {
-          type: 'audio',
-          audio: { type: 'url', url: block.url || '' },
-        };
-      case 'slideshow':
-        return {
-          type: 'slideshow',
-          blocks: block.images
-            .filter(img => img.url)
-            .map(img => ({
-              type: 'photo',
-              photo: { type: 'url', url: img.url },
-            })),
-        };
-      case 'footer':
-        return { type: 'footer', text: block.text || '' };
-      default:
-        return { type: 'paragraph', text: '' };
-    }
-  });
+// ===================== CONVERT TO MARKDOWN =====================
+/** Convert HTML to Telegram markdown */
+function htmlToMarkdown(html) {
+  if (!html) return '';
+  let md = html;
+  // Bold
+  md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+  md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+  // Italic
+  md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+  md = md.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+  // Strikethrough
+  md = md.replace(/<s>(.*?)<\/s>/gi, '~~$1~~');
+  md = md.replace(/<del>(.*?)<\/del>/gi, '~~$1~~');
+  // Underline
+  md = md.replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>');
+  // Inline code
+  md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
+  // Spoiler
+  md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
+  // Line breaks
+  md = md.replace(/<br\s*\/?>/gi, '\n');
+  // Strip remaining tags
+  md = md.replace(/<[^>]+>/g, '');
+  // Decode entities
+  md = md.replace(/&amp;/g, '&');
+  md = md.replace(/&lt;/g, '<');
+  md = md.replace(/&gt;/g, '>');
+  md = md.replace(/&nbsp;/g, ' ');
+  return md;
 }
 
-function buildChecklistPayload(blocks) {
-  const checkBlocks = blocks.filter(b => b.type === 'checklist');
-  if (!checkBlocks.length) return null;
-
-  const tasks = [];
-  let idCounter = 1;
-  checkBlocks.forEach(b => {
-    b.items.forEach(item => {
-      tasks.push({
-        id: idCounter++,
-        text: item.text || '',
-        is_done: item.checked,
-      });
-    });
+function blocksToMarkdown(blocks) {
+  const lines = [];
+  blocks.forEach(block => {
+    switch (block.type) {
+      case 'paragraph':
+        lines.push(htmlToMarkdown(block.html) || block.text || '');
+        lines.push('');
+        break;
+      case 'heading': {
+        const prefix = '#'.repeat(block.size || 2);
+        lines.push(`${prefix} ${htmlToMarkdown(block.html) || block.text || ''}`);
+        lines.push('');
+        break;
+      }
+      case 'code-block':
+        lines.push('```' + (block.language || ''));
+        lines.push(block.text || '');
+        lines.push('```');
+        lines.push('');
+        break;
+      case 'bullet-list':
+        block.items.forEach(item => {
+          lines.push(`- ${item.text || ''}`);
+        });
+        lines.push('');
+        break;
+      case 'numbered-list':
+        block.items.forEach((item, i) => {
+          lines.push(`${i + 1}. ${item.text || ''}`);
+        });
+        lines.push('');
+        break;
+      case 'checklist':
+        block.items.forEach(item => {
+          const check = item.checked ? 'x' : ' ';
+          lines.push(`- [${check}] ${item.text || ''}`);
+        });
+        lines.push('');
+        break;
+      case 'table': {
+        if (block.cells.length > 0) {
+          const header = block.cells[0];
+          lines.push('| ' + header.cells.join(' | ') + ' |');
+          lines.push('|' + header.cells.map(() => '---').join('|') + '|');
+          for (let i = 1; i < block.cells.length; i++) {
+            lines.push('| ' + block.cells[i].cells.join(' | ') + ' |');
+          }
+          lines.push('');
+        }
+        break;
+      }
+      case 'blockquote':
+        (htmlToMarkdown(block.html) || block.text || '').split('\n').forEach(line => {
+          lines.push(`> ${line}`);
+        });
+        lines.push('');
+        break;
+      case 'pull-quote':
+        lines.push(`<aside>${htmlToMarkdown(block.html) || block.text || ''}</aside>`);
+        lines.push('');
+        break;
+      case 'details':
+        lines.push('<details>');
+        lines.push(`<summary>${block.summary || ''}</summary>`);
+        lines.push(htmlToMarkdown(block.html) || block.body || '');
+        lines.push('</details>');
+        lines.push('');
+        break;
+      case 'divider':
+        lines.push('---');
+        lines.push('');
+        break;
+      case 'footer':
+        lines.push(`<footer>${block.text || ''}</footer>`);
+        lines.push('');
+        break;
+      case 'image':
+        if (block.url) {
+          const caption = block.caption || '';
+          lines.push(`![${caption}](${block.url})`);
+          lines.push('');
+        }
+        break;
+      case 'video':
+        if (block.url) {
+          const caption = block.caption || '';
+          lines.push(`![${caption}](${block.url})`);
+          lines.push('');
+        }
+        break;
+      case 'audio':
+        if (block.url) {
+          const caption = block.caption || '';
+          lines.push(`![${caption}](${block.url})`);
+          lines.push('');
+        }
+        break;
+      case 'slideshow':
+        if (block.images && block.images.length) {
+          block.images.forEach(img => {
+            if (img.url) lines.push(`![](${img.url})`);
+          });
+          lines.push('');
+        }
+        break;
+    }
   });
-  return {
-    title: 'Checklist',
-    tasks,
-  };
+  return lines.join('\n').trim();
 }
 
 // ===================== API =====================
@@ -885,10 +920,12 @@ async function sendRichMessage(blocks) {
   const chatId = state.settings.chatId;
   if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
 
-  const apiBlocks = blocksToAPI(blocks);
+  const markdown = blocksToMarkdown(blocks);
+  if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
+
   const body = {
     chat_id: chatId,
-    rich_message: { blocks: apiBlocks },
+    rich_message: { markdown: markdown },
   };
 
   try {
@@ -903,40 +940,17 @@ async function sendRichMessage(blocks) {
   }
 }
 
-async function sendChecklistMsg(blocks) {
-  const token = state.settings.token;
-  const chatId = state.settings.chatId;
-  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
-
-  const checklist = buildChecklistPayload(blocks);
-  if (!checklist) return;
-
-  const body = {
-    chat_id: chatId,
-    checklist,
-  };
-
-  try {
-    const res = await window.tgAPI.send(token, 'sendChecklist', body);
-    if (res.ok) {
-      toast('Checklist sent!', 'success');
-    } else {
-      toast(`Checklist error: ${res.description || 'Unknown error'}`, 'error');
-    }
-  } catch (e) {
-    toast(`API error: ${e.message}`, 'error');
-  }
-}
-
 async function sendDraft(blocks) {
   const token = state.settings.token;
   const chatId = state.settings.chatId;
   if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
 
-  const apiBlocks = blocksToAPI(blocks);
+  const markdown = blocksToMarkdown(blocks);
+  if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
+
   const body = {
     chat_id: chatId,
-    rich_message: { blocks: apiBlocks },
+    rich_message: { markdown: markdown },
   };
 
   try {
@@ -954,11 +968,13 @@ async function editMessage(blocks) {
   const msgId = state.editMessageId;
   if (!token || !chatId || !msgId) { toast('Settings or message ID incomplete', 'error'); return; }
 
-  const apiBlocks = blocksToAPI(blocks);
+  const markdown = blocksToMarkdown(blocks);
+  if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
+
   const body = {
     chat_id: chatId,
     message_id: parseInt(msgId),
-    rich_message: { blocks: apiBlocks },
+    rich_message: { markdown: markdown },
   };
 
   try {
@@ -996,19 +1012,15 @@ async function testConnection() {
 
 // ===================== SEND HANDLER =====================
 function handleSend() {
-  const richBlocks = state.blocks.filter(b => b.type !== 'checklist');
-  const hasChecklist = state.blocks.some(b => b.type === 'checklist');
-
   switch (state.sendMode) {
     case 'rich':
-      if (richBlocks.length) sendRichMessage(richBlocks);
-      if (hasChecklist) sendChecklistMsg(state.blocks);
+      sendRichMessage(state.blocks);
       break;
     case 'draft':
-      sendDraft(richBlocks);
+      sendDraft(state.blocks);
       break;
     case 'edit':
-      editMessage(richBlocks);
+      editMessage(state.blocks);
       break;
   }
 }

@@ -75,8 +75,6 @@ body { background: var(--bg); color: var(--text); }
 .tbtn:active { transform: scale(0.92); }
 .tbtn.active { background: var(--accent); color: #fff; }
 .tbtn.active svg { stroke: #fff; }
-/* SVG fill override for text-in-SVG icons (subscript/superscript) */
-.tbtn svg text { fill: currentColor; stroke: none; }
 #group-inline .tbtn,
 #group-block .tbtn,
 #group-media .tbtn { font-size: 11px; }
@@ -247,9 +245,6 @@ body.light #preview-content code {
 #preview-content .tg-spoiler { background: rgba(255,255,255,0.15); color: transparent; border-radius: 4px; padding: 0 2px; cursor: pointer; transition: all 0.3s; }
 body.light #preview-content .tg-spoiler { background: rgba(0,0,0,0.15); }
 #preview-content .tg-spoiler.revealed { background: rgba(255,255,255,0.25); color: var(--tg-bubble-text); }
-#preview-content .tg-marked { background: rgba(124,92,255,0.25); border-radius: 3px; padding: 0 2px; }
-#preview-content sub { font-size: 0.75em; }
-#preview-content sup { font-size: 0.75em; }
 #preview-content blockquote {
   border-left: 3px solid rgba(255,255,255,0.3); padding: 4px 12px;
   margin: 8px 0; color: rgba(255,255,255,0.7); font-style: italic;
