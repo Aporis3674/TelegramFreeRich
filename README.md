@@ -128,19 +128,37 @@ TelegramFreeRich/
   package.json            # Dependencies
 ```
 
-## Setup
+## Installation
+
+### Prerequisites
+- Node.js 18 or higher
+- A Telegram bot (get one from @BotFather)
+- A Chat ID (channel or group)
+
+### Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/Aporis3674/TelegramFreeRich.git
+cd TelegramFreeRich
+
 # Install dependencies
 npm install
 
-# Development server
+# Start development server
 npm run dev
+```
 
-# Production build
+### Production Build
+
+```bash
+# Build for production
 npm run build
 
-# Preview production build
+# Output is in dist/
+# Deploy to free hosting: GitHub Pages, Vercel, Netlify, Cloudflare Pages
+
+# Preview production build locally
 npm run preview
 ```
 
