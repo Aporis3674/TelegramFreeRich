@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TelegramFreeRich — Documentation</title>
+<style>
+  :root { --bg: #0d0d12; --surface: #16161e; --border: #2a2a3e; --text: #e8e8f0; --muted: #8888a0; --accent: #33b4c9; --accent2: #7c5cff; --green: #44cc88; --red: #ff4466; --yellow: #ffaa33; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 0; }
+  .hero { text-align: center; padding: 60px 20px 40px; background: linear-gradient(135deg, #0d0d12 0%, #1a1a2e 50%, #0d0d12 100%); border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .hero p { color: var(--muted); font-size: 16px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+  h2 { font-size: 24px; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 18px; margin: 24px 0 12px; color: var(--text); }
+  h4 { font-size: 15px; margin: 16px 0 8px; color: var(--accent2); }
+  p, li { font-size: 15px; color: var(--text); margin-bottom: 8px; }
+  ul, ol { padding-left: 24px; margin-bottom: 16px; }
+  code { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: var(--accent); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; padding: 0; color: var(--text); font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  th { background: var(--surface); font-weight: 600; color: var(--accent); }
+  td code { font-size: 12px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; }
+  .tag-ok { background: rgba(68,204,136,0.15); color: var(--green); }
+  .tag-fail { background: rgba(255,68,102,0.15); color: var(--red); }
+  .tag-new { background: rgba(124,92,255,0.15); color: var(--accent2); }
+  .tag-warn { background: rgba(255,170,51,0.15); color: var(--yellow); }
+  blockquote { border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0; background: var(--surface); border-radius: 0 8px 8px 0; color: var(--muted); font-style: italic; }
+  .section { margin-bottom: 48px; }
+  .highlight { background: rgba(51,180,201,0.08); border: 1px solid rgba(51,180,201,0.2); border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .emoji { font-size: 14px; margin-right: 4px; }
+  hr { border: none; height: 1px; background: var(--border); margin: 32px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 20px 0; }
+  .toc a { display: block; padding: 4px 0; color: var(--text); }
+  .toc a:hover { color: var(--accent); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>TelegramFreeRich</h1>
+  <p>Free Rich Text Editor for Telegram — Because bots should not have more rights than humans</p>
+  <p style="margin-top:12px;color:var(--accent2);font-size:13px">Bot API 10.1 Documentation &amp; Architecture Guide</p>
+</div>
+
+<div class="container">
+
+<!-- TABLE OF CONTENTS -->
+<div class="section">
+<h2>Table of Contents</h2>
+<div class="toc">
+  <a href="#concept">1. Project Concept</a>
+  <a href="#architecture">2. Architecture</a>
+  <a href="#api">3. Bot API 10.1 Methods</a>
+  <a href="#markdown">4. Markdown Syntax (TESTED)</a>
+  <a href="#html">5. HTML Syntax (TESTED)</a>
+  <a href="#blocks">6. Block Types — blocks field (TESTED)</a>
+  <a href="#inlines">7. Inline Types (TESTED)</a>
+  <a href="#media">8. Media in Markdown (TESTED)</a>
+  <a href="#strategy">9. Recommended Strategy</a>
+  <a href="#files">10. File Structure</a>
+  <a href="#design">11. UI/UX Design</a>
+  <a href="#features">12. Feature List</a>
+  <a href="#tested">13. Test Results</a>
+</div>
+</div>
+
+<!-- 1. CONCEPT -->
+<div class="section" id="concept">
+<h2>1. Project Concept</h2>
+<p>Telegram introduced a rich text editor in June 2026, but restricted it to Premium users only. However, Bot API 10.1 gives bots the <strong>exact same capabilities for free</strong>. This project creates a visual WYSIWYG editor that lets any user — not just Premium subscribers — create and send professionally formatted messages.</p>
+<blockquote>The best things in life are free. The second-best things are also free, if you use a bot.</blockquote>
+
+<h3>What Telegram does with Premium</h3>
+<ul>
+  <li>Rich text editor with headings, tables, code blocks, collages, etc.</li>
+  <li>Only available in the official Telegram app</li>
+  <li>Requires Telegram Premium subscription</li>
+</ul>
+
+<h3>What this project does</h3>
+<ul>
+  <li>Same rich text features — available to everyone for free</li>
+  <li>WYSIWYG editor in a browser (no Telegram required)</li>
+  <li>Sends via Bot API 10.1 — <code>sendRichMessage</code> with markdown field</li>
+  <li>Also supports <code>editMessageText</code> with <code>rich_message</code></li>
+</ul>
+</div>
+
+<!-- 2. ARCHITECTURE -->
+<div class="section" id="architecture">
+<h2>2. Architecture</h2>
+
+<h3>Core Pipeline</h3>
+<div class="highlight">
+<pre><code>contenteditable DOM
+    ↓  (DOM Parser: convertDOMToMarkdown)
+  Markdown string
+    ↓  (sendRichMessage)
+Telegram API 10.1
+    ↓
+  Rendered rich message in chat</code></pre>
+</div>
+
+<p><strong>Key insight:</strong> The <code>markdown</code> field of <code>sendRichMessage</code> supports the most features with the least complexity. No need for complex <code>blocks</code> parsing — Markdown handles everything: inline formatting, headings, lists, tables, code blocks, math, details, footnotes, media, slideshows, and maps.</p>
+
+<h3>Why Markdown over HTML and Blocks</h3>
+<table>
+  <tr><th>Feature</th><th>HTML</th><th>Blocks</th><th>Markdown</th></tr>
+  <tr><td>Bold, Italic, Strike, Code</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Headings H1-H6</td><td>✅</td><td>✅ (size)</td><td>✅</td></tr>
+  <tr><td>Lists (bullet/numbered/checklist)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Tables</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Blockquote + Citation</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Code Blocks</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Footnotes</td><td>❌</td><td>?</td><td>✅</td></tr>
+  <tr><td>Details/Collapsible</td><td>❌</td><td>?</td><td>✅</td></tr>
+  <tr><td>Math ($ and $$)</td><td>❌</td><td>?</td><td>✅</td></tr>
+  <tr><td>Media (photo/video/audio)</td><td>❌</td><td>✅ (complex)</td><td>✅ (simple)</td></tr>
+  <tr><td>Slideshow</td><td>❌</td><td>?</td><td>✅</td></tr>
+  <tr><td>Map</td><td>❌</td><td>?</td><td>✅</td></tr>
+  <tr><td>Divider</td><td>✅</td><td>✅</td><td>✅</td></tr>
+  <tr><td>Links</td><td>✅</td><td>✅</td><td>✅</td></tr>
+</table>
+
+<div class="highlight">
+<strong>Winner: Markdown</strong> — Simplest syntax, widest feature support, easiest to generate from DOM.
+</div>
+</div>
+
+<!-- 3. API METHODS -->
+<div class="section" id="api">
+<h2>3. Bot API 10.1 Methods</h2>
+
+<h3>3.1 sendRichMessage</h3>
+<p>Sends a rich message with advanced formatting.</p>
+<pre><code>POST https://api.telegram.org/bot{TOKEN}/sendRichMessage
+
+{
+  "chat_id": "@channel or user_id",
+  "rich_message": {
+    "markdown": "...",   // ← USE THIS
+    "html": "...",       // or this (fewer features)
+    "blocks": [...]      // or this (complex)
+  }
+}</code></pre>
+<p><span class="tag tag-ok">TESTED</span> All three fields work. <code>markdown</code> recommended for maximum features.</p>
+
+<h3>3.2 sendRichMessageDraft</h3>
+<p>Sends a temporary 30-second preview (for AI streaming). Must be finalized with <code>sendRichMessage</code>.</p>
+<pre><code>{
+  "chat_id": "user_id",
+  "rich_message": { "markdown": "..." },
+  "draft_id": 12345
+}</code></pre>
+<p><span class="tag tag-warn">PRIVATE CHAT ONLY</span></p>
+
+<h3>3.3 editMessageText + rich_message</h3>
+<p>Edits a previously sent message using rich formatting.</p>
+<pre><code>POST https://api.telegram.org/bot{TOKEN}/editMessageText
+
+{
+  "chat_id": "@channel",
+  "message_id": 123,
+  "rich_message": {
+    "markdown": "*Edited* text!"
+  }
+}</code></pre>
+<p><span class="tag tag-ok">TESTED</span> Works perfectly.</p>
+
+<h3>3.4 sendMessage (legacy fallback)</h3>
+<pre><code>{
+  "chat_id": "@channel",
+  "text": "&lt;b&gt;bold&lt;/b&gt;",
+  "parse_mode": "HTML"
+}</code></pre>
+<p>Simple formatting only. No footnotes, no details, no media. Use only as fallback.</p>
+</div>
+
+<!-- 4. MARKDOWN -->
+<div class="section" id="markdown">
+<h2>4. Markdown Syntax (TESTED &amp; VERIFIED)</h2>
+<p>Syntax to send in the <code>markdown</code> field of <code>sendRichMessage</code>.</p>
+
+<h3>Inline Formatting</h3>
+<table>
+  <tr><th>Style</th><th>Syntax</th><th>Result</th><th>Status</th></tr>
+  <tr><td>Bold</td><td><code>*bold*</code></td><td><strong>bold</strong></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Italic</td><td><code>_italic_</code></td><td><em>italic</em></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Strikethrough</td><td><code>~strike~</code></td><td><s>strike</s></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Code (inline)</td><td><code>`code`</code></td><td><code>code</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Highlight/Marked</td><td><code>==highlight==</code></td><td><mark>highlight</mark></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Spoiler</td><td><code>||spoiler||</code></td><td>||spoiler||</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Superscript</td><td><code>&lt;sup&gt;text&lt;/sup&gt;</code></td><td>text<sup>sup</sup></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Subscript</td><td><code>&lt;sub&gt;text&lt;/sub&gt;</code></td><td>text<sub>sub</sub></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>Headings</h3>
+<table>
+  <tr><th>Level</th><th>Syntax</th><th>Status</th></tr>
+  <tr><td>H1</td><td><code># Heading 1</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>H2</td><td><code>## Heading 2</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>H3</td><td><code>### Heading 3</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>H4</td><td><code>#### Heading 4</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>H5</td><td><code>##### Heading 5</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>H6</td><td><code>###### Heading 6</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>Lists</h3>
+<table>
+  <tr><th>Type</th><th>Syntax</th><th>Status</th></tr>
+  <tr><td>Bullet</td><td><code>- item</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Numbered</td><td><code>1. item</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Checklist (done)</td><td><code>- [x] done</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Checklist (todo)</td><td><code>- [ ] todo</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>Block Elements</h3>
+<table>
+  <tr><th>Element</th><th>Syntax</th><th>Status</th></tr>
+  <tr><td>Blockquote</td><td><code>&gt; quoted text</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Divider</td><td><code>---</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Code Block</td><td><code>```lang\ncode\n```</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Link</td><td><code>[text](url)</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Table</td><td><code>| A | B |\n|---|---|\n| 1 | 2 |</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Math (inline)</td><td><code>$E=mc^2$</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Math (block)</td><td><code>$$\sum_{i=1}^{n} i$$</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Footnote ref</td><td><code>[^id1]</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Footnote def</td><td><code>[^id1]: definition</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>Details / Collapsible</h3>
+<pre><code>&lt;details&gt;
+&lt;summary&gt;Click to expand&lt;/summary&gt;
+Hidden content here!
+&lt;/details&gt;</code></pre>
+<p><span class="tag tag-ok">✅</span> Works in markdown field.</p>
+</div>
+
+<!-- 5. HTML -->
+<div class="section" id="html">
+<h2>5. HTML Syntax (TESTED &amp; VERIFIED)</h2>
+<p>When the message starts with <code>&lt;</code>, Telegram renders it as HTML.</p>
+
+<h3>Supported Tags</h3>
+<table>
+  <tr><th>Tag</th><th>Example</th><th>Status</th></tr>
+  <tr><td><code>&lt;b&gt;</code></td><td><code>&lt;b&gt;bold&lt;/b&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;i&gt;</code></td><td><code>&lt;i&gt;italic&lt;/i&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;u&gt;</code></td><td><code>&lt;u&gt;underline&lt;/u&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;s&gt;</code></td><td><code>&lt;s&gt;strike&lt;/s&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;code&gt;</code></td><td><code>&lt;code&gt;code&lt;/code&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;mark&gt;</code></td><td><code>&lt;mark&gt;highlight&lt;/mark&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;tg-spoiler&gt;</code></td><td><code>&lt;tg-spoiler&gt;spoiler&lt;/tg-spoiler&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;sup&gt;</code></td><td><code>&lt;sup&gt;text&lt;/sup&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;sub&gt;</code></td><td><code>&lt;sub&gt;text&lt;/sub&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;a&gt;</code></td><td><code>&lt;a href="url"&gt;text&lt;/a&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;h1&gt;-&lt;h6&gt;</code></td><td><code>&lt;h1&gt;Title&lt;/h1&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;ul&gt;/&lt;li&gt;</code></td><td><code>&lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;ol&gt;/&lt;li&gt;</code></td><td><code>&lt;ol&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ol&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;input checkbox&gt;</code></td><td><code>&lt;input type="checkbox" checked&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;blockquote&gt;</code></td><td><code>&lt;blockquote&gt;text&lt;/blockquote&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;aside&gt;</code></td><td><code>&lt;aside&gt;pull quote&lt;/aside&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;cite&gt;</code></td><td><code>&lt;blockquote&gt;text&lt;cite&gt;author&lt;/cite&gt;&lt;/blockquote&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;pre&gt;&lt;code&gt;</code></td><td><code>&lt;pre&gt;&lt;code class="lang-x"&gt;...&lt;/code&gt;&lt;/pre&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;table&gt;</code></td><td><code>&lt;table&gt;...&lt;/table&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;tg-math&gt;</code></td><td><code>&lt;tg-math&gt;x^2&lt;/tg-math&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;tg-math-block&gt;</code></td><td><code>&lt;tg-math-block&gt;E=mc^2&lt;/tg-math-block&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>&lt;details&gt;</code></td><td><code>&lt;details&gt;&lt;summary&gt;...&lt;/summary&gt;content&lt;/details&gt;</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>HTML Limitations (not supported)</h3>
+<ul>
+  <li><span class="tag tag-fail">❌ Footnotes</span> — Use Markdown <code>[^1]</code> syntax instead</li>
+  <li><span class="tag tag-fail">❌ Media</span> — Use Markdown <code>![](url.jpg)</code> syntax</li>
+</ul>
+</div>
+
+<!-- 6. BLOCKS -->
+<div class="section" id="blocks">
+<h2>6. Block Types — blocks field (TESTED)</h2>
+<p>When using <code>"blocks": [...]</code> in <code>InputRichMessage</code>. Tested via API calls.</p>
+
+<h3>Working Block Types</h3>
+<table>
+  <tr><th>Type</th><th>Fields</th><th>Status</th></tr>
+  <tr><td><code>paragraph</code></td><td><code>text</code>: string or array of RichText</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>heading</code></td><td><code>size</code>: 1-6, <code>text</code>: array of RichText</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>blockquote</code></td><td><code>blocks</code>: array of child blocks</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>pre</code></td><td><code>text</code>: array of RichText, <code>language</code>: string</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>divider</code></td><td>— (standalone)</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>list</code></td><td><code>items</code>: array of <code>{blocks: [RichBlock]}</code>, <code>ordered</code>: bool</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>footer</code></td><td><code>text</code>: array of RichText</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>table</code></td><td><code>cells</code>: 2D array of <code>{text: [RichText]}</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>photo</code></td><td><code>photo</code>: <code>{type:'photo', media:'url'}</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>video</code></td><td><code>video</code>: <code>{type:'video', media:'url'}</code></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>NOT Working / Untested Block Types</h3>
+<table>
+  <tr><th>Type</th><th>Reason</th><th>Status</th></tr>
+  <tr><td><code>audio</code></td><td>Untested — needs media object</td><td><span class="tag tag-warn">?</span></td></tr>
+  <tr><td><code>collage</code></td><td>Untested</td><td><span class="tag tag-warn">?</span></td></tr>
+  <tr><td><code>slideshow</code></td><td>Untested</td><td><span class="tag tag-warn">?</span></td></tr>
+  <tr><td><code>map</code></td><td>Untested</td><td><span class="tag tag-warn">?</span></td></tr>
+  <tr><td><code>details</code></td><td>Untested</td><td><span class="tag tag-warn">?</span></td></tr>
+</table>
+
+<div class="highlight">
+<strong>Note:</strong> Media (photo, video, audio, slideshows, maps) can be sent via Markdown syntax more easily than via blocks. See Section 8.
+</div>
+
+<h3>Example: Full blocks payload</h3>
+<pre><code>{
+  "chat_id": "@ProgramAryelle",
+  "rich_message": {
+    "blocks": [
+      {"type": "heading", "size": 1, "text": [{"type": "bold", "text": "Title"}]},
+      {"type": "paragraph", "text": [{"type": "italic", "text": "Subtitle"}]},
+      {"type": "divider"},
+      {"type": "blockquote", "blocks": [
+        {"type": "paragraph", "text": [{"type": "bold", "text": "Quoted"}]}
+      ]},
+      {"type": "pre", "text": [{"type": "bold", "text": "code here"}], "language": "python"},
+      {"type": "list", "items": [
+        {"blocks": [{"type": "paragraph", "text": [{"type": "bold", "text": "Item 1"}]}]},
+        {"blocks": [{"type": "paragraph", "text": [{"type": "bold", "text": "Item 2"}]}]}
+      ]},
+      {"type": "table", "cells": [
+        [{"text": [{"type": "bold", "text": "A"}]}, {"text": [{"type": "bold", "text": "B"}]}],
+        [{"text": [{"type": "bold", "text": "C"}]}, {"text": [{"type": "bold", "text": "D"}]}]
+      ]},
+      {"type": "photo", "photo": {"type": "photo", "media": "https://example.com/img.jpg"}},
+      {"type": "footer", "text": [{"type": "bold", "text": "Footer"}]}
+    ]
+  }
+}</code></pre>
+</div>
+
+<!-- 7. INLINES -->
+<div class="section" id="inlines">
+<h2>7. Inline Types (TESTED)</h2>
+<p>Used inside <code>"text": [...]</code> arrays of blocks.</p>
+
+<table>
+  <tr><th>Type</th><th>Fields</th><th>Status</th></tr>
+  <tr><td><code>bold</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>italic</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>underline</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>strikethrough</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>spoiler</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>code</code></td><td><code>text</code>: string</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>marked</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>subscript</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>superscript</code></td><td><code>text</code>: string or array of inlines</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>url</code></td><td><code>text</code>: string, <code>url</code>: string</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>mention</code></td><td><code>text</code>: string, <code>user_id</code>: int</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>text_mention</code></td><td><code>text</code>: string, <code>user</code>: {id, first_name, username}</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>anchor</code></td><td><code>text</code>: string, <code>name</code>: string</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>reference</code></td><td><code>text</code>: string, <code>name</code>: string</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td><code>custom_emoji</code></td><td><code>text</code>: string, <code>custom_emoji_id</code>: string, <code>alternative_text</code>: string</td><td><span class="tag tag-warn">needs valid ID</span></td></tr>
+</table>
+
+<div class="highlight">
+<strong>⚠️ Important:</strong> There is NO <code>text</code> inline type for plain text. Plain text must be wrapped in at least one formatting tag (e.g., <code>bold</code>).
+</div>
+
+<h3>Nesting</h3>
+<p>Inline types can be nested:</p>
+<pre><code>[{"type": "bold", "text": [{"type": "italic", "text": "bold italic"}]}]</code></pre>
+</div>
+
+<!-- 8. MEDIA -->
+<div class="section" id="media">
+<h2>8. Media in Markdown (TESTED)</h2>
+<p>Media is sent via Markdown syntax. <strong>The file extension in the URL determines the media type.</strong></p>
+
+<table>
+  <tr><th>Type</th><th>Syntax</th><th>Extension</th><th>Status</th></tr>
+  <tr><td>Photo</td><td><code>![](url.jpg)</code></td><td>.jpg, .png</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Video</td><td><code>![](url.mp4)</code></td><td>.mp4</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Audio</td><td><code>![](url.mp3)</code></td><td>.mp3</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Voice Note</td><td><code>![](url.ogg)</code></td><td>.ogg</td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Animation/GIF</td><td><code>![](url.gif)</code></td><td>.gif</td><td><span class="tag tag-warn">?</span></td></tr>
+  <tr><td>Photo + caption</td><td><code>![](url.jpg "Caption")</code></td><td></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Slideshow</td><td><code>&lt;tg-slideshow&gt;&lt;img ...&gt;&lt;/tg-slideshow&gt;</code></td><td></td><td><span class="tag tag-ok">✅</span></td></tr>
+  <tr><td>Map</td><td><code>&lt;tg-map lat="..." long="..." zoom="14"/&gt;</code></td><td></td><td><span class="tag tag-ok">✅</span></td></tr>
+</table>
+
+<h3>Slideshow Example</h3>
+<pre><code>&lt;tg-slideshow&gt;
+  &lt;img src="https://example.com/photo1.jpg"/&gt;
+  &lt;img src="https://example.com/photo2.jpg"/&gt;
+  &lt;video src="https://example.com/video.mp4"/&gt;
+  &lt;figcaption&gt;Caption here&lt;/figcaption&gt;
+&lt;/tg-slideshow&gt;</code></pre>
+
+<h3>Map Example</h3>
+<pre><code>&lt;tg-map lat="41.9" long="12.5" zoom="14"/&gt;</code></pre>
+</div>
+
+<!-- 9. STRATEGY -->
+<div class="section" id="strategy">
+<h2>9. Recommended Strategy</h2>
+
+<div class="highlight">
+<h3>The Plan: DOM → Markdown → sendRichMessage</h3>
+<ol style="margin-top:8px">
+  <li>User writes in WYSIWYG editor (contenteditable div)</li>
+  <li>JS converts DOM nodes to Markdown string</li>
+  <li>Send via <code>sendRichMessage</code> with <code>markdown</code> field</li>
+  <li>Fallback: <code>editMessageText</code> + <code>rich_message</code> for edits</li>
+  <li>Fallback: <code>sendMessage</code> + <code>parse_mode=HTML</code> for simple cases</li>
+</ol>
+</div>
+
+<h3>Conversion Rules</h3>
+<table>
+  <tr><th>DOM Element</th><th>Markdown Output</th></tr>
+  <tr><td><code>&lt;b&gt;</code></td><td><code>*text*</code></td></tr>
+  <tr><td><code>&lt;i&gt;</code></td><td><code>_text_</code></td></tr>
+  <tr><td><code>&lt;u&gt;</code></td><td><code>&lt;u&gt;text&lt;/u&gt;</code></td></tr>
+  <tr><td><code>&lt;s&gt;</code></td><td><code>~text~</code></td></tr>
+  <tr><td><code>&lt;code&gt;</code></td><td><code>`text`</code></td></tr>
+  <tr><td><code>&lt;mark&gt;</code></td><td><code>==text==</code></td></tr>
+  <tr><td><code>tg-spoiler</code></td><td><code>||text||</code></td></tr>
+  <tr><td><code>&lt;h1&gt;</code></td><td><code># text</code></td></tr>
+  <tr><td><code>&lt;h2&gt;</code></td><td><code>## text</code></td></tr>
+  <tr><td><code>&lt;h3&gt;</code></td><td><code>### text</code></td></tr>
+  <tr><td><code>&lt;h4&gt;</code></td><td><code>#### text</code></td></tr>
+  <tr><td><code>&lt;h5&gt;</code></td><td><code>##### text</code></td></tr>
+  <tr><td><code>&lt;h6&gt;</code></td><td><code>###### text</code></td></tr>
+  <tr><td><code>&lt;ul&gt;</code></td><td><code>- item</code></td></tr>
+  <tr><td><code>&lt;ol&gt;</code></td><td><code>1. item</code></td></tr>
+  <tr><td><code>&lt;li&gt; checkbox</code></td><td><code>- [ ] todo</code> / <code>- [x] done</code></td></tr>
+  <tr><td><code>&lt;blockquote&gt;</code></td><td><code>&gt; text</code></td></tr>
+  <tr><td><code>&lt;pre&gt;</code></td><td><code>```lang\ncode\n```</code></td></tr>
+  <tr><td><code>&lt;a&gt;</code></td><td><code>[text](url)</code></td></tr>
+  <tr><td><code>&lt;table&gt;</code></td><td><code>| A | B |\n|---|---|\n| 1 | 2 |</code></td></tr>
+  <tr><td><code>&lt;hr&gt;</code></td><td><code>---</code></td></tr>
+  <tr><td><code>&lt;img&gt;</code></td><td><code>![](url.jpg)</code></td></tr>
+  <tr><td><code>tg-math</code></td><td><code>$formula$</code></td></tr>
+  <tr><td><code>tg-math-block</code></td><td><code>$$formula$$</code></td></tr>
+  <tr><td><code>&lt;details&gt;</code></td><td><code>&lt;details&gt;...&lt;/details&gt;</code></td></tr>
+  <tr><td><code>tg-slideshow</code></td><td><code>&lt;tg-slideshow&gt;...&lt;/tg-slideshow&gt;</code></td></tr>
+  <tr><td><code>tg-map</code></td><td><code>&lt;tg-map lat="..." long="..." zoom="..."/&gt;</code></td></tr>
+  <tr><td><code>&lt;sub&gt;</code></td><td><code>&lt;sub&gt;text&lt;/sub&gt;</code></td></tr>
+  <tr><td><code>&lt;sup&gt;</code></td><td><code>&lt;sup&gt;text&lt;/sup&gt;</code></td></tr>
+</table>
+</div>
+
+<!-- 10. FILES -->
+<div class="section" id="files">
+<h2>10. File Structure</h2>
+<pre><code>TelegramFreeRich/
+├── index.html        # Single HTML file (all code)
+├── manifest.json     # PWA manifest
+├── sw.js            # Service Worker (offline)
+└── README.md        # Project docs</code></pre>
+<p><strong>Total: 4 files. No CDN, no dependencies, no frameworks.</strong></p>
+</div>
+
+<!-- 11. DESIGN -->
+<div class="section" id="design">
+<h2>11. UI/UX Design</h2>
+
+<h3>Layout</h3>
+<ul>
+  <li><strong>Desktop:</strong> Split pane — Editor (60%) + Live Preview (40%)</li>
+  <li><strong>Tablet:</strong> 50/50 split</li>
+  <li><strong>Mobile:</strong> Stacked — Editor top, Preview bottom (toggle)</li>
+</ul>
+
+<h3>Theme</h3>
+<ul>
+  <li>Default: Dark theme (Telegram-inspired colors)</li>
+  <li>Optional: Light theme toggle</li>
+  <li>CSS variables for all colors</li>
+</ul>
+
+<h3>Typography</h3>
+<ul>
+  <li>System fonts: <code>-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif</code></li>
+  <li>Code: <code>'Fira Code', 'JetBrains Mono', monospace</code></li>
+  <li>Base size: 16px desktop, 14px mobile</li>
+</ul>
+
+<h3>Icons</h3>
+<ul>
+  <li>All SVG — no emoji, no icon fonts</li>
+  <li>Minimal, clean design</li>
+</ul>
+
+<h3>Features</h3>
+<ul>
+  <li>Floating toolbar with formatting buttons</li>
+  <li>Plus menu for block insertion</li>
+  <li>Settings panel (Bot Token, Chat ID, Send Method)</li>
+  <li>Live Telegram-style preview</li>
+  <li>Drag-and-drop media</li>
+  <li>Keyboard shortcuts (Ctrl+B, I, U, K, E)</li>
+  <li>Focus mode (hide all UI)</li>
+  <li>Clear All button</li>
+  <li>Character counter (32,768 max)</li>
+</ul>
+</div>
+
+<!-- 12. FEATURES -->
+<div class="section" id="features">
+<h2>12. Feature List</h2>
+
+<div class="two-col">
+<div class="card">
+<h4>Inline Formatting</h4>
+<ul>
+  <li>Bold</li><li>Italic</li><li>Underline</li><li>Strikethrough</li>
+  <li>Spoiler</li><li>Highlight/Marked</li><li>Inline Code</li>
+  <li>Subscript</li><li>Superscript</li>
+  <li>Links</li><li>Mentions</li><li>Anchors</li>
+</ul>
+</div>
+<div class="card">
+<h4>Block Elements</h4>
+<ul>
+  <li>Headings H1-H6</li><li>Blockquotes</li><li>Pull Quotes</li>
+  <li>Code Blocks (with language)</li><li>Dividers</li>
+  <li>Collapsible (Details/Summary)</li><li>Footers</li>
+</ul>
+</div>
+<div class="card">
+<h4>Lists</h4>
+<ul>
+  <li>Bullet Lists</li><li>Numbered Lists</li>
+  <li>Checklists (todo/done)</li>
+</ul>
+</div>
+<div class="card">
+<h4>Tables</h4>
+<ul>
+  <li>Basic tables</li><li>Column alignment</li>
+  <li>Headers</li>
+</ul>
+</div>
+<div class="card">
+<h4>Media</h4>
+<ul>
+  <li>Photos</li><li>Videos</li><li>Audio</li><li>Voice Notes</li>
+  <li>Animations/GIFs</li><li>Slideshow</li>
+  <li>Maps (OSM)</li>
+</ul>
+</div>
+<div class="card">
+<h4>Math</h4>
+<ul>
+  <li>Inline math ($formula$)</li>
+  <li>Block math ($$formula$$)</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- 13. TEST RESULTS -->
+<div class="section" id="tested">
+<h2>13. Test Results</h2>
+<p>All tests performed against <code>@ProgramAryelle</code> via Bot API 10.1.</p>
+
+<table>
+  <tr><th>Feature</th><th>Method</th><th>Status</th></tr>
+  <tr><td>sendRichMessage (markdown)</td><td>markdown field</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>sendRichMessage (html)</td><td>html field</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>editMessageText + rich_message</td><td>rich_message param</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Inline: bold, italic, underline, strike, code, marked, spoiler, sub/sup</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Headings H1-H6</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Bullet &amp; Numbered lists</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Checklists</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Blockquote + cite</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Pull quote (aside)</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Code blocks with language</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Table</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Divider (---)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Links</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Math inline ($...$)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Math block ($$...$$)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Details/Collapsible</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Footnotes [^id]</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Photo (jpg extension)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Video (mp4 extension)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Audio (mp3 extension)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Voice note (ogg extension)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Photo + caption</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Slideshow</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>Map (OSM)</td><td>markdown</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML inline tags</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML headings</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML lists + checkbox</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML tables</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML math</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>HTML details</td><td>html</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: heading(size)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: paragraph</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: blockquote(blocks)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: pre(language)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: divider</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: list(items)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: footer</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: table(cells)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: photo(media)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: video(media)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: mention(user_id)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: text_mention(user)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+  <tr><td>blocks: anchor(name)</td><td>blocks</td><td><span class="tag tag-ok">✅ OK</span></td></tr>
+</table>
+
+<p style="margin-top:24px"><strong>Total: 40+ features tested and verified.</strong></p>
+</div>
+
+<hr>
+<p style="text-align:center;color:var(--muted);font-size:13px;margin:40px 0">
+  TelegramFreeRich Documentation — Generated from real API testing<br>
+  "The best things in life are free. The second-best things are also free, if you use a bot."
+</p>
+
+</div>
+</body>
+</html>
