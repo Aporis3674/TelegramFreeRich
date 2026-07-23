@@ -9,7 +9,7 @@
     "build": "electron-builder build --win",
     "build:linux": "electron-builder build --linux"
   },
-  "build": {
+  "publish": null,"build": {
     "appId": "com.aporis.telegramfreerich",
     "productName": "TelegramFreeRich",
     "directories": {
