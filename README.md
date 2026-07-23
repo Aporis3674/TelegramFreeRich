@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="120" alt="TelegramFreeRich">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/React-18-61dafb?logo=react" alt="React 18">
   <img src="https://img.shields.io/badge/Vite-5-646cff?logo=vite" alt="Vite 5">
