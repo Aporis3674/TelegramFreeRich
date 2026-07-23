@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#37aee2"/>
+      <stop offset="1" stop-color="#1a6daa"/>
+    </linearGradient>
+    <linearGradient id="pen" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#e0e0e0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+    <filter id="penShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="2" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    <clipPath id="roundedClip">
+      <rect x="40" y="40" width="432" height="432" rx="96" ry="96"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded square background -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="40" width="432" height="432" rx="96" ry="96" fill="url(#bg)"/>
+  </g>
+
+  <!-- Telegram paper plane -->
+  <g clip-path="url(#roundedClip)">
+    <!-- Shadow layer for depth -->
+    <path d="M220 340c-10 0-9-4-12-14l-22-72 130-78" fill="#b0d4e8" opacity="0.5"/>
+    <path d="M220 340c8 0 11-4 15-8l42-40-52-32" fill="#8cc4d8" opacity="0.4"/>
+    <!-- Main plane -->
+    <path d="M224 338c-10 0-9-3.5-12-13l-22-72 130-78z" fill="#c8daea"/>
+    <path d="M224 338c8 0 11-4 15-8l42-40-52-32z" fill="#a9c9dd"/>
+    <path d="M228 304l48 36c5.5 3 9.5 1.5 10.9-5l19.7-93c2-8.2-3-11.7-8.4-9.3l-148 57c-8 3.2-7.8 7.6-1.4 9.5l30 9.3L302 236c3.2-2 6.2-.9 3.8 1.3z" fill="white"/>
+  </g>
+
+  <!-- Editing pen -->
+  <g filter="url(#penShadow)" transform="translate(305, 100) rotate(45)">
+    <!-- Pen body -->
+    <rect x="0" y="0" width="36" height="120" rx="4" ry="4" fill="url(#pen)"/>
+    <!-- Pen grip lines -->
+    <line x1="6" y1="100" x2="30" y2="100" stroke="#bbb" stroke-width="1.5"/>
+    <line x1="6" y1="106" x2="30" y2="106" stroke="#bbb" stroke-width="1.5"/>
+    <line x1="6" y1="112" x2="30" y2="112" stroke="#bbb" stroke-width="1.5"/>
+    <!-- Pen tip -->
+    <path d="M0 120 L18 152 L36 120 Z" fill="#37aee2"/>
+    <!-- Pen tip point -->
+    <path d="M12 138 L18 152 L24 138 Z" fill="#1a6daa"/>
+    <!-- Pen top cap -->
+    <rect x="2" y="-8" width="32" height="12" rx="6" ry="6" fill="#e8e8e8"/>
+    <!-- Eraser -->
+    <rect x="6" y="-8" width="24" height="10" rx="5" ry="5" fill="#f0a0a0"/>
+  </g>
+
+  <!-- Small sparkle/ink drop near pen tip -->
+  <circle cx="418" cy="310" r="5" fill="white" opacity="0.8"/>
+  <circle cx="408" cy="322" r="3" fill="white" opacity="0.5"/>
+  <circle cx="425" cy="325" r="2.5" fill="white" opacity="0.4"/>
+</svg>
