@@ -69,6 +69,34 @@ function stripHtml(html) {
   return tmp.textContent || '';
 }
 
+/** Strip formatting tags when cursor is in an empty block */
+function clearFormattingIfEmpty(el) {
+  const text = el.textContent.trim();
+  if (text !== '') return;
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const node = sel.anchorNode;
+  if (!node) return;
+  // Walk up from text node to find parent element
+  let parent = node.nodeType === 3 ? node.parentElement : node;
+  while (parent && parent !== el) {
+    if (parent.tagName === 'STRONG' || parent.tagName === 'EM' ||
+        parent.tagName === 'U' || parent.tagName === 'S' ||
+        parent.tagName === 'CODE' || parent.classList?.contains('tg-spoiler')) {
+      // Remove the formatting tag, move cursor to contenteditable root
+      const textNode = document.createTextNode('');
+      parent.replaceWith(textNode);
+      const range = document.createRange();
+      range.setStart(textNode, 0);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+    parent = parent.parentElement;
+  }
+}
+
 /** Update block text/html from a contenteditable element's innerHTML */
 function syncEditableBlock(block, el) {
   const html = el.innerHTML;
@@ -148,7 +176,11 @@ function renderBlock(block, index) {
       contentArea.contentEditable = 'true';
       contentArea.innerHTML = block.html || block.text || '';
       contentArea.dataset.placeholder = 'Type something...';
+      contentArea.addEventListener('beforeinput', () => clearFormattingIfEmpty(contentArea));
       contentArea.addEventListener('input', () => {
+        if (contentArea.textContent.trim() === '') {
+          contentArea.innerHTML = '';
+        }
         syncEditableBlock(block, contentArea);
         updatePreview();
       });
@@ -159,7 +191,11 @@ function renderBlock(block, index) {
       contentArea.contentEditable = 'true';
       contentArea.innerHTML = block.html || block.text || '';
       contentArea.dataset.placeholder = `Heading ${block.size}`;
+      contentArea.addEventListener('beforeinput', () => clearFormattingIfEmpty(contentArea));
       contentArea.addEventListener('input', () => {
+        if (contentArea.textContent.trim() === '') {
+          contentArea.innerHTML = '';
+        }
         syncEditableBlock(block, contentArea);
         updatePreview();
       });
