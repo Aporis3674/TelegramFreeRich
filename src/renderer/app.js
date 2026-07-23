@@ -919,22 +919,21 @@ function blocksToMarkdown(blocks) {
         break;
       case 'image':
         if (block.url) {
-          const caption = block.caption || '';
-          lines.push(`![${caption}](${block.url})`);
+          lines.push(`<img src="${block.url}"/>`);
+          if (block.caption) lines.push(`<figcaption>${block.caption}</figcaption>`);
           lines.push('');
         }
         break;
       case 'video':
         if (block.url) {
-          const caption = block.caption || '';
-          lines.push(`![${caption}](${block.url})`);
+          lines.push(`<video src="${block.url}"/>`);
+          if (block.caption) lines.push(`<figcaption>${block.caption}</figcaption>`);
           lines.push('');
         }
         break;
       case 'audio':
         if (block.url) {
-          const caption = block.caption || '';
-          lines.push(`![${caption}](${block.url})`);
+          lines.push(`<audio src="${block.url}"/>`);
           lines.push('');
         }
         break;
