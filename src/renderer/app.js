@@ -1,0 +1,1146 @@
+/**
+ * TelegramFreeRich — Main Renderer Script
+ * Block-based WYSIWYG editor for Telegram Bot API 10.1
+ */
+
+// ===================== STATE =====================
+const state = {
+  blocks: [],          // Block[]
+  selectedBlockId: null,
+  sendMode: 'rich',    // rich | draft | edit
+  editMessageId: null,
+  theme: 'dark',
+  settings: {
+    token: '',
+    chatId: '',
+    lang: 'en',
+  },
+};
+
+let blockIdCounter = 0;
+function newId() { return `blk_${++blockIdCounter}_${Date.now()}`; }
+
+// ===================== BLOCK MODEL =====================
+function createBlock(type, data = {}) {
+  const base = { id: newId(), type, ...data };
+  switch (type) {
+    case 'paragraph':
+      return { ...base, text: data.text || '' };
+    case 'heading':
+      return { ...base, level: data.level || 2, text: data.text || '' };
+    case 'code-block':
+      return { ...base, language: data.language || '', text: data.text || '' };
+    case 'bullet-list':
+      return { ...base, items: data.items || [{ text: '' }] };
+    case 'numbered-list':
+      return { ...base, items: data.items || [{ text: '' }] };
+    case 'table':
+      return { ...base, cells: data.cells || [{ cells: ['H1', 'H2'], header: true }, { cells: ['1', '2'], header: false }] };
+    case 'blockquote':
+      return { ...base, text: data.text || '' };
+    case 'pull-quote':
+      return { ...base, text: data.text || '', cite: data.cite || '' };
+    case 'details':
+      return { ...base, summary: data.summary || 'Details', body: data.body || '', open: false };
+    case 'divider':
+      return { ...base };
+    case 'image':
+      return { ...base, url: data.url || '', caption: data.caption || '' };
+    case 'video':
+      return { ...base, url: data.url || '', caption: data.caption || '' };
+    case 'audio':
+      return { ...base, url: data.url || '', caption: data.caption || '' };
+    case 'map':
+      return { ...base, lat: data.lat || '35.6892', long: data.long || '51.3890', zoom: data.zoom || '14' };
+    case 'slideshow':
+      return { ...base, images: data.images || [], caption: data.caption || '' };
+    case 'math':
+      return { ...base, formula: data.formula || '', block: !!data.block };
+    case 'footer':
+      return { ...base, text: data.text || '' };
+    case 'checklist':
+      return { ...base, items: data.items || [{ text: '', checked: false }] };
+    default:
+      return { ...base };
+  }
+}
+
+// ===================== DOM EDITOR =====================
+const editorContainer = () => document.getElementById('blocks-container');
+
+function renderBlocks() {
+  const container = editorContainer();
+  if (!container) return;
+
+  container.innerHTML = '';
+  state.blocks.forEach((block, index) => {
+    container.appendChild(renderBlock(block, index));
+  });
+
+  // Add "add block" button at bottom
+  const addBtn = document.createElement('button');
+  addBtn.id = 'add-block-btn';
+  addBtn.textContent = '+ Add Block';
+  addBtn.addEventListener('click', () => {
+    state.blocks.push(createBlock('paragraph'));
+    renderBlocks();
+    updatePreview();
+  });
+  container.appendChild(addBtn);
+
+  updatePreview();
+}
+
+function renderBlock(block, index) {
+  const card = document.createElement('div');
+  card.className = `block-card${state.selectedBlockId === block.id ? ' selected' : ''}`;
+  card.dataset.type = block.type;
+  card.dataset.id = block.id;
+  if (block.level) card.dataset.level = block.level;
+
+  // Drag handle
+  const drag = document.createElement('div');
+  drag.className = 'block-drag';
+  drag.textContent = '⋮⋮';
+  drag.draggable = true;
+  drag.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.effectAllowed = 'move';
+    card.style.opacity = '0.4';
+  });
+  drag.addEventListener('dragend', () => { card.style.opacity = '1'; });
+  card.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const toIndex = index;
+    if (fromIndex !== toIndex) {
+      const [moved] = state.blocks.splice(fromIndex, 1);
+      state.blocks.splice(toIndex, 0, moved);
+      renderBlocks();
+    }
+  });
+
+  card.appendChild(drag);
+
+  // Block content
+  const contentArea = document.createElement('div');
+  contentArea.className = 'block-content';
+
+  switch (block.type) {
+    case 'paragraph':
+      contentArea.contentEditable = 'true';
+      contentArea.textContent = block.text;
+      contentArea.dataset.placeholder = 'Type something...';
+      contentArea.addEventListener('input', () => {
+        block.text = contentArea.textContent;
+        updatePreview();
+      });
+      contentArea.addEventListener('focus', () => selectBlock(block.id));
+      break;
+
+    case 'heading':
+      contentArea.contentEditable = 'true';
+      contentArea.textContent = block.text;
+      contentArea.dataset.placeholder = `Heading ${block.level}`;
+      contentArea.addEventListener('input', () => {
+        block.text = contentArea.textContent;
+        updatePreview();
+      });
+      contentArea.addEventListener('focus', () => selectBlock(block.id));
+      break;
+
+    case 'code-block': {
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.width = '100%';
+
+      const langInput = document.createElement('input');
+      langInput.type = 'text';
+      langInput.placeholder = 'language (js, python, ...)';
+      langInput.value = block.language;
+      langInput.style.cssText = 'padding:4px 8px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;outline:none;width:100%;';
+      langInput.addEventListener('input', () => {
+        block.language = langInput.value;
+        updatePreview();
+      });
+
+      const codeArea = document.createElement('div');
+      codeArea.contentEditable = 'true';
+      codeArea.textContent = block.text;
+      codeArea.style.cssText = 'padding:8px 0;outline:none;font-family:monospace;min-height:40px;white-space:pre-wrap;tab-size:4;';
+      codeArea.addEventListener('input', () => {
+        block.text = codeArea.textContent;
+        updatePreview();
+      });
+
+      wrapper.appendChild(langInput);
+      wrapper.appendChild(codeArea);
+      contentArea.appendChild(wrapper);
+      contentArea.style.padding = '0';
+      break;
+    }
+
+    case 'bullet-list':
+    case 'numbered-list': {
+      const listDiv = document.createElement('div');
+      listDiv.className = 'list-items';
+      const marker = block.type === 'bullet-list' ? '•' : '1.';
+      let counter = 1;
+      block.items.forEach((item, i) => {
+        const row = document.createElement('div');
+        row.className = 'list-item';
+        const m = document.createElement('span');
+        m.className = 'list-marker';
+        m.textContent = block.type === 'numbered-list' ? `${counter++}.` : marker;
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = item.text;
+        inp.placeholder = 'List item';
+        inp.addEventListener('input', () => {
+          block.items[i].text = inp.value;
+          updatePreview();
+        });
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            block.items.splice(i + 1, 0, { text: '' });
+            renderBlocks();
+          }
+          if (e.key === 'Backspace' && inp.value === '' && block.items.length > 1) {
+            e.preventDefault();
+            block.items.splice(i, 1);
+            renderBlocks();
+          }
+        });
+        row.appendChild(m);
+        row.appendChild(inp);
+        listDiv.appendChild(row);
+      });
+      contentArea.appendChild(listDiv);
+      contentArea.style.padding = '8px 12px';
+      break;
+    }
+
+    case 'table': {
+      const table = document.createElement('table');
+      table.className = 'block-table';
+      block.cells.forEach((row, ri) => {
+        const tr = document.createElement('tr');
+        row.cells.forEach((cellText, ci) => {
+          const cell = document.createElement(row.header ? 'th' : 'td');
+          cell.contentEditable = 'true';
+          cell.textContent = cellText;
+          cell.addEventListener('input', () => {
+            block.cells[ri].cells[ci] = cell.textContent;
+            updatePreview();
+          });
+          tr.appendChild(cell);
+        });
+        table.appendChild(tr);
+      });
+      contentArea.appendChild(table);
+
+      const actions = document.createElement('div');
+      actions.className = 'block-table-actions';
+      const addRow = document.createElement('button');
+      addRow.textContent = '+ Row';
+      addRow.addEventListener('click', () => {
+        const cols = block.cells[0]?.cells.length || 2;
+        block.cells.push({ cells: Array(cols).fill(''), header: false });
+        renderBlocks();
+      });
+      const addCol = document.createElement('button');
+      addCol.textContent = '+ Col';
+      addCol.addEventListener('click', () => {
+        block.cells.forEach(r => r.cells.push(''));
+        renderBlocks();
+      });
+      actions.appendChild(addRow);
+      actions.appendChild(addCol);
+      contentArea.appendChild(actions);
+      contentArea.style.padding = '8px';
+      break;
+    }
+
+    case 'blockquote':
+      contentArea.contentEditable = 'true';
+      contentArea.textContent = block.text;
+      contentArea.dataset.placeholder = 'Blockquote text...';
+      contentArea.addEventListener('input', () => {
+        block.text = contentArea.textContent;
+        updatePreview();
+      });
+      break;
+
+    case 'pull-quote':
+      contentArea.innerHTML = '';
+      const pqText = document.createElement('div');
+      pqText.contentEditable = 'true';
+      pqText.textContent = block.text;
+      pqText.dataset.placeholder = 'Pull quote text...';
+      pqText.addEventListener('input', () => { block.text = pqText.textContent; updatePreview(); });
+      const pqCite = document.createElement('div');
+      pqCite.contentEditable = 'true';
+      pqCite.textContent = block.cite;
+      pqCite.dataset.placeholder = '— Author';
+      pqCite.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
+      pqCite.addEventListener('input', () => { block.cite = pqCite.textContent; updatePreview(); });
+      contentArea.appendChild(pqText);
+      contentArea.appendChild(pqCite);
+      break;
+
+    case 'details': {
+      const details = document.createElement('details');
+      details.open = block.open;
+      const header = document.createElement('div');
+      header.className = `details-header${block.open ? ' open' : ''}`;
+      const chevron = document.createElement('span');
+      chevron.className = 'chevron';
+      chevron.textContent = '▶';
+      const sumInput = document.createElement('input');
+      sumInput.type = 'text';
+      sumInput.value = block.summary;
+      sumInput.placeholder = 'Summary';
+      sumInput.style.cssText = 'flex:1;border:none;background:transparent;color:var(--accent);font-size:14px;font-weight:500;outline:none;';
+      sumInput.addEventListener('input', () => {
+        block.summary = sumInput.value;
+        updatePreview();
+      });
+      header.appendChild(chevron);
+      header.appendChild(sumInput);
+      header.addEventListener('click', (e) => {
+        if (e.target !== sumInput) {
+          block.open = !block.open;
+          details.open = block.open;
+          header.classList.toggle('open', block.open);
+        }
+      });
+      const body = document.createElement('div');
+      body.className = 'details-body';
+      body.contentEditable = 'true';
+      body.textContent = block.body;
+      body.dataset.placeholder = 'Hidden content...';
+      body.addEventListener('input', () => { block.body = body.textContent; updatePreview(); });
+      details.appendChild(header);
+      details.appendChild(body);
+      contentArea.appendChild(details);
+      contentArea.style.padding = '0';
+      break;
+    }
+
+    case 'divider':
+      contentArea.innerHTML = '<hr>';
+      break;
+
+    case 'image':
+    case 'video':
+    case 'audio': {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;width:100%;';
+      const urlInp = document.createElement('input');
+      urlInp.type = 'text';
+      urlInp.value = block.url;
+      urlInp.placeholder = `${block.type} URL (https://...)`;
+      urlInp.style.cssText = 'flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      urlInp.addEventListener('input', () => { block.url = urlInp.value; updatePreview(); });
+      const capInp = document.createElement('input');
+      capInp.type = 'text';
+      capInp.value = block.caption;
+      capInp.placeholder = 'Caption (optional)';
+      capInp.style.cssText = 'flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      capInp.addEventListener('input', () => { block.caption = capInp.value; updatePreview(); });
+      row.appendChild(urlInp);
+      row.appendChild(capInp);
+      contentArea.appendChild(row);
+      contentArea.style.padding = '8px';
+      break;
+    }
+
+    case 'map': {
+      const mapRow = document.createElement('div');
+      mapRow.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;';
+      ['lat', 'long', 'zoom'].forEach(key => {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = block[key];
+        inp.placeholder = key;
+        inp.addEventListener('input', () => { block[key] = inp.value; updatePreview(); });
+        mapRow.appendChild(inp);
+      });
+      contentArea.appendChild(mapRow);
+      contentArea.style.padding = '8px';
+      break;
+    }
+
+    case 'math': {
+      const mathInp = document.createElement('input');
+      mathInp.type = 'text';
+      mathInp.value = block.formula;
+      mathInp.placeholder = block.block ? '$$formula$$' : '$formula$';
+      mathInp.style.cssText = 'width:100%;padding:8px;border:none;background:transparent;color:var(--text);font-family:serif;font-size:16px;font-style:italic;outline:none;';
+      mathInp.addEventListener('input', () => { block.formula = mathInp.value; updatePreview(); });
+      contentArea.appendChild(mathInp);
+      contentArea.style.padding = '8px';
+      break;
+    }
+
+    case 'slideshow': {
+      const slideDiv = document.createElement('div');
+      slideDiv.style.cssText = 'width:100%;';
+      block.images.forEach((img, i) => {
+        const imgRow = document.createElement('div');
+        imgRow.style.cssText = 'display:flex;gap:4px;margin-bottom:4px;';
+        const imgInp = document.createElement('input');
+        imgInp.type = 'text';
+        imgInp.value = img.url || '';
+        imgInp.placeholder = `Image ${i + 1} URL`;
+        imgInp.style.cssText = 'flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+        imgInp.addEventListener('input', () => { block.images[i].url = imgInp.value; updatePreview(); });
+        const rmBtn = document.createElement('button');
+        rmBtn.textContent = '×';
+        rmBtn.style.cssText = 'border:none;background:none;color:var(--danger);cursor:pointer;font-size:14px;';
+        rmBtn.addEventListener('click', () => { block.images.splice(i, 1); renderBlocks(); });
+        imgRow.appendChild(imgInp);
+        imgRow.appendChild(rmBtn);
+        slideDiv.appendChild(imgRow);
+      });
+      const addImg = document.createElement('button');
+      addImg.textContent = '+ Add Image';
+      addImg.style.cssText = 'font-size:11px;padding:4px 8px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;width:100%;margin-top:4px;';
+      addImg.addEventListener('click', () => { block.images.push({ url: '' }); renderBlocks(); });
+      slideDiv.appendChild(addImg);
+      contentArea.appendChild(slideDiv);
+      contentArea.style.padding = '8px';
+      break;
+    }
+
+    case 'footer':
+      contentArea.contentEditable = 'true';
+      contentArea.textContent = block.text;
+      contentArea.dataset.placeholder = 'Footer text...';
+      contentArea.addEventListener('input', () => {
+        block.text = contentArea.textContent;
+        updatePreview();
+      });
+      break;
+
+    case 'checklist': {
+      const clDiv = document.createElement('div');
+      clDiv.style.cssText = 'display:flex;flex-direction:column;gap:4px;width:100%;';
+      block.items.forEach((item, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = item.checked;
+        cb.style.cssText = 'accent-color:var(--accent2);';
+        cb.addEventListener('change', () => { block.items[i].checked = cb.checked; updatePreview(); });
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = item.text;
+        inp.placeholder = 'Todo item';
+        inp.style.cssText = 'flex:1;border:none;background:transparent;color:var(--text);font-size:14px;outline:none;padding:4px 0;';
+        inp.addEventListener('input', () => { block.items[i].text = inp.value; updatePreview(); });
+        row.appendChild(cb);
+        row.appendChild(inp);
+        clDiv.appendChild(row);
+      });
+      const addCl = document.createElement('button');
+      addCl.textContent = '+ Add Item';
+      addCl.style.cssText = 'font-size:11px;padding:4px;border:none;background:none;color:var(--text-dim);cursor:pointer;text-align:left;';
+      addCl.addEventListener('click', () => { block.items.push({ text: '', checked: false }); renderBlocks(); });
+      clDiv.appendChild(addCl);
+      contentArea.appendChild(clDiv);
+      contentArea.style.padding = '8px 12px';
+      break;
+    }
+  }
+
+  card.appendChild(contentArea);
+
+  // Delete button
+  const actions = document.createElement('div');
+  actions.className = 'block-actions';
+  const delBtn = document.createElement('button');
+  delBtn.title = 'Delete block';
+  delBtn.textContent = '×';
+  delBtn.addEventListener('click', () => {
+    state.blocks = state.blocks.filter(b => b.id !== block.id);
+    renderBlocks();
+  });
+  actions.appendChild(delBtn);
+  card.appendChild(actions);
+
+  return card;
+}
+
+function selectBlock(id) {
+  state.selectedBlockId = id;
+  document.querySelectorAll('.block-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.id === id);
+  });
+}
+
+// ===================== TOOLBAR =====================
+function initToolbar() {
+  document.querySelectorAll('.tbtn').forEach(btn => {
+    btn.addEventListener('click', () => handleToolbarCommand(btn));
+  });
+}
+
+function handleToolbarCommand(btn) {
+  const cmd = btn.dataset.cmd;
+  const activeBlock = state.blocks.find(b => b.id === state.selectedBlockId);
+
+  switch (cmd) {
+    case 'bold':
+    case 'italic':
+    case 'underline':
+    case 'strikethrough':
+    case 'code':
+      applyInlineToSelected(cmd);
+      break;
+    case 'spoiler':
+      applyInlineToSelected('spoiler');
+      break;
+    case 'highlight':
+      applyInlineToSelected('highlight');
+      break;
+    case 'subscript':
+    case 'superscript':
+      applyInlineToSelected(cmd);
+      break;
+    case 'heading':
+      addBlock('heading', { level: parseInt(btn.dataset.level || '2') });
+      break;
+    case 'bullet-list':
+      addBlock('bullet-list');
+      break;
+    case 'numbered-list':
+      addBlock('numbered-list');
+      break;
+    case 'checklist':
+      addBlock('checklist');
+      break;
+    case 'link':
+      showLinkDialog();
+      break;
+    case 'code-block':
+      addBlock('code-block');
+      break;
+    case 'table':
+      addBlock('table');
+      break;
+    case 'details':
+      addBlock('details');
+      break;
+    case 'divider':
+      addBlock('divider');
+      break;
+    case 'footnote':
+      addBlock('footer');
+      break;
+    case 'image':
+      addBlock('image');
+      break;
+    case 'video':
+      addBlock('video');
+      break;
+    case 'map':
+      addBlock('map');
+      break;
+    case 'slideshow':
+      addBlock('slideshow', { images: [{ url: '' }, { url: '' }] });
+      break;
+    case 'math':
+      addBlock('math');
+      break;
+  }
+}
+
+function addBlock(type, data = {}) {
+  const idx = state.selectedBlockId
+    ? state.blocks.findIndex(b => b.id === state.selectedBlockId) + 1
+    : state.blocks.length;
+  state.blocks.splice(idx, 0, createBlock(type, data));
+  renderBlocks();
+  // Focus the new block
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.block-card');
+    if (cards[idx]) {
+      const content = cards[idx].querySelector('[contenteditable], input');
+      if (content) content.focus();
+    }
+  }, 0);
+}
+
+function applyInlineToSelected(type) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const selectedText = range.toString();
+  if (!selectedText) return;
+
+  let wrapper;
+  switch (type) {
+    case 'bold': wrapper = document.createElement('strong'); break;
+    case 'italic': wrapper = document.createElement('em'); break;
+    case 'underline': wrapper = document.createElement('u'); break;
+    case 'strikethrough': wrapper = document.createElement('s'); break;
+    case 'code': wrapper = document.createElement('code'); break;
+    case 'spoiler':
+      wrapper = document.createElement('span');
+      wrapper.className = 'tg-spoiler';
+      break;
+    case 'highlight':
+      wrapper = document.createElement('mark');
+      break;
+    case 'subscript': wrapper = document.createElement('sub'); break;
+    case 'superscript': wrapper = document.createElement('sup'); break;
+    default: return;
+  }
+  wrapper.textContent = selectedText;
+  range.deleteContents();
+  range.insertNode(wrapper);
+
+  // Update block state
+  const card = sel.anchorNode?.closest?.('.block-card');
+  if (card) {
+    const blk = state.blocks.find(b => b.id === card.dataset.id);
+    if (blk && blk.text !== undefined) {
+      blk.text = card.querySelector('.block-content')?.textContent || blk.text;
+    }
+  }
+  updatePreview();
+}
+
+// ===================== LINK DIALOG =====================
+function showLinkDialog() {
+  const dialog = document.getElementById('link-dialog');
+  const sel = window.getSelection();
+  document.getElementById('link-text').value = sel.toString() || '';
+  document.getElementById('link-url').value = '';
+  dialog.classList.remove('hidden');
+  document.getElementById('link-url').focus();
+
+  document.getElementById('btn-link-ok').onclick = () => {
+    const url = document.getElementById('link-url').value;
+    const text = document.getElementById('link-text').value || url;
+    if (url && sel.rangeCount) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = text;
+      range.insertNode(a);
+      updatePreview();
+    }
+    dialog.classList.add('hidden');
+  };
+  document.getElementById('btn-link-cancel').onclick = () => dialog.classList.add('hidden');
+}
+
+// ===================== PREVIEW =====================
+function updatePreview() {
+  const previewEl = document.getElementById('preview-content');
+  if (!previewEl) return;
+
+  previewEl.innerHTML = '';
+  let charCount = 0;
+
+  state.blocks.forEach(block => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'block-hover';
+
+    switch (block.type) {
+      case 'paragraph':
+        wrapper.textContent = block.text;
+        break;
+      case 'heading':
+        const h = document.createElement(`h${Math.min(block.level, 6)}`);
+        h.textContent = block.text;
+        wrapper.appendChild(h);
+        break;
+      case 'code-block': {
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        code.textContent = block.text;
+        if (block.language) code.className = `language-${block.language}`;
+        pre.appendChild(code);
+        wrapper.appendChild(pre);
+        break;
+      }
+      case 'bullet-list': {
+        const ul = document.createElement('ul');
+        block.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.text;
+          ul.appendChild(li);
+        });
+        wrapper.appendChild(ul);
+        break;
+      }
+      case 'numbered-list': {
+        const ol = document.createElement('ol');
+        block.items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.text;
+          ol.appendChild(li);
+        });
+        wrapper.appendChild(ol);
+        break;
+      }
+      case 'checklist': {
+        block.items.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'checklist-item';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = item.checked;
+          cb.disabled = true;
+          const span = document.createElement('span');
+          span.textContent = item.text;
+          row.appendChild(cb);
+          row.appendChild(span);
+          wrapper.appendChild(row);
+        });
+        break;
+      }
+      case 'table': {
+        const table = document.createElement('table');
+        block.cells.forEach((row, ri) => {
+          const tr = document.createElement('tr');
+          row.cells.forEach(cellText => {
+            const cell = document.createElement(row.header ? 'th' : 'td');
+            cell.textContent = cellText;
+            tr.appendChild(cell);
+          });
+          table.appendChild(tr);
+        });
+        wrapper.appendChild(table);
+        break;
+      }
+      case 'blockquote': {
+        const bq = document.createElement('blockquote');
+        bq.textContent = block.text;
+        wrapper.appendChild(bq);
+        break;
+      }
+      case 'pull-quote': {
+        const aside = document.createElement('aside');
+        aside.textContent = block.text;
+        if (block.cite) {
+          const cite = document.createElement('cite');
+          cite.textContent = `\n— ${block.cite}`;
+          aside.appendChild(cite);
+        }
+        wrapper.appendChild(aside);
+        break;
+      }
+      case 'details': {
+        const det = document.createElement('details');
+        det.open = block.open;
+        const sum = document.createElement('summary');
+        sum.textContent = block.summary;
+        const inner = document.createElement('div');
+        inner.className = 'details-inner';
+        inner.textContent = block.body;
+        det.appendChild(sum);
+        det.appendChild(inner);
+        wrapper.appendChild(det);
+        break;
+      }
+      case 'divider': {
+        const hr = document.createElement('hr');
+        wrapper.appendChild(hr);
+        break;
+      }
+      case 'image': {
+        if (block.url) {
+          const img = document.createElement('img');
+          img.src = block.url;
+          img.style.cssText = 'max-width:100%;border-radius:8px;';
+          wrapper.appendChild(img);
+        }
+        if (block.caption) {
+          const cap = document.createElement('div');
+          cap.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:4px;';
+          cap.textContent = block.caption;
+          wrapper.appendChild(cap);
+        }
+        break;
+      }
+      case 'video': {
+        if (block.url) {
+          const vid = document.createElement('video');
+          vid.src = block.url;
+          vid.controls = true;
+          vid.style.cssText = 'max-width:100%;border-radius:8px;';
+          wrapper.appendChild(vid);
+        }
+        break;
+      }
+      case 'audio': {
+        if (block.url) {
+          const aud = document.createElement('audio');
+          aud.src = block.url;
+          aud.controls = true;
+          aud.style.cssText = 'width:100%;';
+          wrapper.appendChild(aud);
+        }
+        break;
+      }
+      case 'map': {
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(block.long)-0.01}%2C${parseFloat(block.lat)-0.01}%2C${parseFloat(block.long)+0.01}%2C${parseFloat(block.lat)+0.01}&layer=mapnik&marker=${block.lat}%2C${block.long}`;
+        iframe.style.cssText = 'width:100%;height:200px;border:none;border-radius:8px;';
+        wrapper.appendChild(iframe);
+        break;
+      }
+      case 'slideshow': {
+        if (block.images.length) {
+          const slideshow = document.createElement('div');
+          slideshow.style.cssText = 'display:flex;gap:4px;overflow-x:auto;';
+          block.images.forEach(img => {
+            if (img.url) {
+              const sImg = document.createElement('img');
+              sImg.src = img.url;
+              sImg.style.cssText = 'height:150px;border-radius:8px;flex-shrink:0;';
+              slideshow.appendChild(sImg);
+            }
+          });
+          wrapper.appendChild(slideshow);
+        }
+        break;
+      }
+      case 'math': {
+        const mathSpan = document.createElement('span');
+        mathSpan.style.cssText = 'font-family:serif;font-style:italic;font-size:16px;';
+        mathSpan.textContent = block.block ? `$$${block.formula}$$` : `$${block.formula}$`;
+        wrapper.appendChild(mathSpan);
+        break;
+      }
+      case 'footer': {
+        const footer = document.createElement('div');
+        footer.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:8px;';
+        footer.textContent = block.text;
+        wrapper.appendChild(footer);
+        break;
+      }
+    }
+
+    previewEl.appendChild(wrapper);
+    charCount += JSON.stringify(block).length;
+  });
+
+  document.getElementById('char-count').textContent =
+    `${charCount.toLocaleString()} / 32,768`;
+}
+
+// ===================== CONVERT TO API FORMAT =====================
+function blocksToAPI(blocks) {
+  return blocks.map(block => {
+    switch (block.type) {
+      case 'paragraph':
+        return { type: 'paragraph', text: block.text };
+      case 'heading':
+        return { type: 'heading', level: block.level, text: block.text };
+      case 'code-block':
+        return { type: 'pre', text: block.text, language: block.language || undefined };
+      case 'bullet-list':
+        return { type: 'list', style: 'bullet', items: block.items.map(i => ({ text: i.text })) };
+      case 'numbered-list':
+        return { type: 'list', style: 'numbered', items: block.items.map(i => ({ text: i.text })) };
+      case 'table':
+        return { type: 'table', cells: block.cells.map(r => ({ text: r.cells })) };
+      case 'blockquote':
+        return { type: 'blockquote', text: block.text };
+      case 'pull-quote':
+        return { type: 'aside', text: block.text, cite: block.cite };
+      case 'details':
+        return { type: 'details', summary: block.summary, content: block.body };
+      case 'divider':
+        return { type: 'divider' };
+      case 'image':
+        return { type: 'photo', media: block.url, caption: block.caption || undefined };
+      case 'video':
+        return { type: 'video', media: block.url, caption: block.caption || undefined };
+      case 'audio':
+        return { type: 'audio', media: block.url, caption: block.caption || undefined };
+      case 'map':
+        return { type: 'map', lat: parseFloat(block.lat), long: parseFloat(block.long), zoom: parseInt(block.zoom) };
+      case 'slideshow':
+        return { type: 'slideshow', images: block.images.map(i => ({ url: i.url })) };
+      case 'math':
+        return block.block ? { type: 'math_block', formula: block.formula } : { type: 'math_inline', formula: block.formula };
+      case 'footer':
+        return { type: 'footer', text: block.text };
+      default:
+        return { type: 'paragraph', text: '' };
+    }
+  });
+}
+
+function blocksToChecklist(blocks) {
+  const checkBlocks = blocks.filter(b => b.type === 'checklist');
+  if (!checkBlocks.length) return null;
+  const items = [];
+  checkBlocks.forEach(b => {
+    b.items.forEach(item => {
+      items.push({ text: item.text, checked: item.checked });
+    });
+  });
+  return items;
+}
+
+// ===================== API =====================
+async function sendRichMessage(blocks) {
+  const token = state.settings.token;
+  const chatId = state.settings.chatId;
+  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
+
+  const apiBlocks = blocksToAPI(blocks);
+  const body = {
+    chat_id: chatId,
+    rich_message: { blocks: apiBlocks },
+  };
+
+  try {
+    const res = await window.tgAPI.send(token, 'sendRichMessage', body);
+    if (res.ok) {
+      toast('Message sent!', 'success');
+    } else {
+      toast(`Error: ${res.description || 'Unknown error'}`, 'error');
+    }
+  } catch (e) {
+    toast(`API error: ${e.message}`, 'error');
+  }
+}
+
+async function sendChecklist(items) {
+  const token = state.settings.token;
+  const chatId = state.settings.chatId;
+  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
+
+  const body = {
+    chat_id: chatId,
+    checklist: { items },
+  };
+
+  try {
+    const res = await window.tgAPI.send(token, 'sendChecklist', body);
+    if (res.ok) {
+      toast('Checklist sent!', 'success');
+    } else {
+      toast(`Checklist error: ${res.description || 'Unknown error'}`, 'error');
+    }
+  } catch (e) {
+    toast(`API error: ${e.message}`, 'error');
+  }
+}
+
+async function sendDraft(blocks) {
+  const token = state.settings.token;
+  const chatId = state.settings.chatId;
+  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
+
+  const apiBlocks = blocksToAPI(blocks);
+  const body = {
+    chat_id: chatId,
+    rich_message: { blocks: apiBlocks },
+  };
+
+  try {
+    const res = await window.tgAPI.send(token, 'sendRichMessageDraft', body);
+    if (res.ok) toast('Draft sent (30s)', 'info');
+    else toast(`Draft error: ${res.description}`, 'error');
+  } catch (e) {
+    toast(`API error: ${e.message}`, 'error');
+  }
+}
+
+async function editMessage(blocks) {
+  const token = state.settings.token;
+  const chatId = state.settings.chatId;
+  const msgId = state.editMessageId;
+  if (!token || !chatId || !msgId) { toast('Settings or message ID incomplete', 'error'); return; }
+
+  const apiBlocks = blocksToAPI(blocks);
+  const body = {
+    chat_id: chatId,
+    message_id: parseInt(msgId),
+    rich_message: { blocks: apiBlocks },
+  };
+
+  try {
+    const res = await window.tgAPI.send(token, 'editMessageText', body);
+    if (res.ok) toast('Message edited!', 'success');
+    else toast(`Edit error: ${res.description}`, 'error');
+  } catch (e) {
+    toast(`API error: ${e.message}`, 'error');
+  }
+}
+
+async function testConnection() {
+  const token = state.settings.token;
+  if (!token) { toast('Enter a bot token first', 'error'); return; }
+
+  const statusEl = document.getElementById('connection-status');
+  statusEl.textContent = 'Testing...';
+  statusEl.className = '';
+
+  try {
+    const res = await window.tgAPI.send(token, 'getMe', {});
+    if (res.ok) {
+      statusEl.textContent = `Connected: @${res.result.username} (${res.result.first_name})`;
+      statusEl.className = 'ok';
+      toast('Connection successful', 'success');
+    } else {
+      statusEl.textContent = `Error: ${res.description}`;
+      statusEl.className = 'error';
+    }
+  } catch (e) {
+    statusEl.textContent = `Error: ${e.message}`;
+    statusEl.className = 'error';
+  }
+}
+
+// ===================== SEND HANDLER =====================
+function handleSend() {
+  const richBlocks = state.blocks.filter(b => b.type !== 'checklist');
+  const checkBlocks = state.blocks.filter(b => b.type === 'checklist');
+
+  switch (state.sendMode) {
+    case 'rich':
+      if (richBlocks.length) sendRichMessage(richBlocks);
+      if (checkBlocks.length) sendChecklist(checkBlocks);
+      break;
+    case 'draft':
+      sendDraft(richBlocks);
+      break;
+    case 'edit':
+      editMessage(richBlocks);
+      break;
+  }
+}
+
+// ===================== SETTINGS =====================
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('tfr_settings');
+    if (saved) Object.assign(state.settings, JSON.parse(saved));
+  } catch {}
+}
+
+function saveSettings() {
+  state.settings.token = document.getElementById('input-token').value;
+  state.settings.chatId = document.getElementById('input-chat').value;
+  state.settings.lang = document.getElementById('input-lang').value;
+  localStorage.setItem('tfr_settings', JSON.stringify(state.settings));
+  toast('Settings saved', 'success');
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+
+function openSettings() {
+  document.getElementById('input-token').value = state.settings.token;
+  document.getElementById('input-chat').value = state.settings.chatId;
+  document.getElementById('input-lang').value = state.settings.lang;
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+// ===================== THEME =====================
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.body.classList.toggle('light', state.theme === 'light');
+  localStorage.setItem('tfr_theme', state.theme);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('tfr_theme');
+  if (saved) {
+    state.theme = saved;
+    document.body.classList.toggle('light', saved === 'light');
+  }
+}
+
+// ===================== TOAST =====================
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ===================== KEYBOARD SHORTCUTS =====================
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'b') { e.preventDefault(); applyInlineToSelected('bold'); }
+  if (e.ctrlKey && e.key === 'i') { e.preventDefault(); applyInlineToSelected('italic'); }
+  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); applyInlineToSelected('underline'); }
+  if (e.ctrlKey && e.key === 'e') { e.preventDefault(); applyInlineToSelected('code'); }
+  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); showLinkDialog(); }
+});
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  loadTheme();
+  initToolbar();
+
+  // Add initial blocks
+  if (state.blocks.length === 0) {
+    state.blocks.push(createBlock('paragraph', { text: '' }));
+  }
+  renderBlocks();
+
+  // Send mode
+  document.querySelectorAll('input[name="send-mode"]').forEach(r => {
+    r.addEventListener('change', () => {
+      state.sendMode = r.value;
+      document.getElementById('message-id').style.display =
+        r.value === 'edit' ? 'block' : 'none';
+    });
+  });
+
+  // Buttons
+  document.getElementById('btn-send').addEventListener('click', handleSend);
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    state.blocks = [createBlock('paragraph')];
+    renderBlocks();
+    toast('Cleared', 'info');
+  });
+  document.getElementById('btn-settings').addEventListener('click', openSettings);
+  document.getElementById('btn-close-settings').addEventListener('click', () => {
+    document.getElementById('settings-overlay').classList.add('hidden');
+  });
+  document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+  document.getElementById('btn-test-connection').addEventListener('click', testConnection);
+  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+
+  // Message ID input
+  document.getElementById('message-id').addEventListener('input', (e) => {
+    state.editMessageId = e.target.value;
+  });
+
+  // Focus mode
+  document.getElementById('btn-focus').addEventListener('click', () => {
+    const overlay = document.getElementById('focus-overlay');
+    overlay.classList.toggle('hidden');
+    if (!overlay.classList.contains('hidden')) {
+      const focusEditor = document.getElementById('focus-editor');
+      focusEditor.contentEditable = 'true';
+      focusEditor.focus();
+      focusEditor.addEventListener('blur', () => {
+        // Sync back
+      });
+    }
+  });
+  document.getElementById('focus-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'focus-overlay') {
+      e.target.classList.add('hidden');
+    }
+  });
+});
