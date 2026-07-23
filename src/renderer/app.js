@@ -25,9 +25,9 @@ function createBlock(type, data = {}) {
   const base = { id: newId(), type, ...data };
   switch (type) {
     case 'paragraph':
-      return { ...base, text: data.text || '' };
+      return { ...base, text: data.text || '', html: data.html || '' };
     case 'heading':
-      return { ...base, level: data.level || 2, text: data.text || '' };
+      return { ...base, size: data.size || 2, text: data.text || '', html: data.html || '' };
     case 'code-block':
       return { ...base, language: data.language || '', text: data.text || '' };
     case 'bullet-list':
@@ -50,12 +50,8 @@ function createBlock(type, data = {}) {
       return { ...base, url: data.url || '', caption: data.caption || '' };
     case 'audio':
       return { ...base, url: data.url || '', caption: data.caption || '' };
-    case 'map':
-      return { ...base, lat: data.lat || '35.6892', long: data.long || '51.3890', zoom: data.zoom || '14' };
     case 'slideshow':
       return { ...base, images: data.images || [], caption: data.caption || '' };
-    case 'math':
-      return { ...base, formula: data.formula || '', block: !!data.block };
     case 'footer':
       return { ...base, text: data.text || '' };
     case 'checklist':
@@ -63,6 +59,21 @@ function createBlock(type, data = {}) {
     default:
       return { ...base };
   }
+}
+
+// ===================== HELPERS =====================
+/** Strip HTML tags to get plain text */
+function stripHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || '';
+}
+
+/** Update block text/html from a contenteditable element's innerHTML */
+function syncEditableBlock(block, el) {
+  const html = el.innerHTML;
+  block.html = html;
+  block.text = stripHtml(html);
 }
 
 // ===================== DOM EDITOR =====================
@@ -96,7 +107,7 @@ function renderBlock(block, index) {
   card.className = `block-card${state.selectedBlockId === block.id ? ' selected' : ''}`;
   card.dataset.type = block.type;
   card.dataset.id = block.id;
-  if (block.level) card.dataset.level = block.level;
+  if (block.size) card.dataset.size = block.size;
 
   // Drag handle
   const drag = document.createElement('div');
@@ -130,10 +141,10 @@ function renderBlock(block, index) {
   switch (block.type) {
     case 'paragraph':
       contentArea.contentEditable = 'true';
-      contentArea.textContent = block.text;
+      contentArea.innerHTML = block.html || block.text || '';
       contentArea.dataset.placeholder = 'Type something...';
       contentArea.addEventListener('input', () => {
-        block.text = contentArea.textContent;
+        syncEditableBlock(block, contentArea);
         updatePreview();
       });
       contentArea.addEventListener('focus', () => selectBlock(block.id));
@@ -141,10 +152,10 @@ function renderBlock(block, index) {
 
     case 'heading':
       contentArea.contentEditable = 'true';
-      contentArea.textContent = block.text;
-      contentArea.dataset.placeholder = `Heading ${block.level}`;
+      contentArea.innerHTML = block.html || block.text || '';
+      contentArea.dataset.placeholder = `Heading ${block.size}`;
       contentArea.addEventListener('input', () => {
-        block.text = contentArea.textContent;
+        syncEditableBlock(block, contentArea);
         updatePreview();
       });
       contentArea.addEventListener('focus', () => selectBlock(block.id));
@@ -266,21 +277,22 @@ function renderBlock(block, index) {
 
     case 'blockquote':
       contentArea.contentEditable = 'true';
-      contentArea.textContent = block.text;
+      contentArea.innerHTML = block.html || block.text || '';
       contentArea.dataset.placeholder = 'Blockquote text...';
       contentArea.addEventListener('input', () => {
-        block.text = contentArea.textContent;
+        syncEditableBlock(block, contentArea);
         updatePreview();
       });
+      contentArea.addEventListener('focus', () => selectBlock(block.id));
       break;
 
-    case 'pull-quote':
+    case 'pull-quote': {
       contentArea.innerHTML = '';
       const pqText = document.createElement('div');
       pqText.contentEditable = 'true';
-      pqText.textContent = block.text;
+      pqText.innerHTML = block.html || block.text || '';
       pqText.dataset.placeholder = 'Pull quote text...';
-      pqText.addEventListener('input', () => { block.text = pqText.textContent; updatePreview(); });
+      pqText.addEventListener('input', () => { syncEditableBlock(block, pqText); updatePreview(); });
       const pqCite = document.createElement('div');
       pqCite.contentEditable = 'true';
       pqCite.textContent = block.cite;
@@ -290,6 +302,7 @@ function renderBlock(block, index) {
       contentArea.appendChild(pqText);
       contentArea.appendChild(pqCite);
       break;
+    }
 
     case 'details': {
       const details = document.createElement('details');
@@ -320,9 +333,9 @@ function renderBlock(block, index) {
       const body = document.createElement('div');
       body.className = 'details-body';
       body.contentEditable = 'true';
-      body.textContent = block.body;
+      body.innerHTML = block.html || block.body || '';
       body.dataset.placeholder = 'Hidden content...';
-      body.addEventListener('input', () => { block.body = body.textContent; updatePreview(); });
+      body.addEventListener('input', () => { block.html = body.innerHTML; block.body = stripHtml(body.innerHTML); updatePreview(); });
       details.appendChild(header);
       details.appendChild(body);
       contentArea.appendChild(details);
@@ -354,34 +367,6 @@ function renderBlock(block, index) {
       row.appendChild(urlInp);
       row.appendChild(capInp);
       contentArea.appendChild(row);
-      contentArea.style.padding = '8px';
-      break;
-    }
-
-    case 'map': {
-      const mapRow = document.createElement('div');
-      mapRow.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%;';
-      ['lat', 'long', 'zoom'].forEach(key => {
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.value = block[key];
-        inp.placeholder = key;
-        inp.addEventListener('input', () => { block[key] = inp.value; updatePreview(); });
-        mapRow.appendChild(inp);
-      });
-      contentArea.appendChild(mapRow);
-      contentArea.style.padding = '8px';
-      break;
-    }
-
-    case 'math': {
-      const mathInp = document.createElement('input');
-      mathInp.type = 'text';
-      mathInp.value = block.formula;
-      mathInp.placeholder = block.block ? '$$formula$$' : '$formula$';
-      mathInp.style.cssText = 'width:100%;padding:8px;border:none;background:transparent;color:var(--text);font-family:serif;font-size:16px;font-style:italic;outline:none;';
-      mathInp.addEventListener('input', () => { block.formula = mathInp.value; updatePreview(); });
-      contentArea.appendChild(mathInp);
       contentArea.style.padding = '8px';
       break;
     }
@@ -435,7 +420,7 @@ function renderBlock(block, index) {
         const cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.checked = item.checked;
-        cb.style.cssText = 'accent-color:var(--accent2);';
+        cb.style.cssText = 'accent-color:var(--accent);';
         cb.addEventListener('change', () => { block.items[i].checked = cb.checked; updatePreview(); });
         const inp = document.createElement('input');
         inp.type = 'text';
@@ -492,7 +477,6 @@ function initToolbar() {
 
 function handleToolbarCommand(btn) {
   const cmd = btn.dataset.cmd;
-  const activeBlock = state.blocks.find(b => b.id === state.selectedBlockId);
 
   switch (cmd) {
     case 'bold':
@@ -513,7 +497,7 @@ function handleToolbarCommand(btn) {
       applyInlineToSelected(cmd);
       break;
     case 'heading':
-      addBlock('heading', { level: parseInt(btn.dataset.level || '2') });
+      addBlock('heading', { size: parseInt(btn.dataset.level || '2') });
       break;
     case 'bullet-list':
       addBlock('bullet-list');
@@ -523,9 +507,6 @@ function handleToolbarCommand(btn) {
       break;
     case 'checklist':
       addBlock('checklist');
-      break;
-    case 'link':
-      showLinkDialog();
       break;
     case 'code-block':
       addBlock('code-block');
@@ -548,14 +529,11 @@ function handleToolbarCommand(btn) {
     case 'video':
       addBlock('video');
       break;
-    case 'map':
-      addBlock('map');
+    case 'audio':
+      addBlock('audio');
       break;
     case 'slideshow':
       addBlock('slideshow', { images: [{ url: '' }, { url: '' }] });
-      break;
-    case 'math':
-      addBlock('math');
       break;
   }
 }
@@ -605,41 +583,18 @@ function applyInlineToSelected(type) {
   range.deleteContents();
   range.insertNode(wrapper);
 
-  // Update block state
+  // Update block state from the contenteditable element
   const card = sel.anchorNode?.closest?.('.block-card');
   if (card) {
     const blk = state.blocks.find(b => b.id === card.dataset.id);
-    if (blk && blk.text !== undefined) {
-      blk.text = card.querySelector('.block-content')?.textContent || blk.text;
+    if (blk) {
+      const contentEl = card.querySelector('.block-content');
+      if (contentEl && contentEl.contentEditable === 'true') {
+        syncEditableBlock(blk, contentEl);
+      }
     }
   }
   updatePreview();
-}
-
-// ===================== LINK DIALOG =====================
-function showLinkDialog() {
-  const dialog = document.getElementById('link-dialog');
-  const sel = window.getSelection();
-  document.getElementById('link-text').value = sel.toString() || '';
-  document.getElementById('link-url').value = '';
-  dialog.classList.remove('hidden');
-  document.getElementById('link-url').focus();
-
-  document.getElementById('btn-link-ok').onclick = () => {
-    const url = document.getElementById('link-url').value;
-    const text = document.getElementById('link-text').value || url;
-    if (url && sel.rangeCount) {
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-      const a = document.createElement('a');
-      a.href = url;
-      a.textContent = text;
-      range.insertNode(a);
-      updatePreview();
-    }
-    dialog.classList.add('hidden');
-  };
-  document.getElementById('btn-link-cancel').onclick = () => dialog.classList.add('hidden');
 }
 
 // ===================== PREVIEW =====================
@@ -656,13 +611,15 @@ function updatePreview() {
 
     switch (block.type) {
       case 'paragraph':
-        wrapper.textContent = block.text;
+        // Render HTML to preserve inline formatting
+        wrapper.innerHTML = block.html || block.text || '';
         break;
-      case 'heading':
-        const h = document.createElement(`h${Math.min(block.level, 6)}`);
-        h.textContent = block.text;
+      case 'heading': {
+        const h = document.createElement(`h${Math.min(block.size || 2, 6)}`);
+        h.innerHTML = block.html || block.text || '';
         wrapper.appendChild(h);
         break;
+      }
       case 'code-block': {
         const pre = document.createElement('pre');
         const code = document.createElement('code');
@@ -710,7 +667,7 @@ function updatePreview() {
       }
       case 'table': {
         const table = document.createElement('table');
-        block.cells.forEach((row, ri) => {
+        block.cells.forEach((row) => {
           const tr = document.createElement('tr');
           row.cells.forEach(cellText => {
             const cell = document.createElement(row.header ? 'th' : 'td');
@@ -724,13 +681,13 @@ function updatePreview() {
       }
       case 'blockquote': {
         const bq = document.createElement('blockquote');
-        bq.textContent = block.text;
+        bq.innerHTML = block.html || block.text || '';
         wrapper.appendChild(bq);
         break;
       }
       case 'pull-quote': {
         const aside = document.createElement('aside');
-        aside.textContent = block.text;
+        aside.innerHTML = block.html || block.text || '';
         if (block.cite) {
           const cite = document.createElement('cite');
           cite.textContent = `\n— ${block.cite}`;
@@ -746,7 +703,7 @@ function updatePreview() {
         sum.textContent = block.summary;
         const inner = document.createElement('div');
         inner.className = 'details-inner';
-        inner.textContent = block.body;
+        inner.innerHTML = block.html || block.body || '';
         det.appendChild(sum);
         det.appendChild(inner);
         wrapper.appendChild(det);
@@ -792,13 +749,6 @@ function updatePreview() {
         }
         break;
       }
-      case 'map': {
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(block.long)-0.01}%2C${parseFloat(block.lat)-0.01}%2C${parseFloat(block.long)+0.01}%2C${parseFloat(block.lat)+0.01}&layer=mapnik&marker=${block.lat}%2C${block.long}`;
-        iframe.style.cssText = 'width:100%;height:200px;border:none;border-radius:8px;';
-        wrapper.appendChild(iframe);
-        break;
-      }
       case 'slideshow': {
         if (block.images.length) {
           const slideshow = document.createElement('div');
@@ -813,13 +763,6 @@ function updatePreview() {
           });
           wrapper.appendChild(slideshow);
         }
-        break;
-      }
-      case 'math': {
-        const mathSpan = document.createElement('span');
-        mathSpan.style.cssText = 'font-family:serif;font-style:italic;font-size:16px;';
-        mathSpan.textContent = block.block ? `$$${block.formula}$$` : `$${block.formula}$`;
-        wrapper.appendChild(mathSpan);
         break;
       }
       case 'footer': {
@@ -844,55 +787,94 @@ function blocksToAPI(blocks) {
   return blocks.map(block => {
     switch (block.type) {
       case 'paragraph':
-        return { type: 'paragraph', text: block.text };
+        return { type: 'paragraph', text: block.text || '' };
       case 'heading':
-        return { type: 'heading', level: block.level, text: block.text };
+        return { type: 'heading', text: block.text || '', size: block.size || 2 };
       case 'code-block':
-        return { type: 'pre', text: block.text, language: block.language || undefined };
+        return { type: 'pre', text: block.text || '', language: block.language || undefined };
       case 'bullet-list':
-        return { type: 'list', style: 'bullet', items: block.items.map(i => ({ text: i.text })) };
       case 'numbered-list':
-        return { type: 'list', style: 'numbered', items: block.items.map(i => ({ text: i.text })) };
+        return {
+          type: 'list',
+          items: block.items.map(item => ({
+            blocks: [{ type: 'paragraph', text: item.text || '' }],
+          })),
+        };
       case 'table':
-        return { type: 'table', cells: block.cells.map(r => ({ text: r.cells })) };
+        return {
+          type: 'table',
+          cells: block.cells.map(row => row.cells.map((cellText, ci) => ({
+            text: cellText,
+            is_header: row.header,
+          }))),
+        };
       case 'blockquote':
-        return { type: 'blockquote', text: block.text };
+        return {
+          type: 'blockquote',
+          blocks: [{ type: 'paragraph', text: block.text || '' }],
+        };
       case 'pull-quote':
-        return { type: 'aside', text: block.text, cite: block.cite };
+        return { type: 'pullquote', text: block.text || '' };
       case 'details':
-        return { type: 'details', summary: block.summary, content: block.body };
+        return {
+          type: 'details',
+          summary: block.summary || '',
+          blocks: [{ type: 'paragraph', text: block.body || '' }],
+        };
       case 'divider':
         return { type: 'divider' };
       case 'image':
-        return { type: 'photo', media: block.url, caption: block.caption || undefined };
+        return {
+          type: 'photo',
+          photo: { type: 'url', url: block.url || '' },
+        };
       case 'video':
-        return { type: 'video', media: block.url, caption: block.caption || undefined };
+        return {
+          type: 'video',
+          video: { type: 'url', url: block.url || '' },
+        };
       case 'audio':
-        return { type: 'audio', media: block.url, caption: block.caption || undefined };
-      case 'map':
-        return { type: 'map', lat: parseFloat(block.lat), long: parseFloat(block.long), zoom: parseInt(block.zoom) };
+        return {
+          type: 'audio',
+          audio: { type: 'url', url: block.url || '' },
+        };
       case 'slideshow':
-        return { type: 'slideshow', images: block.images.map(i => ({ url: i.url })) };
-      case 'math':
-        return block.block ? { type: 'math_block', formula: block.formula } : { type: 'math_inline', formula: block.formula };
+        return {
+          type: 'slideshow',
+          blocks: block.images
+            .filter(img => img.url)
+            .map(img => ({
+              type: 'photo',
+              photo: { type: 'url', url: img.url },
+            })),
+        };
       case 'footer':
-        return { type: 'footer', text: block.text };
+        return { type: 'footer', text: block.text || '' };
       default:
         return { type: 'paragraph', text: '' };
     }
   });
 }
 
-function blocksToChecklist(blocks) {
+function buildChecklistPayload(blocks) {
   const checkBlocks = blocks.filter(b => b.type === 'checklist');
   if (!checkBlocks.length) return null;
-  const items = [];
+
+  const tasks = [];
+  let idCounter = 1;
   checkBlocks.forEach(b => {
     b.items.forEach(item => {
-      items.push({ text: item.text, checked: item.checked });
+      tasks.push({
+        id: idCounter++,
+        text: item.text || '',
+        is_done: item.checked,
+      });
     });
   });
-  return items;
+  return {
+    title: 'Checklist',
+    tasks,
+  };
 }
 
 // ===================== API =====================
@@ -919,14 +901,17 @@ async function sendRichMessage(blocks) {
   }
 }
 
-async function sendChecklist(items) {
+async function sendChecklistMsg(blocks) {
   const token = state.settings.token;
   const chatId = state.settings.chatId;
   if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
 
+  const checklist = buildChecklistPayload(blocks);
+  if (!checklist) return;
+
   const body = {
     chat_id: chatId,
-    checklist: { items },
+    checklist,
   };
 
   try {
@@ -1010,12 +995,12 @@ async function testConnection() {
 // ===================== SEND HANDLER =====================
 function handleSend() {
   const richBlocks = state.blocks.filter(b => b.type !== 'checklist');
-  const checkBlocks = state.blocks.filter(b => b.type === 'checklist');
+  const hasChecklist = state.blocks.some(b => b.type === 'checklist');
 
   switch (state.sendMode) {
     case 'rich':
       if (richBlocks.length) sendRichMessage(richBlocks);
-      if (checkBlocks.length) sendChecklist(checkBlocks);
+      if (hasChecklist) sendChecklistMsg(state.blocks);
       break;
     case 'draft':
       sendDraft(richBlocks);
@@ -1055,6 +1040,17 @@ function toggleTheme() {
   state.theme = state.theme === 'dark' ? 'light' : 'dark';
   document.body.classList.toggle('light', state.theme === 'light');
   localStorage.setItem('tfr_theme', state.theme);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('btn-theme');
+  if (!btn) return;
+  if (state.theme === 'dark') {
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+  }
 }
 
 function loadTheme() {
@@ -1063,6 +1059,7 @@ function loadTheme() {
     state.theme = saved;
     document.body.classList.toggle('light', saved === 'light');
   }
+  updateThemeIcon();
 }
 
 // ===================== TOAST =====================
@@ -1081,7 +1078,6 @@ document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'i') { e.preventDefault(); applyInlineToSelected('italic'); }
   if (e.ctrlKey && e.key === 'u') { e.preventDefault(); applyInlineToSelected('underline'); }
   if (e.ctrlKey && e.key === 'e') { e.preventDefault(); applyInlineToSelected('code'); }
-  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); showLinkDialog(); }
 });
 
 // ===================== INIT =====================
@@ -1125,22 +1121,10 @@ document.addEventListener('DOMContentLoaded', () => {
     state.editMessageId = e.target.value;
   });
 
-  // Focus mode
-  document.getElementById('btn-focus').addEventListener('click', () => {
-    const overlay = document.getElementById('focus-overlay');
-    overlay.classList.toggle('hidden');
-    if (!overlay.classList.contains('hidden')) {
-      const focusEditor = document.getElementById('focus-editor');
-      focusEditor.contentEditable = 'true';
-      focusEditor.focus();
-      focusEditor.addEventListener('blur', () => {
-        // Sync back
-      });
-    }
-  });
-  document.getElementById('focus-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'focus-overlay') {
-      e.target.classList.add('hidden');
+  // Settings overlay close on background click
+  document.getElementById('settings-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'settings-overlay') {
+      document.getElementById('settings-overlay').classList.add('hidden');
     }
   });
 });

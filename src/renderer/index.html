@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,14 +13,17 @@
   <header id="titlebar">
     <div class="titlebar-drag">
       <svg class="logo" viewBox="0 0 24 24" width="18" height="18">
-        <path d="M11.944.042C5.347.042.042 5.347.042 11.944c0 6.596 5.305 11.902 11.902 11.902 6.596 0 11.902-5.306 11.902-11.902C23.846 5.347 18.54.042 11.944.042zM17.92 8.182l-2.057 9.668c-.153.695-.558.865-1.13.538l-3.117-2.298-1.505 1.448c-.166.166-.306.306-.63.306l.44-3.128 5.69-5.142c.248-.22-.054-.343-.384-.122l-7.04 4.435-3.032-.988c-.66-.206-.673-.66.138-.977l11.83-4.56c.55-.203 1.03.136.852.97z" fill="#fff"/>
+        <path d="M11.944.042C5.347.042.042 5.347.042 11.944c0 6.596 5.305 11.902 11.902 11.902 6.596 0 11.902-5.306 11.902-11.902C23.846 5.347 18.54.042 11.944.042zM17.92 8.182l-2.057 9.668c-.153.695-.558.865-1.13.538l-3.117-2.298-1.505 1.448c-.166.166-.306.306-.63.306l.44-3.128 5.69-5.142c.248-.22-.054-.343-.384-.122l-7.04 4.435-3.032-.988c-.66-.206-.673-.66.138-.977l11.83-4.56c.55-.203 1.03.136.852.97z" fill="currentColor"/>
       </svg>
       <span class="titlebar-text">TelegramFreeRich</span>
     </div>
     <div class="titlebar-controls">
-      <button id="btn-focus" class="title-btn" title="Focus Mode">&#x2712;</button>
-      <button id="btn-theme" class="title-btn" title="Toggle Theme">&#x263E;</button>
-      <button id="btn-settings" class="title-btn" title="Settings">&#x2699;</button>
+      <button id="btn-theme" class="title-btn" title="Toggle Theme">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button id="btn-settings" class="title-btn" title="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -51,9 +54,8 @@
           <div class="tg-sep"></div>
           <button class="tbtn" data-cmd="bullet-list" title="Bullet List"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></button>
           <button class="tbtn" data-cmd="numbered-list" title="Numbered List"><svg viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="8" font-size="7">1</text><text x="3" y="14" font-size="7">2</text><text x="3" y="20" font-size="7">3</text></svg></button>
-          <button class="tbtn checklist-btn" data-cmd="checklist" title="Checklist (separate API)">&#x2611;</button>
+          <button class="tbtn" data-cmd="checklist" title="Checklist (separate API)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 12l2 2 4-4"/></svg></button>
           <div class="tg-sep"></div>
-          <button class="tbtn" data-cmd="link" title="Insert Link"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></button>
           <button class="tbtn" data-cmd="code-block" title="Code Block"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><polyline points="8 10 5 7 8 4"/><polyline points="16 10 19 7 16 4"/><line x1="13" y1="14" x2="11" y2="14"/></svg></button>
           <button class="tbtn" data-cmd="table" title="Table"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></button>
           <button class="tbtn" data-cmd="details" title="Collapsible"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button>
@@ -63,10 +65,9 @@
         <!-- Group 3: Media & Special -->
         <div class="toolbar-group" id="group-media">
           <button class="tbtn" data-cmd="image" title="Image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
-          <button class="tbtn" data-cmd="video" title="Video">&#x25B6;</button>
-          <button class="tbtn" data-cmd="map" title="Map">&#x1F5FA;</button>
-          <button class="tbtn" data-cmd="slideshow" title="Slideshow">&#x1F4C1;</button>
-          <button class="tbtn" data-cmd="math" title="Math">&#x2211;</button>
+          <button class="tbtn" data-cmd="video" title="Video"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          <button class="tbtn" data-cmd="audio" title="Audio"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+          <button class="tbtn" data-cmd="slideshow" title="Slideshow"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
         </div>
       </div>
 
@@ -127,26 +128,8 @@
     </div>
   </div>
 
-  <!-- Focus mode overlay -->
-  <div id="focus-overlay" class="hidden">
-    <div id="focus-editor"></div>
-  </div>
-
   <!-- Toast container -->
   <div id="toast-container"></div>
-
-  <!-- Link dialog -->
-  <div id="link-dialog" class="dialog hidden">
-    <div class="dialog-content">
-      <h3>Insert Link</h3>
-      <input type="text" id="link-url" placeholder="https://...">
-      <input type="text" id="link-text" placeholder="Display text">
-      <div class="dialog-actions">
-        <button id="btn-link-ok" class="btn-primary">OK</button>
-        <button id="btn-link-cancel" class="btn-secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script src="app.js"></script>
