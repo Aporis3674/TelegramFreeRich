@@ -2,6 +2,13 @@
   <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="120" alt="TelegramFreeRich">
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
+  <img src="https://img.shields.io/badge/Desktop-Electron-47848f?logo=electron" alt="Electron">
+  <img src="https://img.shields.io/github/license/Aporis3674/TelegramFreeRich" alt="License">
+  <img src="https://img.shields.io/badge/%D8%B1%D8%A7%DB%8C%DA%AF%D8%A7%D9%86-success" alt="Free">
+</p>
+
 <h1 align="center">تله‌گرام‌فری‌ریچ</h1>
 
 <p align="center"><strong>ویرایشگر متن غنی رایگان برای تلگرام — نسخه دسکتاپ</strong></p>
@@ -10,10 +17,16 @@
 <p align="center"><a href="README.md">[ English ]</a></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
-  <img src="https://img.shields.io/badge/Desktop-Electron-47848f?logo=electron" alt="Electron">
-  <img src="https://img.shields.io/github/license/Aporis3674/TelegramFreeRich" alt="License">
-  <img src="https://img.shields.io/badge/%D8%B1%D8%A7%DB%8C%DA%AF%D8%A7%D9%86-success" alt="Free">
+  <a href="#دانلود">دانلود</a> •
+  <a href="#قابلیت‌ها">قابلیت‌ها</a> •
+  <a href="#معماری">معماری</a> •
+  <a href="#نصب">نصب</a> •
+  <a href="#نحوه-استفاده">نحوه استفاده</a> •
+  <a href="#بیلد">بیلد</a>
+</p>
+
+<p align="center">
+  <img src="screenshot.jpg" alt="اسکرین‌شات TelegramFreeRich" width="800">
 </p>
 
 ---
@@ -38,9 +51,7 @@
 
 ### قالب‌بندی درون‌خطی
 - پررنگ، کج، زیرخط، خط‌خورده
-- اسپویلر، هایلایت (Marked)، کد درون خطی
-- زیرنویس، بالانویس
-- لینک‌ها (با دیالوگ URL)
+- اسپویلر، کد درون خطی
 
 ### المان‌های بلوکی
 - سرتیتر H1 تا H6
@@ -52,7 +63,7 @@
 ### لیست‌ها
 - لیست گلوله‌ای
 - لیست شماره‌دار
-- چک‌لیست *(با API جداگانه)*
+- چک‌لیست (فرمت markdown: `- [x]` / `- [ ]`)
 
 ### جدول
 - سلول‌های قابل ویرایش
@@ -62,17 +73,11 @@
 - تصویر (URL)
 - ویدیو، صدا
 - اسلایدشو (چند تصویر)
-- نقشه OpenStreetMap
-
-### ریاضیات
-- فرمول درون خطی
-- فرمول بلوکی
 
 ### اتصال به API
-- ارسال با `sendRichMessage` و بلوک‌های `InputRichBlock*`
+- ارسال با `sendRichMessage` و فرمت markdown
 - ویرایش پیام با `editMessageText` + `rich_message`
 - ارسال پیش‌نویس با `sendRichMessageDraft` (۳۰ ثانیه)
-- چک‌لیست با `sendChecklist` (API جداگانه)
 - دکمه تست اتصال (`getMe`)
 
 ### امکانات ویرایشگر
@@ -81,41 +86,52 @@
 - تم تاریک (پیش‌فرض) + تم روشن
 - نوار ابزار ۳ گروهی: درون‌خطی، بلوک، رسانه
 - منوی درج بلوک
-- کلیدهای میانبر (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+K, Ctrl+E)
+- کلیدهای میانبر (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+E)
 - کشیدن و رها کردن فایل‌های رسانه
 - شمارشگر کاراکتر (حداکثر ۳۲۷۶۸)
 - پنل تنظیمات (توکن ربات، شناسه چت، زبان)
-- حالت فوکوس
 - دکمه پاک کردن همه
 - اعلان‌های توست
 - جابه‌جایی بلوک‌ها با drag-and-drop
 
 ## معماری
 
-**تفاوت حیاتی با نسخه ۱:** این نسخه از **state بلوک‌محور JSON** به جای رشته‌های مارکداون استفاده می‌کند. هر المان پیام یه بلوک مستقل JSON است که با API واقعی تلگرام مطابقت دارد.
+ویرایشگر از یک **state بلوک‌محور JSON** استفاده می‌کند. هنگام ارسال، بلوک‌ها از طریق `htmlToMarkdown()` به **Markdown تلگرام** تبدیل شده و از طریق فیلد `markdown` در `InputRichMessage` ارسال می‌شوند.
 
 ```
-State بلوک‌ها (JSON[])               Telegram Bot API 10.1
-  +-----------+                        +------------------+
-  | paragraph |--- متن پاراگراف        | InputRichMessage |
-  | heading   |--- سطح، متن            |   blocks: [      |
-  | code-block|--- زبان، کد           |     {paragraph}  |
-  | table     |--- سلول‌ها[][]         |     {heading}    |
-  | list      |--- سبک، آیتم‌ها[]     |     {pre}        |
-  | details   |--- خلاصه، محتوا        |     {table}      |
-  | image     |--- URL، کپشن          |     {list}       |
-  | video     |--- URL، کپشن          |     {details}    |
-  | slideshow |--- تصاویر[]           |     {photo}      |
-  | map       |--- عرض، طول، زوم       |     {video}      |
-  | math      |--- فرمول               |     {map}        |
-  | divider   |                        |     {divider}    |
-  | pull-quote|--- متن، منبع          |     {aside}      |
-  | footer    |--- متن                 |     {footer}     |
-  +-----------+                        +------------------+
-        |
-        v
-  چک‌لیست‌ها جداگانه با sendChecklist ارسال می‌شوند
+State ویرایشگر (JSON[])          htmlToMarkdown()         Telegram Bot API
+  +-----------+                    |                   +------------------+
+  | paragraph |--- متن HTML        v                   | InputRichMessage |
+  | heading   |--- متن HTML    رشته markdown --------->|   markdown: "..."|
+  | code-block|--- کد                                  +------------------+
+  | table     |--- سلول‌ها[][]
+  | list      |--- آیتم‌ها[]
+  | details   |--- خلاصه، متن HTML
+  | image     |--- URL، کپشن         خروجی markdown:
+  | video     |--- URL، کپشن         **bold** *italic*
+  | slideshow |--- تصاویر[]          # سرتیتر
+  | divider   |                      - لیست گلوله‌ای
+  | pull-quote|--- متن، منبع         1. لیست شماره‌دار
+  | footer    |--- متن               - [x] چک‌لیست
+  | checklist |--- آیتم‌ها[]          --- جداکننده
+  +-----------+                      | جدول |
+                                      ````کد````
+                                      > نقل‌قول
+                                      <details>...</details>
 ```
+
+### تبدیل قالب‌بندی درون‌خطی
+
+تابع `htmlToMarkdown()` HTML ادیتور را به markdown تلگرام تبدیل می‌کند:
+
+| HTML ادیتور | Markdown تلگرام |
+|-------------|-----------------|
+| `<strong>متن</strong>` | `**متن**` |
+| `<em>متن</em>` | `*متن*` |
+| `<u>متن</u>` | `<u>متن</u>` |
+| `<s>متن</s>` | `~~متن~~` |
+| `<code>متن</code>` | `` `متن` `` |
+| `<span class="tg-spoiler">متن</span>` | `\|\|متن\|\|` |
 
 ## نصب
 
@@ -163,9 +179,9 @@ npm start
 
 | گروه | دکمه‌ها |
 |-------|---------|
-| **درون‌خطی** | پررنگ، کج، زیرخط، خط‌خورده، کد، اسپویلر، هایلایت، زیرنویس، بالانویس |
-| **بلوک** | سرتیتر H1-H3، لیست گلوله‌ای، لیست شماره‌دار، چک‌لیست، لینک، کد بلند، جدول، تاشو، جداکننده، پانویس |
-| **رسانه** | تصویر، ویدیو، نقشه، اسلایدشو، ریاضیات |
+| **درون‌خطی** | پررنگ، کج، زیرخط، خط‌خورده، کد، اسپویلر |
+| **بلوک** | سرتیتر H1-H3، لیست گلوله‌ای، لیست شماره‌دار، چک‌لیست، کد بلند، جدول، تاشو، جداکننده، پانویس |
+| **رسانه** | تصویر، ویدیو، اسلایدشو |
 
 ## بیلد
 
@@ -173,7 +189,7 @@ npm start
 
 ```bash
 npm run build
-# خروجی: dist/TelegramFreeRich-Setup-1.0.0.exe
+# خروجی: dist/TelegramFreeRich-Setup-2.0.0.exe
 ```
 
 ### لینوکس
@@ -182,16 +198,15 @@ npm run build
 npm run build:linux
 ```
 
-## انواع Bot API 10.1 (تست شده)
+## ویژگی‌های Markdown (تست شده)
 
-### بلوک‌ها
-`paragraph`, `heading`, `blockquote`, `pre`, `divider`, `list`, `footer`, `table`, `photo`, `video`, `audio`, `slideshow`, `map`, `aside`, `details`
+بولد، ایتالیک، اندرلاین، استرایک‌ترو، اسپویلر، کد درون خطی، سرتیتر، لیست‌ها، چک‌لیست‌ها، جدول، نقل‌قول، بلوک کد، جداکننده، جزئیات/خلاصه، پانویس
 
-### درون‌خطی‌ها
-`bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `code`, `marked`, `subscript`, `superscript`, `url`, `mention`, `text_mention`, `anchor`, `reference`
+### رسانه
+تصویر (`![](url)`)، ویدیو، صدا، اسلایدشو
 
-### چک‌لیست (API جداگانه)
-`sendChecklist` با `InputChecklist{ items: [{text, checked}] }`
+### چک‌لیست
+فرمت markdown: `- [x] انجام شده` / `- [ ] انجام نشده` (از طریق `sendRichMessage` markdown ارسال می‌شود)
 
 ## کلیدهای میانبر
 
@@ -200,7 +215,6 @@ npm run build:linux
 | Ctrl+B | پررنگ |
 | Ctrl+I | کج |
 | Ctrl+U | زیرخط |
-| Ctrl+K | درج لینک |
 | Ctrl+E | کد درون خطی |
 
 ## تکنولوژی
@@ -208,9 +222,10 @@ npm run build:linux
 | لایه | تکنولوژی |
 |------|-----------|
 | پوسته دسکتاپ | Electron 35 |
-| فرانت‌اند | HTML + CSS + JavaScript خالص |
+| فانت‌اند | HTML + CSS + JavaScript خالص |
 | مدل داده | Block State (JSON array) |
-| خروجی | InputRichMessage.blocks[] |
+| خروجی | InputRichMessage.markdown |
+| تبدیل | htmlToMarkdown (HTML به MD تلگرام) |
 | تم | متغیرهای CSS (تاریک + روشن) |
 | پکیج‌بندی | electron-builder (NSIS) |
 

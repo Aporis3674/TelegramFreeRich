@@ -54,9 +54,7 @@ No coding required. No Telegram Premium required. No server required.
 
 ### Inline Formatting
 - Bold, Italic, Underline, Strikethrough
-- Spoiler, Highlight (Marked), Inline Code
-- Subscript, Superscript
-- Links (with URL dialog)
+- Spoiler, Inline Code
 
 ### Block Elements
 - Headings (H1 through H6)
@@ -68,7 +66,7 @@ No coding required. No Telegram Premium required. No server required.
 ### Lists
 - Bullet Lists
 - Numbered Lists
-- Checklists *(uses separate API -- see architecture)*
+- Checklists (markdown: `- [x]` / `- [ ]`)
 
 ### Tables
 - Editable table cells
@@ -78,17 +76,11 @@ No coding required. No Telegram Premium required. No server required.
 - Images (URL input)
 - Videos, Audio
 - Slideshows (multiple images)
-- OpenStreetMap embeds
-
-### Math
-- Inline math
-- Block math
 
 ### API Integration
-- Send via `sendRichMessage` with structured `InputRichBlock*` blocks
+- Send via `sendRichMessage` with markdown formatting
 - Edit messages with `editMessageText` + `rich_message`
 - Send drafts with `sendRichMessageDraft` (30s, private chats)
-- Checklists sent via `sendChecklist` (separate API call)
 - Test Connection button (`getMe`)
 
 ### Editor UX
@@ -97,11 +89,10 @@ No coding required. No Telegram Premium required. No server required.
 - Dark theme (default) + Light theme toggle
 - 3-group toolbar: Inline, Block, Media
 - Plus menu for inserting blocks
-- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+K, Ctrl+E)
+- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+E)
 - Drag-and-drop media files
 - Character counter (32,768 max)
 - Settings panel (Bot Token, Chat ID, Language)
-- Focus mode for distraction-free writing
 - Clear All button
 - Toast notifications
 - Drag-to-reorder blocks
@@ -109,30 +100,42 @@ No coding required. No Telegram Premium required. No server required.
 
 ## Architecture
 
-**Critical difference from v1:** This version uses a **block-based JSON state** instead of Markdown strings. Each message element is an independent block object, matching Telegram's actual API structure.
+The editor uses a **block-based JSON state** internally. When sending, the blocks are converted to **Telegram Markdown** via `htmlToMarkdown()` and sent through the `markdown` field of `InputRichMessage`.
 
 ```
-Block State (JSON[])                 Telegram Bot API 10.1
-  +-----------+                        +------------------+
-  | paragraph |--- headings, text      | InputRichMessage |
-  | heading   |--- level, text         |   blocks: [      |
-  | code-block|--- language, code      |     {paragraph}  |
-  | table     |--- cells[][]           |     {heading}    |
-  | list      |--- style, items[]      |     {pre}        |
-  | details   |--- summary, body       |     {table}      |
-  | image     |--- url, caption        |     {list}       |
-  | video     |--- url, caption        |     {details}    |
-  | slideshow |--- images[]            |     {photo}      |
-  | map       |--- lat, lng, zoom      |     {video}      |
-  | math      |--- formula             |     {map}        |
-  | divider   |                        |     {divider}    |
-  | pull-quote|--- text, cite          |     {aside}      |
-  | footer    |--- text                |     {footer}     |
-  +-----------+                        +------------------+
-        |
-        v
-  Checklist items are sent separately via sendChecklist API
+Editor State (JSON[])          htmlToMarkdown()         Telegram Bot API
+  +-----------+                    |                   +------------------+
+  | paragraph |--- HTML text       v                   | InputRichMessage |
+  | heading   |--- HTML text   markdown string -------->|   markdown: "..."|
+  | code-block|--- code text                          +------------------+
+  | table     |--- cells[][]
+  | list      |--- items[]
+  | details   |--- summary, HTML body
+  | image     |--- URL, caption         Markdown output:
+  | video     |--- URL, caption         **bold** *italic*
+  | slideshow |--- images[]             # Heading
+  | divider   |                        - bullet list
+  | pull-quote|--- text, cite          1. numbered list
+  | footer    |--- text                - [x] checklist
+  | checklist |--- items[]             --- divider
+  +-----------+                        | table |
+                                       ````code````
+                                       > blockquote
+                                       <details>...</details>
 ```
+
+### Inline Formatting Conversion
+
+The `htmlToMarkdown()` function converts HTML from the editor to Telegram markdown:
+
+| Editor HTML | Telegram Markdown |
+|-------------|-------------------|
+| `<strong>text</strong>` | `**text**` |
+| `<em>text</em>` | `*text*` |
+| `<u>text</u>` | `<u>text</u>` |
+| `<s>text</s>` | `~~text~~` |
+| `<code>text</code>` | `` `text` `` |
+| `<span class="tg-spoiler">text</span>` | `\|\|text\|\|` |
 
 ## Installation
 
@@ -180,9 +183,9 @@ npm start
 
 | Group | Buttons |
 |-------|---------|
-| **Inline** | Bold, Italic, Underline, Strikethrough, Code, Spoiler, Highlight, Subscript, Superscript |
-| **Block** | Heading H1-H3, Bullet List, Numbered List, Checklist, Link, Code Block, Table, Details, Divider, Footnote |
-| **Media** | Image, Video, Map, Slideshow, Math |
+| **Inline** | Bold, Italic, Underline, Strikethrough, Code, Spoiler |
+| **Block** | Heading H1-H3, Bullet List, Numbered List, Checklist, Code Block, Table, Details, Divider, Footnote |
+| **Media** | Image, Video, Slideshow |
 
 ## Build
 
@@ -191,7 +194,7 @@ npm start
 ```bash
 # Build Windows installer
 npm run build
-# Output: dist/TelegramFreeRich-Setup-1.0.0.exe
+# Output: dist/TelegramFreeRich-Setup-2.0.0.exe
 ```
 
 ### Linux
@@ -202,14 +205,14 @@ npm run build:linux
 
 ## Bot API 10.1 Types (Tested)
 
-### Block Types
-`paragraph`, `heading`, `blockquote`, `pre`, `divider`, `list`, `footer`, `table`, `photo`, `video`, `audio`, `slideshow`, `map`, `aside`, `details`
+### Markdown Features
+Bold, Italic, Underline, Strikethrough, Spoiler, Inline Code, Headings, Lists, Checklists, Tables, Blockquotes, Code Blocks, Dividers, Details/Summary, Footers
 
-### Inline Types
-`bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `code`, `marked`, `subscript`, `superscript`, `url`, `mention`, `text_mention`, `anchor`, `reference`
+### Media
+Images (`![](url)`), Videos, Audio, Slideshows
 
-### Checklist (separate API)
-`sendChecklist` with `InputChecklist{ items: [{text, checked}] }`
+### Checklist
+Markdown format: `- [x] done` / `- [ ] not done` (sent via `sendRichMessage` markdown)
 
 ## Keyboard Shortcuts
 
@@ -218,7 +221,6 @@ npm run build:linux
 | Ctrl+B | Bold |
 | Ctrl+I | Italic |
 | Ctrl+U | Underline |
-| Ctrl+K | Insert Link |
 | Ctrl+E | Inline Code |
 
 ## Tech Stack
@@ -228,7 +230,8 @@ npm run build:linux
 | Desktop shell | Electron 35 |
 | Frontend | Vanilla HTML + CSS + JS |
 | Data model | Block State (JSON object array) |
-| Output | InputRichMessage.blocks[] |
+| Output | InputRichMessage.markdown |
+| Conversion | htmlToMarkdown (HTML to Telegram MD) |
 | Theming | CSS variables (dark + light) |
 | Packaging | electron-builder (NSIS) |
 
