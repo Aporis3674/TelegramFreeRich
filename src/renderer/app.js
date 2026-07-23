@@ -917,7 +917,7 @@ function blocksToMarkdown(blocks) {
 // ===================== API =====================
 async function sendRichMessage(blocks) {
   const chatId = state.settings.chatId;
-  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
+  if (!state.settings.tokenSet || !chatId) { toast('Settings incomplete', 'error'); return; }
 
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
@@ -941,7 +941,7 @@ async function sendRichMessage(blocks) {
 
 async function sendDraft(blocks) {
   const chatId = state.settings.chatId;
-  if (!token || !chatId) { toast('Settings incomplete', 'error'); return; }
+  if (!state.settings.tokenSet || !chatId) { toast('Settings incomplete', 'error'); return; }
 
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
@@ -963,7 +963,7 @@ async function sendDraft(blocks) {
 async function editMessage(blocks) {
   const chatId = state.settings.chatId;
   const msgId = state.editMessageId;
-  if (!token || !chatId || !msgId) { toast('Settings or message ID incomplete', 'error'); return; }
+  if (!state.settings.tokenSet || !chatId || !msgId) { toast('Settings or message ID incomplete', 'error'); return; }
 
   const markdown = blocksToMarkdown(blocks);
   if (!markdown.trim()) { toast('Nothing to send', 'error'); return; }
@@ -984,7 +984,7 @@ async function editMessage(blocks) {
 }
 
 async function testConnection() {
-  if (!token) { toast('Enter a bot token first', 'error'); return; }
+  if (!state.settings.tokenSet) { toast('Enter a bot token first', 'error'); return; }
 
   const statusEl = document.getElementById('connection-status');
   statusEl.textContent = 'Testing...';
