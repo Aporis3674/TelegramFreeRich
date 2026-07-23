@@ -253,6 +253,10 @@ TelegramFreeRich/
   package.json          # Dependencies and build config
 ```
 
+## Known Issues
+
+- After deleting formatted text (bold, italic, etc.) in a block, new text may inherit the formatting. **Workaround:** create a new block.
+
 ## License
 
 MIT
