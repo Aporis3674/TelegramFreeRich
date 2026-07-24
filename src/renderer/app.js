@@ -1,6 +1,7 @@
 /**
- * TelegramFreeRich v2.0 — Telegram-style rich text editor
- * Single contenteditable per block, block-based JSON state → Markdown output
+ * TelegramFreeRich v2.2 — Telegram-style rich text editor
+ * Full Bot API 10.1/10.2 Rich Message support
+ * Block-based JSON state → Markdown output
  */
 
 // ===================== STATE =====================
@@ -10,10 +11,13 @@ const state = {
   mode: 'rich',
   editMessageId: null,
   theme: localStorage.getItem('tfr-theme') || 'dark',
+  isRtl: false,
+  skipEntityDetection: false,
   settings: {
     token: localStorage.getItem('tfr-token') || '',
     tokenSet: !!localStorage.getItem('tfr-token'),
     chatId: localStorage.getItem('tfr-chat') || '',
+    editId: localStorage.getItem('tfr-edit-id') || '',
     lang: localStorage.getItem('tfr-lang') || 'en',
   },
 };
@@ -27,11 +31,11 @@ const $$ = (s) => document.querySelectorAll(s);
 function createBlock(type, data = {}) {
   const base = { id: newId(), type, ...data };
   switch (type) {
-    case 'paragraph': return { ...base, text: data.text || '', html: data.html || '' };
-    case 'heading': return { ...base, size: data.size || 2, text: data.text || '', html: data.html || '' };
+    case 'paragraph': return { ...base, html: data.html || '', text: data.text || '' };
+    case 'heading': return { ...base, size: data.size || 2, html: data.html || '', text: data.text || '' };
     case 'code-block': return { ...base, language: data.language || '', text: data.text || '' };
     case 'bullet-list': case 'ordered-list':
-      return { ...base, items: data.items || [{ text: '' }] };
+      return { ...base, items: data.items || [{ text: '' }], listType: data.listType || (type === 'ordered-list' ? '1' : null) };
     case 'checklist':
       return { ...base, items: data.items || [{ text: '', checked: false }] };
     case 'table':
@@ -40,14 +44,20 @@ function createBlock(type, data = {}) {
         { cells: ['', '', ''], header: false },
         { cells: ['', '', ''], header: false },
       ]};
-    case 'blockquote': return { ...base, text: data.text || '', html: data.html || '' };
-    case 'pull-quote': return { ...base, text: data.text || '', html: data.html || '', cite: data.cite || '' };
+    case 'blockquote': return { ...base, html: data.html || '', text: data.text || '', credit: data.credit || '' };
+    case 'pull-quote': return { ...base, html: data.html || '', text: data.text || '', credit: data.credit || '' };
     case 'details':
       return { ...base, summary: data.summary || 'Details', body: data.body || '', html: data.html || '', open: data.open || false };
     case 'divider': return { ...base };
     case 'footer': return { ...base, text: data.text || '' };
-    case 'image': case 'video': case 'audio':
+    case 'image': case 'video': case 'audio': case 'animation': case 'voicenote':
       return { ...base, url: data.url || '', caption: data.caption || '' };
+    case 'collage': return { ...base, images: data.images || [], caption: data.caption || '' };
+    case 'slideshow': return { ...base, images: data.images || [], caption: data.caption || '' };
+    case 'map': return { ...base, latitude: data.latitude || 0, longitude: data.longitude || 0, zoom: data.zoom || 15 };
+    case 'math-block': return { ...base, expression: data.expression || '' };
+    case 'thinking': return { ...base, text: data.text || '' };
+    case 'anchor': return { ...base, name: data.name || '' };
     default: return { ...base };
   }
 }
@@ -83,7 +93,7 @@ function renderBlock(block, index) {
   card.dataset.id = block.id;
   if (block.size) card.dataset.size = block.size;
 
-  // Actions (drag + delete)
+  // Actions
   const actions = document.createElement('div');
   actions.className = 'block-actions';
   const dragBtn = document.createElement('button');
@@ -104,19 +114,14 @@ function renderBlock(block, index) {
   actions.appendChild(delBtn);
   card.appendChild(actions);
 
-  // Drop target
+  // Drop
   card.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
   card.addEventListener('drop', (e) => {
     e.preventDefault();
     const from = parseInt(e.dataTransfer.getData('text/plain'));
-    if (from !== index) {
-      const [moved] = state.blocks.splice(from, 1);
-      state.blocks.splice(index, 0, moved);
-      renderBlocks();
-    }
+    if (from !== index) { const [m] = state.blocks.splice(from, 1); state.blocks.splice(index, 0, m); renderBlocks(); }
   });
 
-  // Content
   const content = document.createElement('div');
   content.className = 'block-content';
 
@@ -124,7 +129,9 @@ function renderBlock(block, index) {
     case 'paragraph': case 'heading': case 'blockquote': {
       content.contentEditable = 'true';
       content.innerHTML = block.html || block.text || '';
-      content.dataset.placeholder = block.type === 'heading' ? `Heading ${block.size}` : 'Type something...';
+      content.dataset.placeholder =
+        block.type === 'heading' ? `Heading ${block.size}` :
+        block.type === 'blockquote' ? 'Quote...' : 'Type something...';
       content.addEventListener('input', () => { syncEditableBlock(block, content); updateCharCount(); });
       content.addEventListener('focus', () => selectBlock(block.id));
       content.addEventListener('keydown', (e) => handleKeydown(e, block, index));
@@ -135,7 +142,7 @@ function renderBlock(block, index) {
       const wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;flex-direction:column;width:100%;';
       const langIn = document.createElement('input');
-      langIn.type = 'text'; langIn.placeholder = 'language'; langIn.value = block.language;
+      langIn.type = 'text'; langIn.placeholder = 'language (js, python...)'; langIn.value = block.language;
       langIn.style.cssText = 'padding:6px 10px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;outline:none;width:100%;';
       langIn.addEventListener('input', () => { block.language = langIn.value; updateCharCount(); });
       const codeArea = document.createElement('div');
@@ -214,26 +221,16 @@ function renderBlock(block, index) {
         table.appendChild(tr);
       });
       content.appendChild(table);
-      const tActions = document.createElement('div');
-      tActions.style.cssText = 'display:flex;gap:6px;padding:6px 0 2px;';
-      const addRow = document.createElement('button');
-      addRow.textContent = '+ Row';
-      addRow.style.cssText = 'font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;';
-      addRow.addEventListener('click', () => {
-        const cols = block.cells[0]?.cells.length || 3;
-        block.cells.push({ cells: Array(cols).fill(''), header: false });
-        renderBlocks();
-      });
-      const addCol = document.createElement('button');
-      addCol.textContent = '+ Col';
-      addCol.style.cssText = addRow.style.cssText;
-      addCol.addEventListener('click', () => {
-        block.cells.forEach(r => r.cells.push(''));
-        renderBlocks();
-      });
-      tActions.appendChild(addRow);
-      tActions.appendChild(addCol);
-      content.appendChild(tActions);
+      const tA = document.createElement('div');
+      tA.style.cssText = 'display:flex;gap:6px;padding:6px 0 2px;';
+      const addR = document.createElement('button');
+      addR.textContent = '+ Row'; addR.style.cssText = 'font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;';
+      addR.addEventListener('click', () => { block.cells.push({ cells: Array(block.cells[0]?.cells.length || 3).fill(''), header: false }); renderBlocks(); });
+      const addC = document.createElement('button');
+      addC.textContent = '+ Col'; addC.style.cssText = addR.style.cssText;
+      addC.addEventListener('click', () => { block.cells.forEach(r => r.cells.push('')); renderBlocks(); });
+      tA.appendChild(addR); tA.appendChild(addC);
+      content.appendChild(tA);
       content.style.padding = '8px';
       break;
     }
@@ -245,13 +242,11 @@ function renderBlock(block, index) {
       pqText.dataset.placeholder = 'Pull quote...';
       pqText.addEventListener('input', () => { syncEditableBlock(block, pqText); updateCharCount(); });
       const pqCite = document.createElement('div');
-      pqCite.contentEditable = 'true';
-      pqCite.textContent = block.cite;
+      pqCite.contentEditable = 'true'; pqCite.textContent = block.credit;
       pqCite.dataset.placeholder = '— Author';
       pqCite.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
-      pqCite.addEventListener('input', () => { block.cite = pqCite.textContent; updateCharCount(); });
-      content.appendChild(pqText);
-      content.appendChild(pqCite);
+      pqCite.addEventListener('input', () => { block.credit = pqCite.textContent; updateCharCount(); });
+      content.appendChild(pqText); content.appendChild(pqCite);
       break;
     }
 
@@ -259,29 +254,19 @@ function renderBlock(block, index) {
       const header = document.createElement('div');
       header.className = `details-header${block.open ? ' open' : ''}`;
       const chevron = document.createElement('span');
-      chevron.className = 'chevron';
-      chevron.textContent = '▶';
+      chevron.className = 'chevron'; chevron.textContent = '▶';
       const sumIn = document.createElement('input');
       sumIn.type = 'text'; sumIn.value = block.summary; sumIn.placeholder = 'Summary';
       sumIn.addEventListener('input', () => { block.summary = sumIn.value; updateCharCount(); });
-      header.appendChild(chevron);
-      header.appendChild(sumIn);
-      header.addEventListener('click', (e) => {
-        if (e.target !== sumIn) {
-          block.open = !block.open;
-          header.classList.toggle('open', block.open);
-          body.style.display = block.open ? 'block' : 'none';
-        }
-      });
+      header.appendChild(chevron); header.appendChild(sumIn);
       const body = document.createElement('div');
       body.className = 'details-body';
       body.contentEditable = 'true';
       body.innerHTML = block.html || block.body || '';
-      body.dataset.placeholder = 'Hidden content...';
       body.style.display = block.open ? 'block' : 'none';
       body.addEventListener('input', () => { block.html = body.innerHTML; block.body = stripHtml(body.innerHTML); updateCharCount(); });
-      content.appendChild(header);
-      content.appendChild(body);
+      header.addEventListener('click', (e) => { if (e.target !== sumIn) { block.open = !block.open; header.classList.toggle('open', block.open); body.style.display = block.open ? 'block' : 'none'; } });
+      content.appendChild(header); content.appendChild(body);
       content.style.padding = '0';
       break;
     }
@@ -290,19 +275,98 @@ function renderBlock(block, index) {
       content.innerHTML = '<hr>';
       break;
 
-    case 'image': case 'video': case 'audio': {
+    case 'image': case 'video': case 'audio': case 'animation': case 'voicenote': {
       const row = document.createElement('div');
       row.className = 'media-fields';
+      const labels = { image: 'Photo', video: 'Video', audio: 'Audio', animation: 'GIF URL', voicenote: 'Voice Note URL' };
       const urlIn = document.createElement('input');
-      urlIn.type = 'text'; urlIn.value = block.url; urlIn.placeholder = `${block.type} URL`;
+      urlIn.type = 'text'; urlIn.value = block.url; urlIn.placeholder = labels[block.type] + ' URL';
       urlIn.addEventListener('input', () => { block.url = urlIn.value; updateCharCount(); });
       const capIn = document.createElement('input');
       capIn.type = 'text'; capIn.value = block.caption; capIn.placeholder = 'Caption';
       capIn.addEventListener('input', () => { block.caption = capIn.value; updateCharCount(); });
-      row.appendChild(urlIn);
-      row.appendChild(capIn);
-      content.appendChild(row);
+      row.appendChild(urlIn); row.appendChild(capIn);
+      content.appendChild(row); content.style.padding = '8px 12px';
+      break;
+    }
+
+    case 'collage': case 'slideshow': {
+      const lbl = block.type === 'collage' ? 'Collage' : 'Slideshow';
+      const imgDiv = document.createElement('div');
+      imgDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px;width:100%;';
+      (block.images || []).forEach((img, i) => {
+        const r = document.createElement('div');
+        r.style.cssText = 'display:flex;gap:6px;align-items:center;';
+        const urlI = document.createElement('input');
+        urlI.type = 'text'; urlI.value = img.url || ''; urlI.placeholder = `Image ${i + 1} URL`;
+        urlI.style.cssText = 'flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:11px;outline:none;';
+        urlI.addEventListener('input', () => { block.images[i].url = urlI.value; updateCharCount(); });
+        const rm = document.createElement('button');
+        rm.textContent = '×'; rm.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;';
+        rm.addEventListener('click', () => { block.images.splice(i, 1); renderBlocks(); });
+        r.appendChild(urlI); r.appendChild(rm);
+        imgDiv.appendChild(r);
+      });
+      const addImg = document.createElement('button');
+      addImg.textContent = '+ Image'; addImg.style.cssText = 'font-size:11px;padding:4px 8px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;width:fit-content;';
+      addImg.addEventListener('click', () => { block.images.push({ url: '' }); renderBlocks(); });
+      imgDiv.appendChild(addImg);
+      const capIn = document.createElement('input');
+      capIn.type = 'text'; capIn.value = block.caption; capIn.placeholder = 'Caption';
+      capIn.style.cssText = 'padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      capIn.addEventListener('input', () => { block.caption = capIn.value; updateCharCount(); });
+      content.appendChild(imgDiv); content.appendChild(capIn);
       content.style.padding = '8px 12px';
+      break;
+    }
+
+    case 'map': {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;width:100%;';
+      const lat = document.createElement('input'); lat.type = 'number'; lat.step = 'any'; lat.value = block.latitude;
+      lat.placeholder = 'Latitude'; lat.style.cssText = 'flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
+      lat.addEventListener('input', () => { block.latitude = parseFloat(lat.value) || 0; updateCharCount(); });
+      const lng = document.createElement('input'); lng.type = 'number'; lng.step = 'any'; lng.value = block.longitude;
+      lng.placeholder = 'Longitude'; lng.style.cssText = lat.style.cssText;
+      lng.addEventListener('input', () => { block.longitude = parseFloat(lng.value) || 0; updateCharCount(); });
+      const zm = document.createElement('input'); zm.type = 'number'; zm.min = '1'; zm.max = '20'; zm.value = block.zoom;
+      zm.placeholder = 'Zoom'; zm.style.cssText = 'width:60px;' + lat.style.cssText;
+      zm.addEventListener('input', () => { block.zoom = parseInt(zm.value) || 15; updateCharCount(); });
+      row.appendChild(lat); row.appendChild(lng); row.appendChild(zm);
+      content.appendChild(row); content.style.padding = '8px 12px';
+      break;
+    }
+
+    case 'math-block': {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.value = block.expression;
+      inp.placeholder = 'LaTeX expression: \\frac{a}{b}, \\int_0^1, ...';
+      inp.style.cssText = 'width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-family:monospace;font-size:14px;outline:none;';
+      inp.addEventListener('input', () => { block.expression = inp.value; updateCharCount(); });
+      content.appendChild(inp); content.style.padding = '8px 12px';
+      break;
+    }
+
+    case 'thinking': {
+      const inp = document.createElement('div');
+      inp.contentEditable = 'true';
+      inp.innerHTML = block.html || block.text || '';
+      inp.dataset.placeholder = 'Thinking process...';
+      inp.style.cssText = 'font-size:13px;color:var(--text-muted);font-style:italic;';
+      inp.addEventListener('input', () => { syncEditableBlock(block, inp); updateCharCount(); });
+      content.appendChild(inp);
+      content.style.background = 'var(--surface2)';
+      content.style.borderRadius = '8px';
+      break;
+    }
+
+    case 'anchor': {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.value = block.name;
+      inp.placeholder = 'Anchor name (for internal links)';
+      inp.style.cssText = 'width:100%;padding:6px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);font-size:12px;outline:none;';
+      inp.addEventListener('input', () => { block.name = inp.value; updateCharCount(); });
+      content.appendChild(inp); content.style.padding = '6px 12px';
       break;
     }
 
@@ -315,11 +379,7 @@ function renderBlock(block, index) {
   }
 
   card.appendChild(content);
-
-  card.addEventListener('click', (e) => {
-    if (!e.target.closest('.block-actions')) selectBlock(block.id);
-  });
-
+  card.addEventListener('click', (e) => { if (!e.target.closest('.block-actions')) selectBlock(block.id); });
   return card;
 }
 
@@ -334,30 +394,20 @@ function handleKeydown(e, block, index) {
     const nb = createBlock('paragraph');
     state.blocks.splice(index + 1, 0, nb);
     renderBlocks();
-    setTimeout(() => {
-      const card = $$(`[data-id="${nb.id}"] .block-content`)[0];
-      if (card) card.focus();
-    }, 0);
+    setTimeout(() => { const c = $$(`[data-id="${nb.id}"] .block-content`)[0]; if (c) c.focus(); }, 0);
   }
   if (e.key === 'Backspace' && block.type === 'paragraph' && block.text === '' && state.blocks.length > 1) {
     e.preventDefault();
     const prev = state.blocks[index - 1];
     state.blocks.splice(index, 1);
     renderBlocks();
-    if (prev) {
-      setTimeout(() => {
-        const card = $$(`[data-id="${prev.id}"] .block-content`)[0];
-        if (card) card.focus();
-      }, 0);
-    }
+    if (prev) setTimeout(() => { const c = $$(`[data-id="${prev.id}"] .block-content`)[0]; if (c) c.focus(); }, 0);
   }
 }
 
 function handleListKeydown(e, block, i) {
   if (e.key === 'Enter') { e.preventDefault(); block.items.splice(i + 1, 0, { text: '' }); renderBlocks(); }
-  if (e.key === 'Backspace' && e.target.value === '' && block.items.length > 1) {
-    e.preventDefault(); block.items.splice(i, 1); renderBlocks();
-  }
+  if (e.key === 'Backspace' && e.target.value === '' && block.items.length > 1) { e.preventDefault(); block.items.splice(i, 1); renderBlocks(); }
 }
 
 // ===================== CHAR COUNT =====================
@@ -366,11 +416,12 @@ function updateCharCount() {
   if (!el) return;
   let total = 0;
   state.blocks.forEach(b => {
-    if (b.type === 'code-block') total += (b.text || '').length;
+    if (b.type === 'code-block' || b.type === 'math-block') total += (b.text || b.expression || '').length;
     else if (b.type === 'bullet-list' || b.type === 'ordered-list' || b.type === 'checklist')
       total += b.items.reduce((s, it) => s + (it.text || '').length, 0);
     else if (b.type === 'table')
       total += b.cells.reduce((s, r) => s + r.cells.reduce((ss, c) => ss + c.length, 0), 0);
+    else if (b.type === 'map') total += 30;
     else total += JSON.stringify(b).length;
   });
   el.textContent = `${total.toLocaleString()} / 32,768`;
@@ -379,15 +430,14 @@ function updateCharCount() {
 
 // ===================== TOOLBAR =====================
 function initToolbar() {
-  // Inline + heading buttons
+  // Inline + block buttons
   $$('.tb-btn[data-cmd]').forEach(btn => {
     btn.addEventListener('click', () => {
       const cmd = btn.dataset.cmd;
       const level = btn.dataset.level;
       if (cmd === 'heading') { insertBlock('heading', { size: parseInt(level) || 2 }); }
-      else if (cmd === 'bullet-list' || cmd === 'ordered-list' || cmd === 'checklist' ||
-               cmd === 'blockquote' || cmd === 'code-block' || cmd === 'divider' ||
-               cmd === 'table' || cmd === 'details' || cmd === 'image' || cmd === 'video') {
+      else if (['bullet-list', 'ordered-list', 'checklist', 'blockquote', 'code-block',
+                'divider', 'table', 'details', 'image', 'video', 'animation', 'voicenote'].includes(cmd)) {
         insertBlock(cmd);
       } else {
         applyInline(cmd);
@@ -403,17 +453,13 @@ function initToolbar() {
   if (plusBtn) plusBtn.addEventListener('click', togglePlus);
   if (plusBtn2) plusBtn2.addEventListener('click', togglePlus);
   $$('.pm-item[data-cmd]').forEach(item => {
-    item.addEventListener('click', () => {
-      insertBlock(item.dataset.cmd);
-      plusMenu.classList.remove('show');
-    });
+    item.addEventListener('click', () => { insertBlock(item.dataset.cmd); plusMenu.classList.remove('show'); });
   });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.plus-menu') && !e.target.closest('#btn-plus') && !e.target.closest('#btn-plus-bottom'))
       plusMenu.classList.remove('show');
   });
 
-  // Undo/Redo
   $('#btn-undo')?.addEventListener('click', () => document.execCommand('undo'));
   $('#btn-redo')?.addEventListener('click', () => document.execCommand('redo'));
 }
@@ -441,6 +487,26 @@ function applyInline(type) {
     case 'strikethrough': wrapper = document.createElement('s'); break;
     case 'code': wrapper = document.createElement('code'); break;
     case 'spoiler': wrapper = document.createElement('span'); wrapper.className = 'tg-spoiler'; break;
+    case 'sub': wrapper = document.createElement('sub'); break;
+    case 'sup': wrapper = document.createElement('sup'); break;
+    case 'marked': wrapper = document.createElement('mark'); break;
+    case 'datetime':
+      wrapper = document.createElement('span');
+      wrapper.className = 'tg-datetime';
+      wrapper.dataset.timestamp = Math.floor(Date.now() / 1000);
+      wrapper.textContent = new Date().toLocaleString();
+      break;
+    case 'math-inline':
+      wrapper = document.createElement('span');
+      wrapper.className = 'tg-math';
+      wrapper.textContent = text;
+      break;
+    case 'emoji':
+      wrapper = document.createElement('span');
+      wrapper.className = 'tg-emoji';
+      wrapper.dataset.emojiId = '0';
+      wrapper.textContent = text || '😀';
+      break;
     default: return;
   }
   wrapper.textContent = text;
@@ -457,10 +523,7 @@ function applyInline(type) {
 // ===================== THEME =====================
 function applyTheme() {
   document.body.classList.toggle('light', state.theme === 'light');
-  const btn = $('#btn-theme');
-  if (btn) btn.title = state.theme === 'dark' ? 'Switch to light' : 'Switch to dark';
 }
-
 function initTheme() {
   applyTheme();
   $('#btn-theme')?.addEventListener('click', () => {
@@ -470,15 +533,23 @@ function initTheme() {
   });
 }
 
-// ===================== MODE TABS =====================
+// ===================== MODE =====================
 function initModeTabs() {
   $$('.mode-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       state.mode = tab.dataset.mode;
       $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
-      $('#btn-send').title = state.mode === 'rich' ? 'Send Rich Message' : state.mode === 'draft' ? 'Send Draft' : 'Edit Message';
+      if (state.mode === 'edit') state.editMessageId = state.settings.editId || null;
     });
   });
+}
+
+// ===================== RTL / ENTITY CHECKS =====================
+function initFlags() {
+  const rtlChk = $('#chk-rtl');
+  const entChk = $('#chk-skip-entities');
+  if (rtlChk) rtlChk.addEventListener('change', () => { state.isRtl = rtlChk.checked; });
+  if (entChk) entChk.addEventListener('change', () => { state.skipEntityDetection = entChk.checked; });
 }
 
 // ===================== SETTINGS =====================
@@ -487,6 +558,7 @@ function initSettings() {
   const open = () => {
     $('#input-token').value = state.settings.token;
     $('#input-chat').value = state.settings.chatId;
+    $('#input-edit-id').value = state.settings.editId;
     $('#input-lang').value = state.settings.lang;
     overlay.classList.remove('hidden');
   };
@@ -500,38 +572,28 @@ function initSettings() {
   $('#btn-save-settings')?.addEventListener('click', () => {
     state.settings.token = $('#input-token').value.trim();
     state.settings.chatId = $('#input-chat').value.trim();
+    state.settings.editId = $('#input-edit-id').value.trim();
     state.settings.lang = $('#input-lang').value;
     state.settings.tokenSet = !!state.settings.token;
     localStorage.setItem('tfr-token', state.settings.token);
     localStorage.setItem('tfr-chat', state.settings.chatId);
+    localStorage.setItem('tfr-edit-id', state.settings.editId);
     localStorage.setItem('tfr-lang', state.settings.lang);
-    updateStatus();
-    close();
-    toast('Settings saved', 'success');
+    updateStatus(); close(); toast('Settings saved', 'success');
   });
 
   $('#btn-test-connection')?.addEventListener('click', async () => {
     const token = $('#input-token').value.trim();
     if (!token) { toast('Enter bot token', 'error'); return; }
     const statusEl = $('#connection-status');
-    statusEl.textContent = 'Testing...';
-    statusEl.className = '';
+    statusEl.textContent = 'Testing...'; statusEl.className = '';
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
       const data = await res.json();
-      if (data.ok) {
-        statusEl.textContent = `✓ @${data.result.username} connected`;
-        statusEl.className = 'ok';
-      } else {
-        statusEl.textContent = `✗ ${data.description || 'Failed'}`;
-        statusEl.className = 'error';
-      }
-    } catch (err) {
-      statusEl.textContent = `✗ Network error`;
-      statusEl.className = 'error';
-    }
+      if (data.ok) { statusEl.textContent = `✓ @${data.result.username} connected`; statusEl.className = 'ok'; }
+      else { statusEl.textContent = `✗ ${data.description}`; statusEl.className = 'error'; }
+    } catch { statusEl.textContent = '✗ Network error'; statusEl.className = 'error'; }
   });
-
   updateStatus();
 }
 
@@ -548,64 +610,53 @@ function updateStatus() {
 }
 
 // ===================== SEND =====================
-function initSend() {
-  $('#btn-send')?.addEventListener('click', sendMessage);
-}
+function initSend() { $('#btn-send')?.addEventListener('click', sendMessage); }
 
 async function sendMessage() {
-  if (!state.settings.tokenSet) { toast('Configure bot token in settings', 'error'); return; }
-  if (!state.settings.chatId) { toast('Set chat ID in settings', 'error'); return; }
+  if (!state.settings.tokenSet) { toast('Configure bot token', 'error'); return; }
+  if (!state.settings.chatId) { toast('Set chat ID', 'error'); return; }
   if (state.blocks.length === 0) { toast('Nothing to send', 'error'); return; }
 
   const markdown = blocksToMarkdown();
   const token = state.settings.token;
   const chatId = state.settings.chatId;
 
+  const body = { chat_id: chatId, rich_message: { markdown } };
+  if (state.isRtl) body.rich_message.is_rtl = true;
+  if (state.skipEntityDetection) body.rich_message.skip_entity_detection = true;
+
   try {
     const sendBtn = $('#btn-send');
-    sendBtn.style.opacity = '0.5';
-    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.5'; sendBtn.disabled = true;
 
+    let res;
     if (state.mode === 'draft') {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessageDraft`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, markdown }),
+      body.rich_message = { markdown: blocksToMarkdown(true) };
+      res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessageDraft`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (data.ok) toast('Draft sent (30s preview)', 'success');
-      else toast(`Error: ${data.description}`, 'error');
     } else if (state.mode === 'edit' && state.editMessageId) {
-      const res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, message_id: state.editMessageId, markdown, rich_message: { markdown } }),
+      res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, message_id: state.editMessageId }),
       });
-      const data = await res.json();
-      if (data.ok) toast('Message edited', 'success');
-      else toast(`Error: ${data.description}`, 'error');
     } else {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, markdown }),
+      res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (data.ok) toast('Message sent!', 'success');
-      else toast(`Error: ${data.description}`, 'error');
     }
 
-    sendBtn.style.opacity = '1';
-    sendBtn.disabled = false;
-  } catch (err) {
-    toast('Network error', 'error');
-    $('#btn-send').style.opacity = '1';
-    $('#btn-send').disabled = false;
-  }
+    const data = await res.json();
+    if (data.ok) toast(state.mode === 'draft' ? 'Draft sent (30s)' : state.mode === 'edit' ? 'Edited!' : 'Sent!', 'success');
+    else toast(`Error: ${data.description}`, 'error');
+    sendBtn.style.opacity = '1'; sendBtn.disabled = false;
+  } catch { toast('Network error', 'error'); $('#btn-send').style.opacity = '1'; $('#btn-send').disabled = false; }
 }
 
 // ===================== MARKDOWN CONVERSION =====================
-function blocksToMarkdown() {
+function blocksToMarkdown(draft = false) {
   const lines = [];
   state.blocks.forEach(block => {
     switch (block.type) {
@@ -619,11 +670,12 @@ function blocksToMarkdown() {
         break;
       case 'blockquote':
         (inlineToMd(block.html || block.text || '').split('\n').forEach(l => lines.push(`> ${l}`)));
+        if (block.credit) lines.push(`> — ${block.credit}`);
         lines.push('');
         break;
       case 'pull-quote':
         lines.push(`> ${inlineToMd(block.html || block.text || '')}`);
-        if (block.cite) lines.push(`> — ${block.cite}`);
+        if (block.credit) lines.push(`> — ${block.credit}`);
         lines.push('');
         break;
       case 'code-block':
@@ -645,13 +697,10 @@ function blocksToMarkdown() {
         lines.push('');
         break;
       case 'table': {
-        if (block.cells.length === 0) break;
-        const header = block.cells[0];
-        lines.push('| ' + header.cells.join(' | ') + ' |');
-        lines.push('| ' + header.cells.map(() => '---').join(' | ') + ' |');
-        block.cells.slice(1).forEach(row => {
-          lines.push('| ' + row.cells.join(' | ') + ' |');
-        });
+        if (!block.cells.length) break;
+        lines.push('| ' + block.cells[0].cells.join(' | ') + ' |');
+        lines.push('| ' + block.cells[0].cells.map(() => '---').join(' | ') + ' |');
+        block.cells.slice(1).forEach(row => lines.push('| ' + row.cells.join(' | ') + ' |'));
         lines.push('');
         break;
       }
@@ -682,6 +731,44 @@ function blocksToMarkdown() {
         if (block.url) lines.push(`![audio](${block.url})`);
         lines.push('');
         break;
+      case 'animation':
+        if (block.url) lines.push(`![${block.caption || 'GIF'}](${block.url})`);
+        lines.push('');
+        break;
+      case 'voicenote':
+        if (block.url) lines.push(`![voice](${block.url})`);
+        lines.push('');
+        break;
+      case 'collage':
+        lines.push('<tg-collage>');
+        (block.images || []).forEach(img => { if (img.url) lines.push(`  <img src="${img.url}"/>`); });
+        lines.push('</tg-collage>');
+        if (block.caption) lines.push(block.caption);
+        lines.push('');
+        break;
+      case 'slideshow':
+        lines.push('<tg-slideshow>');
+        (block.images || []).forEach(img => { if (img.url) lines.push(`  <img src="${img.url}"/>`); });
+        lines.push('</tg-slideshow>');
+        if (block.caption) lines.push(block.caption);
+        lines.push('');
+        break;
+      case 'map':
+        lines.push(`[map](${block.latitude},${block.longitude})`);
+        lines.push('');
+        break;
+      case 'math-block':
+        lines.push(`$$${block.expression}$$`);
+        lines.push('');
+        break;
+      case 'thinking':
+        lines.push(`<thinking>${inlineToMd(block.html || block.text || '')}</thinking>`);
+        lines.push('');
+        break;
+      case 'anchor':
+        lines.push(`<a name="${block.name}"></a>`);
+        lines.push('');
+        break;
     }
   });
   return lines.join('\n').trim();
@@ -700,9 +787,12 @@ function inlineToMd(html) {
   md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
   md = md.replace(/<a href="(.*?)">(.*?)<\/a>/gi, '[$2]($1)');
   md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
-  md = md.replace(/<sub>(.*?)<\/sub>/gi, '$1');
-  md = md.replace(/<sup>(.*?)<\/sup>/gi, '$1');
-  md = md.replace(/<mark>(.*?)<\/mark>/gi, '$1');
+  md = md.replace(/<sub>(.*?)<\/sub>/gi, '<sub>$1</sub>');
+  md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
+  md = md.replace(/<mark>(.*?)<\/mark>/gi, '<mark>$1</mark>');
+  md = md.replace(/<span class="tg-datetime"[^>]*>(.*?)<\/span>/gi, '<time>$1</time>');
+  md = md.replace(/<span class="tg-math"[^>]*>(.*?)<\/span>/gi, '\\($1\\)');
+  md = md.replace(/<span class="tg-emoji"[^>]*>(.*?)<\/span>/gi, '$1');
   md = md.replace(/<br\s*\/?>/gi, '\n');
   md = md.replace(/<\/?div[^>]*>/gi, '\n');
   md = md.replace(/<\/?p[^>]*>/gi, '\n');
@@ -712,17 +802,16 @@ function inlineToMd(html) {
 
 // ===================== INIT =====================
 function init() {
-  // Default blocks
   if (state.blocks.length === 0) {
-    state.blocks.push(createBlock('heading', { size: 2, text: 'Welcome to FreeRich', html: 'Welcome to FreeRich' }));
-    state.blocks.push(createBlock('paragraph', { text: 'A free rich text editor for Telegram Bot API.', html: 'A free rich text editor for Telegram Bot API.' }));
-    state.blocks.push(createBlock('paragraph', { text: 'Format your messages with headings, lists, tables, code blocks and more.', html: 'Format your messages with headings, lists, tables, code blocks and more.' }));
+    state.blocks.push(createBlock('heading', { size: 2, html: 'TelegramFreeRich', text: 'TelegramFreeRich' }));
+    state.blocks.push(createBlock('paragraph', { html: 'Free rich text editor for Telegram Bot API 10.1/10.2.', text: 'Free rich text editor for Telegram Bot API 10.1/10.2.' }));
+    state.blocks.push(createBlock('paragraph', { html: 'All block types: headings, tables, lists, code, math, media, collage, slideshow, maps, thinking, and more.', text: 'All block types: headings, tables, lists, code, math, media, collage, slideshow, maps, thinking, and more.' }));
   }
-
   renderBlocks();
   initToolbar();
   initTheme();
   initModeTabs();
+  initFlags();
   initSettings();
   initSend();
 }
