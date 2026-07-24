@@ -76,6 +76,13 @@ body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;h
 .block-content .tg-spoiler:hover{color:var(--text);background:transparent}
 .block-content .tg-datetime{color:var(--accent);font-size:.85em}
 .block-content .tg-math{font-style:italic;color:var(--warning)}
+.block-content .tg-bankcard{font-family:monospace;color:var(--warning);background:rgba(245,166,35,.1);padding:1px 4px;border-radius:3px}
+.block-content .tg-mention{color:var(--accent);font-weight:500}
+.block-content .tg-hashtag{color:var(--accent);font-weight:500}
+.block-content .tg-cashtag{color:var(--success);font-weight:500}
+.block-content .tg-botcommand{color:var(--accent-hover);font-family:monospace}
+.block-content .tg-textmention{color:var(--accent);font-weight:500}
+.block-content .tg-ref{color:var(--text-dim);font-style:italic;border:1px dashed var(--border);padding:1px 4px;border-radius:3px;font-size:.85em}
 .block-content mark{background:rgba(44,165,224,.25);color:var(--text);border-radius:2px;padding:0 2px}
 
 /* Block type styling */

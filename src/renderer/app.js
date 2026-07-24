@@ -813,50 +813,154 @@ function initTestMessage() {
 }
 
 function loadTestMessage() {
+  const now = Math.floor(Date.now() / 1000);
+  const emojiId = '5365287242976311112'; // TG star emoji ID (public)
   state.blocks = [
-    createBlock('heading', { size: 1, html: 'TelegramFreeRich <strong>Test</strong> Message' }),
-    createBlock('paragraph', { html: 'This is a <strong>comprehensive</strong> test message using <em>every</em> block type supported by Telegram <u>Bot</u> API 10.1/10.2. It includes <code>inline code</code>, <span class="tg-spoiler">spoiler</span>, <sub>sub</sub>, <sup>sup</sup>, <mark>marked</mark> text, and a <a href="https://telegram.org">link</a>.' }),
-    createBlock('heading', { size: 2, html: 'Headings & Text Blocks' }),
-    createBlock('heading', { size: 3, html: 'This is H3 — Section' }),
-    createBlock('blockquote', { html: '<strong>"The only way to do great work is to love what you do."</strong> — Steve Jobs' }),
-    createBlock('pull-quote', { html: 'A centered pull quote that stands out from the main content.', credit: 'TelegramFreeRich' }),
+    // ====================================================
+    // SECTION 1: ALL RichText (Inline) Types = 25 types
+    // ====================================================
+    createBlock('heading', { size: 1, html:
+      'TelegramFreeRich <strong>Rich Text</strong> — All 25 Inline Types' }),
+    createBlock('paragraph', { html:
+      '1️⃣ <strong>Bold</strong> &bull; 2️⃣ <em>Italic</em> &bull; 3️⃣ <u>Underline</u> &bull; ' +
+      '4️⃣ <s>Strikethrough</s> &bull; 5️⃣ <span class="tg-spoiler">Spoiler (tap to reveal)</span>' }),
+    createBlock('paragraph', { html:
+      '6️⃣ <sub>Subscript</sub> (H₂O) &bull; 7️⃣ <sup>Superscript</sup> (E=mc²) &bull; ' +
+      '8️⃣ <mark>Marked/Highlighted</mark> text' }),
+    createBlock('paragraph', { html:
+      '9️⃣ <code>Inline code</code> &bull; ' +
+      '🔟 <time class="tg-datetime" timestamp="' + now + '">' + new Date().toLocaleString() + '</time> (DateTime)' }),
+    createBlock('paragraph', { html:
+      '1️⃣1️⃣ <span class="tg-math">\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}</span> (Math Inline) &bull; ' +
+      '1️⃣2️⃣ <span class="tg-emoji" emoji-id="' + emojiId + '">⭐</span> (Custom Emoji)' }),
+    createBlock('paragraph', { html:
+      '1️⃣3️⃣ <a href="https://telegram.org">URL / Link</a> &bull; ' +
+      '1️⃣4️⃣ <a href="mailto:user@example.com">Email Address</a> &bull; ' +
+      '1️⃣5️⃣ <a href="tel:+1234567890">Phone Number</a>'}),
+    createBlock('paragraph', { html:
+      '1️⃣6️⃣ <span class="tg-bankcard">1234 5678 9012 3456</span> (Bank Card) &bull; ' +
+      '1️⃣7️⃣ <span class="tg-mention">@username</span> (Mention) &bull; ' +
+      '1️⃣8️⃣ <span class="tg-hashtag">#hashtag</span> (Hashtag)' }),
+    createBlock('paragraph', { html:
+      '1️⃣9️⃣ <span class="tg-cashtag">$STARS</span> (Cashtag) &bull; ' +
+      '2️⃣0️⃣ <span class="tg-botcommand">/start@BotFather</span> (Bot Command) &bull; ' +
+      '2️⃣1️⃣ <span class="tg-textmention">Text Mention</span> (by user ID)' }),
+    createBlock('paragraph', { html:
+      '2️⃣2️⃣ <a name="section-top"></a>Anchor (named section) &bull; ' +
+      '2️⃣3️⃣ <a href="#section-top">Anchor Link</a> &bull; ' +
+      '2️⃣4️⃣ <span class="tg-ref">Reference</span> &bull; ' +
+      '2️⃣5️⃣ <a href="#ref-1">Reference Link</a>'}),
+
+    // ====================================================
+    // SECTION 2: ALL Block Types = 21 blocks
+    // ====================================================
     createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Lists & Checklists' }),
-    createBlock('bullet-list', { items: [{ text: 'Apple' }, { text: 'Banana' }, { text: 'Cherry' }] }),
-    createBlock('ordered-list', { items: [{ text: 'First step' }, { text: 'Second step' }, { text: 'Third step' }] }),
-    createBlock('checklist', { items: [{ text: 'Buy groceries', checked: true }, { text: 'Walk the dog', checked: false }, { text: 'Read a book', checked: false }] }),
-    createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Code Block' }),
-    createBlock('code-block', { language: 'javascript', text: 'function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet("World"));' }),
-    createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Table' }),
-    createBlock('table', { cells: [
-      { cells: ['Feature', 'Status', 'Version'], header: true },
-      { cells: ['Bold', '✅', '10.1'], header: false },
-      { cells: ['Subscript', '✅', '10.1'], header: false },
-      { cells: ['Collage', '✅', '10.2'], header: false },
+    createBlock('heading', { size: 1, html: 'Section 2 — All 21 Block Types' }),
+    createBlock('heading', { size: 2, html: '2. Paragraph (already seen above) &amp; Headings H1-H6' }),
+    createBlock('heading', { size: 6, html: '2a. Heading H6 — smallest heading' }),
+    createBlock('heading', { size: 4, html: '2b. Heading H4 — medium heading' }),
+    createBlock('heading', { size: 3, html: '2c. Heading H3 — section heading' }),
+
+    createBlock('heading', { size: 3, html: '2d. Block Quote (with credit)' }),
+    createBlock('blockquote', { html: '<strong>"The only way to do great work is to love what you do."</strong>', credit: '— Steve Jobs' }),
+
+    createBlock('heading', { size: 3, html: '2e. Pull Quote (centered)' }),
+    createBlock('pull-quote', { html: 'This is a centered pull quote that visually stands out from the main content flow.', credit: 'TelegramFreeRich' }),
+
+    createBlock('heading', { size: 3, html: '2f. Preformatted / Code Block' }),
+    createBlock('code-block', { language: 'python', text: 'def fibonacci(n):\n    """Return the nth Fibonacci number."""\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n\nprint(fibonacci(10))  # Output: 55' }),
+
+    createBlock('heading', { size: 3, html: '2g. Bullet List &amp; 2h. Ordered List' }),
+    createBlock('bullet-list', { items: [
+      { text: 'Unordered item A' },
+      { text: 'Unordered item B with <code>inline</code>' },
+      { text: 'Unordered item C' },
     ]}),
+    createBlock('ordered-list', { items: [
+      { text: 'First ordered item' },
+      { text: 'Second ordered item' },
+      { text: 'Third ordered item with <b>bold</b>' },
+    ]}),
+
+    createBlock('heading', { size: 3, html: '2i. Checklist' }),
+    createBlock('checklist', { items: [
+      { text: 'Completed task', checked: true },
+      { text: 'In progress task', checked: false },
+      { text: 'Pending task with notes', checked: false },
+    ]}),
+
+    createBlock('heading', { size: 3, html: '2j. Table' }),
+    createBlock('table', { cells: [
+      { cells: ['Telegram Bot API', 'Version', 'Rich Text Support', 'Blocks Support'], header: true },
+      { cells: ['Bold / Italic', '10.1', '✅', '—'], header: false },
+      { cells: ['Table block', '10.1', '—', '✅'], header: false },
+      { cells: ['Collage / Slideshow', '10.2', '—', '✅'], header: false },
+      { cells: ['Thinking block', '10.2', '—', '✅'], header: false },
+    ]}),
+
+    createBlock('heading', { size: 3, html: '2k. Details (spoiler/expandable)' }),
+    createBlock('details', { summary: '🔽 Click to expand — hidden content inside', html: 'This content is <strong>hidden</strong> by default. Telegram renders it as a collapsible block. The user can tap to expand and read the full text.', open: false }),
+
+    createBlock('heading', { size: 3, html: '2l. Divider' }),
     createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Details / Spoiler' }),
-    createBlock('details', { summary: 'Click to reveal secret message', html: 'This is <strong>hidden</strong> content inside a details block!', open: false }),
+
+    createBlock('heading', { size: 3, html: '2m. Footer' }),
+    createBlock('footer', { text: 'This is a footer block — italic, smaller, separated from the main content.' }),
+
+    createBlock('heading', { size: 3, html: '2n. Math Block (block-level LaTeX)' }),
+    createBlock('math-block', { expression: '\\int_{0}^{2\\pi} \\sin^2(x) \\, dx = \\pi' }),
+
+    createBlock('heading', { size: 3, html: '2o. Thinking Block (AI reasoning)' }),
+    createBlock('thinking', { text: 'This is a "thinking" block that represents the AI\'s internal chain-of-thought reasoning process. It should appear with a distinct visual style (e.g., grey/italic background) to indicate it is not part of the final response.' }),
+
+    createBlock('heading', { size: 3, html: '2p. Media Blocks (Photo, Video, GIF, Audio, Voice)' }),
+    createBlock('image', { url: 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', caption: 'Photo: Telegram logo (SVG)' }),
+    createBlock('video', { url: 'https://www.w3schools.com/html/mov_bbb.mp4', caption: 'Video: Big Buck Bunny sample' }),
+    createBlock('animation', { url: 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif', caption: 'Animation/GIF: dancing cat' }),
+    createBlock('audio', { url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', caption: 'Audio: SoundHelix sample track' }),
+    createBlock('voicenote', { url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', caption: 'Voice Note sample' }),
+
+    createBlock('heading', { size: 3, html: '2q. Collage (multi-image grid)' }),
+    createBlock('collage', { images: [
+      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/240px-Telegram_logo.svg.png' },
+      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/240px-Instagram_icon.png' },
+      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter_logo.png/240px-Twitter_logo.png' },
+    ], caption: 'A collage of social media logos' }),
+
+    createBlock('heading', { size: 3, html: '2r. Slideshow (carousel)' }),
+    createBlock('slideshow', { images: [
+      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/240px-PNG_transparency_demonstration_1.png' },
+      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/JPEG_example_flower.jpg/240px-JPEG_example_flower.jpg' },
+    ], caption: 'A slideshow of sample images' }),
+
+    createBlock('heading', { size: 3, html: '2s. Map (location pin)' }),
+    createBlock('map', { latitude: 35.6892, longitude: 51.3890, zoom: 13 }),
+
+    createBlock('heading', { size: 3, html: '2t. Anchor (named position)' }),
+    createBlock('anchor', { name: 'section-bottom' }),
+
+    createBlock('heading', { size: 3, html: '2u. List Item (rich nested)' }),
+    createBlock('bullet-list', { items: [
+      { text: 'Main item with <b>rich text</b> support' },
+      { text: 'Sub-item reference <a href="#section-bottom">link to anchor</a>' },
+      { text: 'Final item with <code>code</code> inline' },
+    ]}),
+
+    // ====================================================
+    // SECTION 3: InputRichMessage Features
+    // ====================================================
     createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Math Expression' }),
-    createBlock('math-block', { expression: '\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}' }),
-    createBlock('paragraph', { html: 'Inline math: <span class="tg-math">\\frac{a}{b}</span> and <span class="tg-math">\\sum_{i=1}^{n} i</span> are supported.' }),
-    createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Thinking Block' }),
-    createBlock('thinking', { text: 'This is a thinking block that represents the AI\'s internal reasoning process. It appears with a subtle style to indicate it is not the final response.' }),
-    createBlock('divider'),
-    createBlock('heading', { size: 3, html: 'Media Blocks' }),
-    createBlock('image', { url: 'https://via.placeholder.com/400x200.png?text=Test+Image', caption: 'Sample photo block' }),
-    createBlock('video', { url: 'https://www.w3schools.com/html/mov_bbb.mp4', caption: 'Sample video' }),
-    createBlock('animation', { url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXRkaWdvbXJ6ZHV0dDRuajJtNDBmc29vYzltbHh3eHM4MDhuMmo4YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/du3J3cXyzhjWIO/giphy.gif', caption: 'Animated GIF' }),
-    createBlock('heading', { size: 2, html: 'Anchor & Footer' }),
-    createBlock('anchor', { name: 'section-end' }),
-    createBlock('footer', { text: 'Generated by TelegramFreeRich v2.2' }),
+    createBlock('heading', { size: 1, html: 'Section 3 — InputRichMessage Features' }),
+    createBlock('paragraph', { html:
+      '✅ <strong>is_rtl</strong> — Enable below (RTL toggle) for Arabic/Persian/Hebrew text<br/>' +
+      '✅ <strong>skip_entity_detection</strong> — Enable below (No Detect toggle) to send raw text without URL/hashtag auto-linking<br/>' +
+      '✅ <strong>media field</strong> — Use tg://photo?id= links in markdown for file attachment<br/>' +
+      '✅ <strong>Three modes</strong> — Rich (sendRichMessage) / Draft (sendRichMessageDraft, auto-deletes after 30s) / Edit (editMessageText)'}),
+
+    createBlock('footer', { text: 'Generated by TelegramFreeRich — covers all 25 RichText + 21 RichBlock + InputRichMessage features' }),
   ];
   renderBlocks();
-  toast('Test message loaded with all block types!', 'success');
+  toast('Full API test loaded: 25 RichText + 21 blocks + msg features', 'success');
 }
 function init() {
   if (state.blocks.length === 0) {
