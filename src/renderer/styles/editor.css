@@ -1,0 +1,219 @@
+/* TipTap editor styles */
+
+.tiptap-wrapper {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.tiptap-editor {
+  min-height: 100%;
+  padding: 16px 18px 80px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.65;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  color: var(--text);
+}
+
+.tiptap-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+.tiptap-editor a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.tiptap-editor code {
+  background: var(--surface3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.tiptap-editor pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.tiptap-editor pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.tiptap-editor blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 4px 12px;
+  margin: 8px 0;
+  color: var(--text-dim);
+  background: var(--surface);
+  border-radius: 0 6px 6px 0;
+}
+
+.tiptap-editor blockquote.pullquote {
+  border-left-color: var(--warning);
+  font-style: italic;
+}
+
+.tiptap-editor table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.tiptap-editor th,
+.tiptap-editor td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  min-width: 60px;
+}
+
+.tiptap-editor th {
+  background: var(--surface2);
+  font-weight: 600;
+}
+
+.tiptap-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+
+.tiptap-editor details {
+  margin: 8px 0;
+  padding: 6px 0;
+}
+
+.tiptap-editor summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.tiptap-editor img {
+  max-width: 200px;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.tiptap-editor .tg-spoiler {
+  background: var(--text-dim);
+  color: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.tiptap-editor .tg-spoiler:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.tiptap-editor .tg-math {
+  font-style: italic;
+  color: var(--warning);
+  text-align: center;
+  padding: 8px;
+}
+
+.tiptap-editor mark {
+  background: rgba(44, 165, 224, 0.25);
+  color: var(--text);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.tiptap-editor footer {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.tiptap-editor h1 { font-size: 1.8em; margin: 12px 0 6px; }
+.tiptap-editor h2 { font-size: 1.5em; margin: 10px 0 5px; }
+.tiptap-editor h3 { font-size: 1.25em; margin: 8px 0 4px; }
+.tiptap-editor h4 { font-size: 1.1em; margin: 6px 0 3px; }
+.tiptap-editor h5 { font-size: 1em; margin: 4px 0 2px; }
+.tiptap-editor h6 { font-size: 0.9em; margin: 4px 0 2px; color: var(--text-dim); }
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  padding-left: 24px;
+  margin: 6px 0;
+}
+
+.tiptap-editor li {
+  margin: 2px 0;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.tb-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  flex-shrink: 0;
+  padding: 0 6px;
+}
+
+.tb-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.tb-btn.active {
+  background: var(--surface3);
+  color: var(--accent);
+}
+
+.tb-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tb-icon {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tb-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}

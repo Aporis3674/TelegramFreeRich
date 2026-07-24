@@ -1,5 +1,41 @@
 # Changelog
 
+## [3.0.0] - 2026-07-24
+
+### Security (Critical)
+- Token NEVER stored or used in renderer — all API calls via secure IPC
+- Removed all direct `fetch()` calls with bot token from renderer
+- Removed plaintext token storage from `localStorage`
+- Input validation for token, chatId, lang, and API method names
+- HTTP timeout (30s) and response size limit (1MB) on Telegram requests
+- CSP meta tag added to HTML
+- URL scheme sanitization against `javascript:` / `data:` XSS
+
+### Architecture
+- Block State model: `BlockManager`, `block-parser`, `block-serializer`
+- DOM → Block JSON → Telegram `InputRichBlock*` pipeline
+- Checklist separated into its own `sendChecklist` API path
+- Shared modules under `src/shared/` (types, utils, constants)
+
+### UI
+- React 19 + TipTap editor foundation
+- Split-pane live preview panel
+- RTL toggle
+- i18n strings for English and Persian
+- Toolbar regrouped (inline / block / media)
+
+### Tooling
+- ESLint + Prettier + EditorConfig
+- Vitest unit tests (block manager, parser, serializer, utils, validation)
+- Vite for React renderer build
+- CI workflow: lint + test on PR/push
+- Build workflow: Windows + Linux after tests pass
+
+### Breaking
+- Version bumped to 3.0.0
+- Renderer settings no longer include raw token
+- Production path expects Vite build output under `dist/renderer`
+
 ## [2.1.0] - 2026-07-23
 
 ### Security (Critical)
@@ -23,49 +59,20 @@
 ## [1.0.0] - 2026-07-23
 
 ### Added
-- Block-based editor architecture (Notion-like draggable cards)
-- Live preview panel with Telegram-style message bubble
+- Desktop Electron shell for Telegram Bot API rich messages
 - Dark/Light theme toggle
 - Settings panel with Bot Token, Chat ID, and Test Connection
-- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+K, Ctrl+E)
-- Drag-to-reorder blocks
+- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U)
 - Send modes: Rich Message, Draft, Edit
-- Checklist support (separate API call via sendChecklist)
-- Media support: Image, Video, Audio, Slideshow, Map
-- Math formulas (inline and block)
-- Collapsible Details/Summary blocks
-- Pull Quotes with citation
-- Code Blocks with language selector
-- Tables with add row/column
-- Focus mode for distraction-free writing
 - Character counter (32,768 max)
 - Toast notifications
 - Clear All button
-- File drag-and-drop for media
-
-### Block Types
-- Paragraph, Heading (H1-H6), Blockquote, Preformatted (Code Block)
-- Divider, List (Bullet/Numbered), Footer
-- Table, Photo, Video, Audio, Slideshow, Map
-- Aside (Pull Quote), Details (Collapsible)
-
-### Inline Formatting
-- Bold, Italic, Underline, Strikethrough
-- Spoiler, Highlight (Marked), Inline Code
-- Subscript, Superscript, Links
-
-### API Integration
-- sendRichMessage with InputRichBlock* types
-- editMessageText with rich_message parameter
-- sendRichMessageDraft (30s, private chats)
-- sendChecklist (separate API)
 
 ### Tech Stack
 - Electron 35 (Desktop shell)
 - Vanilla HTML + CSS + JavaScript
-- Block State (JSON object array)
 - electron-builder (NSIS installer)
 
 ### Supported Platforms
 - Windows (x64 installer)
-- Linux (AppImage, deb)
+- Linux (AppImage)

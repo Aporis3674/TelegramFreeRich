@@ -1,47 +1,62 @@
+/**
+ * TelegramFreeRich — Electron Main Process
+ * Handles: window management, encrypted settings, Telegram API proxy.
+ * Security: token NEVER leaves main process.
+ */
+
 const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require('electron');
 const path = require('path');
 const https = require('https');
 const fs = require('fs');
+const {
+  isValidToken,
+  isValidChatId,
+  isValidLang,
+  isValidMethod,
+} = require('./security/validation');
 
-// --- Input Validation ---
-const VALID_TOKEN_RE = /^\d{8,10}:[A-Za-z0-9_-]{35}$/;
-const VALID_CHATID_RE = /^(@[a-zA-Z][a-zA-Z0-9_]{3,}|-\d{5,})$/;
 const HTTP_TIMEOUT_MS = 30000;
-const MAX_RESPONSE_BYTES = 1048576; // 1MB
+const MAX_RESPONSE_BYTES = 1048576;
 
 let mainWindow;
 let secureToken = '';
 let secureChatId = '';
 let secureLang = 'en';
 
-// --- Secure Settings Path ---
+// ===================== Encrypted Settings =====================
+
 function getSettingsPath() {
   const dir = app.getPath('userData');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return path.join(dir, 'settings.enc');
 }
 
-// --- Load encrypted settings from disk ---
 function loadSecureSettings() {
   const filePath = getSettingsPath();
   if (!fs.existsSync(filePath)) return;
-
   try {
     const raw = fs.readFileSync(filePath);
+    if (!safeStorage.isEncryptionAvailable()) {
+      console.error('[Settings] Encryption not available on this system');
+      return;
+    }
     const decrypted = safeStorage.decryptString(raw);
     const parsed = JSON.parse(decrypted);
     secureToken = parsed.token || '';
     secureChatId = parsed.chatId || '';
     secureLang = parsed.lang || 'en';
   } catch (e) {
-    console.error('Failed to load secure settings:', e.message);
+    console.error('[Settings] Failed to load:', e.message);
   }
 }
 
-// --- Save encrypted settings to disk ---
 function saveSecureSettings() {
   const filePath = getSettingsPath();
   try {
+    if (!safeStorage.isEncryptionAvailable()) {
+      console.error('[Settings] Encryption not available — settings not saved');
+      return false;
+    }
     const data = JSON.stringify({
       token: secureToken,
       chatId: secureChatId,
@@ -49,10 +64,71 @@ function saveSecureSettings() {
     });
     const encrypted = safeStorage.encryptString(data);
     fs.writeFileSync(filePath, encrypted);
+    return true;
   } catch (e) {
-    console.error('Failed to save secure settings:', e.message);
+    console.error('[Settings] Failed to save:', e.message);
+    return false;
   }
 }
+
+// ===================== HTTP Request with Timeout =====================
+
+/**
+ * Make an HTTPS request to Telegram API with timeout and size limit.
+ * @param {string} url
+ * @param {object|null} payload - null for GET, object for POST
+ * @returns {Promise<object>}
+ */
+function tgRequest(url, payload = null) {
+  return new Promise((resolve, reject) => {
+    const isPost = payload !== null;
+    const data = isPost ? JSON.stringify(payload) : null;
+
+    const options = {
+      method: isPost ? 'POST' : 'GET',
+      headers: isPost
+        ? {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(data),
+          }
+        : {},
+    };
+
+    const req = https.request(url, options, (res) => {
+      let body = '';
+      let size = 0;
+
+      res.on('data', (chunk) => {
+        size += chunk.length;
+        if (size > MAX_RESPONSE_BYTES) {
+          req.destroy();
+          reject(new Error('Response too large'));
+          return;
+        }
+        body += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body));
+        } catch {
+          reject(new Error('Invalid JSON response'));
+        }
+      });
+    });
+
+    req.setTimeout(HTTP_TIMEOUT_MS, () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+// ===================== Window =====================
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -69,10 +145,16 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
-
-  if (process.argv.includes('--dev')) {
+  // In dev with Vite, load from localhost; otherwise load built file
+  const isDev = process.argv.includes('--dev');
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
+  } else {
+    // Prefer Vite build output, fall back to source HTML
+    const built = path.join(__dirname, '..', '..', 'dist', 'renderer', 'index.html');
+    const source = path.join(__dirname, '..', 'renderer', 'index.html');
+    mainWindow.loadFile(fs.existsSync(built) ? built : source);
   }
 }
 
@@ -89,67 +171,61 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-// === IPC Handlers ===
+// ===================== IPC Handlers =====================
 
-// Telegram API call — token NEVER leaves main process
-ipcMain.handle('tg-api', async (event, { method, body }) => {
+/**
+ * Telegram API call — token is added here, NEVER in renderer.
+ */
+ipcMain.handle('tg-api', async (_event, { method, body }) => {
   if (!secureToken) {
     return { ok: false, description: 'Bot token not configured' };
   }
-  if (!method || typeof method !== 'string') {
+  if (!isValidMethod(method)) {
     return { ok: false, description: 'Invalid API method' };
   }
+  if (!body || typeof body !== 'object') {
+    return { ok: false, description: 'Invalid request body' };
+  }
 
-  return new Promise((resolve, reject) => {
+  try {
     const url = `https://api.telegram.org/bot${secureToken}/${method}`;
-    const data = JSON.stringify(body);
-
-    const req = https.request(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-      },
-      timeout: HTTP_TIMEOUT_MS,
-    }, (res) => {
-      let body = '';
-      let size = 0;
-      res.on('data', chunk => {
-        size += chunk.length;
-        if (size > MAX_RESPONSE_BYTES) { req.destroy(); reject(new Error('Response too large')); return; }
-        body += chunk;
-      });
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch (e) {
-          reject(new Error('Invalid JSON response'));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
+    return await tgRequest(url, body);
+  } catch (e) {
+    return { ok: false, description: e.message || 'Network error' };
+  }
 });
 
-// Save settings — token encrypted via safeStorage
-ipcMain.handle('save-settings', async (event, { token, chatId, lang }) => {
+/**
+ * Save settings — encrypted via safeStorage. Token is validated.
+ */
+ipcMain.handle('save-settings', async (_event, { token, chatId, lang }) => {
   if (token !== undefined) {
-    if (!VALID_TOKEN_RE.test(token)) return { ok: false, description: 'Invalid bot token format' };
-    secureToken = token;
+    if (typeof token === 'string' && token.length > 0 && !isValidToken(token)) {
+      return { ok: false, description: 'Invalid bot token format' };
+    }
+    secureToken = token || '';
   }
   if (chatId !== undefined) {
-    if (!VALID_CHATID_RE.test(chatId)) return { ok: false, description: 'Invalid chat ID format' };
-    secureChatId = chatId;
+    if (typeof chatId === 'string' && chatId.length > 0 && !isValidChatId(chatId)) {
+      return { ok: false, description: 'Invalid chat ID format' };
+    }
+    secureChatId = chatId || '';
   }
-  if (lang !== undefined && ['en', 'fa'].includes(lang)) secureLang = lang;
-  saveSecureSettings();
-  return { ok: true };
+  if (lang !== undefined) {
+    if (!isValidLang(lang)) {
+      return { ok: false, description: 'Invalid language' };
+    }
+    secureLang = lang;
+  }
+  const saved = saveSecureSettings();
+  return saved
+    ? { ok: true }
+    : { ok: false, description: 'Failed to encrypt/save settings' };
 });
 
-// Load settings — returns everything EXCEPT token (security)
+/**
+ * Load settings — returns everything EXCEPT the token (security).
+ */
 ipcMain.handle('load-settings', async () => {
   return {
     tokenSet: !!secureToken,
@@ -158,26 +234,26 @@ ipcMain.handle('load-settings', async () => {
   };
 });
 
-// Test connection — uses internal token
+/**
+ * Test connection — uses internal token, never exposes it.
+ * Uses GET (getMe has no body).
+ */
 ipcMain.handle('tg-test', async () => {
   if (!secureToken) {
     return { ok: false, description: 'Bot token not configured' };
   }
-  return new Promise((resolve, reject) => {
+  try {
     const url = `https://api.telegram.org/bot${secureToken}/getMe`;
-    https.get(url, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try { resolve(JSON.parse(body)); }
-        catch (e) { reject(new Error('Invalid JSON')); }
-      });
-    }).on('error', reject);
-  });
+    return await tgRequest(url, null);
+  } catch (e) {
+    return { ok: false, description: e.message || 'Network error' };
+  }
 });
 
-// File dialog for image/media selection
-ipcMain.handle('open-file', async (event, { filters }) => {
+/**
+ * File dialog for image/media selection.
+ */
+ipcMain.handle('open-file', async (_event, { filters } = {}) => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
     filters: filters || [

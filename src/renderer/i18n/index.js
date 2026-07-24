@@ -1,85 +1,50 @@
 /**
- * Simple i18n module for TelegramFreeRich.
- * Uses window.i18n pattern (non-ES-module, loaded via <script>).
- *
- * Usage:
- *   i18n.t('key')            → translated string for current language
- *   i18n.setLang('fa')       → switch language (persists to localStorage)
- *   i18n.getLang()            → current language code
+ * Simple i18n loader for TelegramFreeRich.
+ * @module i18n
  */
-(function () {
-  'use strict';
 
-  var LANG_KEY = 'tfr-lang';
-  var _currentLang = localStorage.getItem(LANG_KEY) || 'en';
-  var _strings = {};
+import en from './en.json';
+import fa from './fa.json';
 
-  // Cache loaded language bundles
-  var _bundles = {};
+const locales = { en, fa };
+let currentLang = 'en';
 
-  /**
-   * Load a language bundle (JSON file).
-   * Returns a Promise that resolves with the parsed strings.
-   */
-  function loadBundle(lang) {
-    if (_bundles[lang]) return Promise.resolve(_bundles[lang]);
+/**
+ * Set the active language.
+ * @param {string} lang - 'en' | 'fa'
+ */
+export function setLanguage(lang) {
+  if (locales[lang]) currentLang = lang;
+}
 
-    // Map lang code to the right JSON path relative to the HTML page
-    var path = 'i18n/' + lang + '.json';
-    return fetch(path)
-      .then(function (res) {
-        if (!res.ok) throw new Error('Failed to load ' + path);
-        return res.json();
-      })
-      .then(function (data) {
-        _bundles[lang] = data;
-        return data;
-      });
-  }
+/**
+ * Get the active language code.
+ * @returns {string}
+ */
+export function getLanguage() {
+  return currentLang;
+}
 
-  /**
-   * Translate a key. Returns the key itself if translation is not found.
-   * Supports simple interpolation: t('key', { username: 'Alice' })
-   *   replaces {username} in the translated string.
-   */
-  function t(key, vars) {
-    var dict = _bundles[_currentLang] || _bundles['en'] || {};
-    var str = dict[key] || key;
-    if (vars && typeof str === 'string') {
-      Object.keys(vars).forEach(function (k) {
-        str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
-      });
+/**
+ * Translate a key. Falls back to English, then to the key itself.
+ * @param {string} key
+ * @param {Record<string, string>} [params] - Optional {name} replacements.
+ * @returns {string}
+ */
+export function t(key, params) {
+  let str = locales[currentLang]?.[key] ?? locales.en[key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
     }
-    return str;
   }
+  return str;
+}
 
-  /**
-   * Switch language. Persists to localStorage and loads the bundle.
-   * Returns a Promise that resolves once the new language is ready.
-   */
-  function setLang(lang) {
-    _currentLang = lang || 'en';
-    localStorage.setItem(LANG_KEY, _currentLang);
-    return loadBundle(_currentLang);
-  }
-
-  /**
-   * Get the current language code.
-   */
-  function getLang() {
-    return _currentLang;
-  }
-
-  // Pre-load the default language
-  loadBundle(_currentLang).catch(function (err) {
-    console.warn('[i18n] Failed to load default language:', err);
-  });
-
-  // Expose as window.i18n
-  window.i18n = {
-    t: t,
-    setLang: setLang,
-    getLang: getLang,
-    loadBundle: loadBundle
-  };
-})();
+/**
+ * Whether the current language is RTL.
+ * @returns {boolean}
+ */
+export function isRtlLang() {
+  return currentLang === 'fa';
+}
