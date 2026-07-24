@@ -1,0 +1,97 @@
+{
+  "app.title": "FreeRich",
+  "app.version": "3.0.0",
+
+  "editor.placeholder": "شروع به نوشتن...",
+
+  "btn.settings": "تنظیمات",
+  "btn.clear": "پاک کردن همه",
+  "btn.send": "ارسال",
+  "btn.save": "ذخیره",
+  "btn.cancel": "لغو",
+  "btn.create": "ایجاد",
+  "btn.testConnection": "تست اتصال",
+
+  "toolbar.formatting": "قالب‌بندی",
+  "toolbar.textStyle": "سبک متن",
+  "toolbar.list": "لیست",
+  "toolbar.table": "درج جدول",
+  "toolbar.link": "درج لینک",
+  "toolbar.media": "رسانه",
+
+  "menu.heading": "عنوان",
+  "menu.heading.back": "بازگشت",
+  "menu.heading.h1": "عنوان ۱",
+  "menu.heading.h2": "عنوان ۲",
+  "menu.heading.h3": "عنوان ۳",
+  "menu.heading.h4": "عنوان ۴",
+  "menu.heading.h5": "عنوان ۵",
+  "menu.heading.h6": "عنوان ۶",
+
+  "menu.text": "متن",
+  "menu.blockquote": "نقل‌قول",
+  "menu.pullquote": "نقل‌قول بزرگ",
+  "menu.codeBlock": "بلوک کد",
+  "menu.footer": "پاورقی",
+  "menu.divider": "جداساز",
+  "menu.mathBlock": "بلوک ریاضی",
+  "menu.details": "جزئیات",
+
+  "style.bold": "بولد",
+  "style.italic": "ایتالیک",
+  "style.underline": "زیرخط",
+  "style.strikethrough": "خط‌خورده",
+  "style.spoiler": "اسپویلر",
+  "style.subscript": "زیرنویس",
+  "style.superscript": "بالانویس",
+  "style.marked": "مشخص‌شده",
+
+  "list.ordered": "لیست مرتب",
+  "list.bullet": "لیست گلوله‌ای",
+  "list.checklist": "لیست چک‌باکس",
+
+  "media.photo": "عکس یا ویدیو",
+  "media.audio": "فایل صوتی",
+
+  "link.header": "ایجاد لینک",
+  "link.textPlaceholder": "متن لینک",
+  "link.urlPlaceholder": "آدرس (https://...)",
+
+  "mode.rich": "غنی",
+  "mode.draft": "پیش‌نویس",
+  "mode.edit": "ویرایش",
+
+  "settings.title": "تنظیمات",
+  "settings.botToken": "توکن ربات",
+  "settings.botToken.placeholder": "از @BotFather",
+  "settings.chatId": "شناسه چت",
+  "settings.chatId.placeholder": "@کانال یا شناسه عددی",
+  "settings.editMessageId": "شناسه پیام ویرایش",
+  "settings.editMessageId.placeholder": "شناسه پیام برای ویرایش",
+  "settings.language": "زبان",
+  "settings.theme": "پوسته",
+  "settings.theme.dark": "تاریک",
+  "settings.theme.light": "روشن",
+
+  "toast.settingsSaved": "تنظیمات ذخیره شد",
+  "toast.sent": "ارسال شد!",
+  "toast.draftSent": "پیش‌نویس ارسال شد",
+  "toast.edited": "ویرایش شد!",
+  "toast.cleared": "پاک شد",
+  "toast.fullTestLoaded": "تست کامل بارگذاری شد",
+
+  "error.configureBotToken": "توکن ربات را تنظیم کنید",
+  "error.setChatId": "شناسه چت را تنظیم کنید",
+  "error.nothingToSend": "چیزی برای ارسال نیست",
+  "error.enterUrl": "آدرس را وارد کنید",
+  "error.networkError": "خطای شبکه",
+
+  "confirm.clearAll": "همه محتوا پاک شود؟",
+
+  "charCount.format": "{count} / ۳۲,۷۶۸",
+
+  "connection.testing": "در حال تست...",
+  "connection.success": "✓ @{username} متصل شد",
+  "connection.error": "✗ {description}",
+  "connection.networkError": "✗ خطای شبکه"
+}

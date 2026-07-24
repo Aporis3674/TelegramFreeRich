@@ -1,0 +1,97 @@
+{
+  "app.title": "FreeRich",
+  "app.version": "3.0.0",
+
+  "editor.placeholder": "Start writing...",
+
+  "btn.settings": "Settings",
+  "btn.clear": "Clear All",
+  "btn.send": "Send",
+  "btn.save": "Save",
+  "btn.cancel": "Cancel",
+  "btn.create": "Create",
+  "btn.testConnection": "Test Connection",
+
+  "toolbar.formatting": "Formatting",
+  "toolbar.textStyle": "Text Style",
+  "toolbar.list": "List",
+  "toolbar.table": "Insert Table",
+  "toolbar.link": "Insert Link",
+  "toolbar.media": "Media",
+
+  "menu.heading": "Heading",
+  "menu.heading.back": "Back",
+  "menu.heading.h1": "Heading 1",
+  "menu.heading.h2": "Heading 2",
+  "menu.heading.h3": "Heading 3",
+  "menu.heading.h4": "Heading 4",
+  "menu.heading.h5": "Heading 5",
+  "menu.heading.h6": "Heading 6",
+
+  "menu.text": "Text",
+  "menu.blockquote": "Quote",
+  "menu.pullquote": "Pullquote",
+  "menu.codeBlock": "Code Block",
+  "menu.footer": "Footer",
+  "menu.divider": "Divider",
+  "menu.mathBlock": "Math Block",
+  "menu.details": "Details",
+
+  "style.bold": "Bold",
+  "style.italic": "Italic",
+  "style.underline": "Underline",
+  "style.strikethrough": "Strikethrough",
+  "style.spoiler": "Spoiler",
+  "style.subscript": "Subscript",
+  "style.superscript": "Superscript",
+  "style.marked": "Marked",
+
+  "list.ordered": "Ordered List",
+  "list.bullet": "Bullet List",
+  "list.checklist": "Check List",
+
+  "media.photo": "Photo or Video",
+  "media.audio": "Audio File",
+
+  "link.header": "Create Link",
+  "link.textPlaceholder": "Link text",
+  "link.urlPlaceholder": "URL (https://...)",
+
+  "mode.rich": "Rich",
+  "mode.draft": "Draft",
+  "mode.edit": "Edit",
+
+  "settings.title": "Settings",
+  "settings.botToken": "Bot Token",
+  "settings.botToken.placeholder": "From @BotFather",
+  "settings.chatId": "Chat ID",
+  "settings.chatId.placeholder": "@channel or numeric ID",
+  "settings.editMessageId": "Edit Message ID",
+  "settings.editMessageId.placeholder": "Message ID to edit",
+  "settings.language": "Language",
+  "settings.theme": "Theme",
+  "settings.theme.dark": "Dark",
+  "settings.theme.light": "Light",
+
+  "toast.settingsSaved": "Settings saved",
+  "toast.sent": "Sent!",
+  "toast.draftSent": "Draft sent",
+  "toast.edited": "Edited!",
+  "toast.cleared": "Cleared",
+  "toast.fullTestLoaded": "Full test loaded",
+
+  "error.configureBotToken": "Configure bot token",
+  "error.setChatId": "Set chat ID",
+  "error.nothingToSend": "Nothing to send",
+  "error.enterUrl": "Enter a URL",
+  "error.networkError": "Network error",
+
+  "confirm.clearAll": "Clear all content?",
+
+  "charCount.format": "{count} / 32,768",
+
+  "connection.testing": "Testing...",
+  "connection.success": "✓ @{username} connected",
+  "connection.error": "✗ {description}",
+  "connection.networkError": "✗ Network error"
+}

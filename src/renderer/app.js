@@ -1,5 +1,5 @@
 /**
- * TelegramFreeRich v4.0 — Compact free-form editor
+ * TelegramFreeRich 3.0.0 — Compact free-form editor
  * Bottom toolbar with 6 dropdown icons, single contenteditable, minimal UI.
  */
 

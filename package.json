@@ -1,6 +1,6 @@
 {
   "name": "telegramfreerich",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Free Rich Text Editor for Telegram — Desktop Edition",
   "main": "src/main/main.js",
   "scripts": {
