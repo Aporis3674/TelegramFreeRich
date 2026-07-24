@@ -1,572 +1,336 @@
 /**
- * TelegramFreeRich v2.2 — Telegram-style rich text editor
- * Full Bot API 10.1/10.2 Rich Message support
- * Block-based JSON state → Markdown output
+ * TelegramFreeRich v3.0 — Free-form rich text editor with chat sessions
+ * Single contenteditable, no block system. Markdown conversion via HTML.
  */
 
 // ===================== STATE =====================
+const CHATS_KEY = 'tfr-chats';
+const SETTINGS_KEY = 'tfr-settings';
+const THEME_KEY = 'tfr-theme';
+
 const state = {
-  blocks: [],
-  selectedBlockId: null,
-  mode: 'rich',
-  editMessageId: null,
-  theme: localStorage.getItem('tfr-theme') || 'dark',
+  chats: JSON.parse(localStorage.getItem(CHATS_KEY) || '[]'),
+  activeChatId: null,
+  theme: localStorage.getItem(THEME_KEY) || 'dark',
+  settings: JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'),
   isRtl: false,
   skipEntityDetection: false,
-  settings: {
-    token: localStorage.getItem('tfr-token') || '',
-    tokenSet: !!localStorage.getItem('tfr-token'),
-    chatId: localStorage.getItem('tfr-chat') || '',
-    editId: localStorage.getItem('tfr-edit-id') || '',
-    lang: localStorage.getItem('tfr-lang') || 'en',
-  },
+  mode: 'rich',
 };
 
-let blockIdCounter = 0;
-const newId = () => `blk_${++blockIdCounter}_${Date.now()}`;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
-
-// ===================== BLOCK MODEL =====================
-function createBlock(type, data = {}) {
-  const base = { id: newId(), type, ...data };
-  switch (type) {
-    case 'paragraph': return { ...base, html: data.html || '', text: data.text || '' };
-    case 'heading': return { ...base, size: data.size || 2, html: data.html || '', text: data.text || '' };
-    case 'code-block': return { ...base, language: data.language || '', text: data.text || '' };
-    case 'bullet-list': case 'ordered-list':
-      return { ...base, items: data.items || [{ text: '' }], listType: data.listType || (type === 'ordered-list' ? '1' : null) };
-    case 'checklist':
-      return { ...base, items: data.items || [{ text: '', checked: false }] };
-    case 'table':
-      return { ...base, cells: data.cells || [
-        { cells: ['H1', 'H2', 'H3'], header: true },
-        { cells: ['', '', ''], header: false },
-        { cells: ['', '', ''], header: false },
-      ]};
-    case 'blockquote': return { ...base, html: data.html || '', text: data.text || '', credit: data.credit || '' };
-    case 'pull-quote': return { ...base, html: data.html || '', text: data.text || '', credit: data.credit || '' };
-    case 'details':
-      return { ...base, summary: data.summary || 'Details', body: data.body || '', html: data.html || '', open: data.open || false };
-    case 'divider': return { ...base };
-    case 'footer': return { ...base, text: data.text || '' };
-    case 'image': case 'video': case 'audio': case 'animation': case 'voicenote':
-      return { ...base, url: data.url || '', caption: data.caption || '' };
-    case 'collage': return { ...base, images: data.images || [], caption: data.caption || '' };
-    case 'slideshow': return { ...base, images: data.images || [], caption: data.caption || '' };
-    case 'map': return { ...base, latitude: data.latitude || 0, longitude: data.longitude || 0, zoom: data.zoom || 15 };
-    case 'math-block': return { ...base, expression: data.expression || '' };
-    case 'thinking': return { ...base, text: data.text || '' };
-    case 'anchor': return { ...base, name: data.name || '' };
-    default: return { ...base };
-  }
-}
-
-// ===================== HELPERS =====================
-function stripHtml(html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent || ''; }
-function syncEditableBlock(block, el) { block.html = el.innerHTML; block.text = stripHtml(el.innerHTML); }
-function getBlockIndex(id) { return state.blocks.findIndex(b => b.id === id); }
-function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
+function save() { localStorage.setItem(CHATS_KEY, JSON.stringify(state.chats)); }
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); }
 function toast(msg, type = 'info') {
-  const c = $('#toast-container');
   const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.2s'; setTimeout(() => t.remove(), 200); }, 2500);
+  t.className = `toast ${type}`; t.textContent = msg;
+  $('#toast-container').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .2s'; setTimeout(() => t.remove(), 200); }, 2500);
 }
 
-// ===================== RENDER =====================
-function renderBlocks() {
-  const container = $('#blocks-container');
-  if (!container) return;
-  container.innerHTML = '';
-  state.blocks.forEach((block, index) => container.appendChild(renderBlock(block, index)));
+// ===================== CHAT MANAGEMENT =====================
+function createChat(name) {
+  const chat = { id: `chat_${Date.now()}`, name: name || 'New Chat', content: '', created: Date.now() };
+  state.chats.unshift(chat);
+  state.activeChatId = chat.id;
+  save();
+  renderChatList();
+  loadActiveChat();
+  return chat;
+}
+
+function deleteChat(id) {
+  state.chats = state.chats.filter(c => c.id !== id);
+  if (state.activeChatId === id) {
+    state.activeChatId = state.chats.length ? state.chats[0].id : null;
+  }
+  save();
+  renderChatList();
+  loadActiveChat();
+}
+
+function renameChat(id, newName) {
+  const chat = state.chats.find(c => c.id === id);
+  if (chat) { chat.name = newName || 'Untitled'; save(); renderChatList(); updateChatTitle(); }
+}
+
+function switchChat(id) {
+  saveCurrentChatContent();
+  state.activeChatId = id;
+  save();
+  renderChatList();
+  loadActiveChat();
+  updateChatTitle();
+}
+
+function saveCurrentChatContent() {
+  const chat = state.chats.find(c => c.id === state.activeChatId);
+  if (chat) { chat.content = $('#editor').innerHTML; save(); }
+}
+
+function loadActiveChat() {
+  const chat = state.chats.find(c => c.id === state.activeChatId);
+  const editor = $('#editor');
+  if (chat) {
+    editor.innerHTML = chat.content || '';
+  } else {
+    editor.innerHTML = '';
+  }
   updateCharCount();
 }
 
-function renderBlock(block, index) {
-  const card = document.createElement('div');
-  card.className = `block-card${state.selectedBlockId === block.id ? ' selected' : ''}`;
-  card.dataset.type = block.type;
-  card.dataset.id = block.id;
-  if (block.size) card.dataset.size = block.size;
-
-  // Actions
-  const actions = document.createElement('div');
-  actions.className = 'block-actions';
-  const dragBtn = document.createElement('button');
-  dragBtn.className = 'ba-btn ba-drag';
-  dragBtn.textContent = '⋮⋮';
-  dragBtn.draggable = true;
-  dragBtn.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', index.toString()); card.style.opacity = '0.4'; });
-  dragBtn.addEventListener('dragend', () => { card.style.opacity = '1'; });
-  const delBtn = document.createElement('button');
-  delBtn.className = 'ba-btn del';
-  delBtn.textContent = '×';
-  delBtn.addEventListener('click', () => {
-    state.blocks = state.blocks.filter(b => b.id !== block.id);
-    if (state.selectedBlockId === block.id) state.selectedBlockId = null;
-    renderBlocks();
-  });
-  actions.appendChild(dragBtn);
-  actions.appendChild(delBtn);
-  card.appendChild(actions);
-
-  // Drop
-  card.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
-  card.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const from = parseInt(e.dataTransfer.getData('text/plain'));
-    if (from !== index) { const [m] = state.blocks.splice(from, 1); state.blocks.splice(index, 0, m); renderBlocks(); }
-  });
-
-  const content = document.createElement('div');
-  content.className = 'block-content';
-
-  switch (block.type) {
-    case 'paragraph': case 'heading': case 'blockquote': {
-      content.contentEditable = 'true';
-      content.innerHTML = block.html || block.text || '';
-      content.dataset.placeholder =
-        block.type === 'heading' ? `Heading ${block.size}` :
-        block.type === 'blockquote' ? 'Quote...' : 'Type something...';
-      content.addEventListener('input', () => { syncEditableBlock(block, content); updateCharCount(); });
-      content.addEventListener('focus', () => selectBlock(block.id));
-      content.addEventListener('keydown', (e) => handleKeydown(e, block, index));
-      break;
-    }
-
-    case 'code-block': {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;width:100%;';
-      const langIn = document.createElement('input');
-      langIn.type = 'text'; langIn.placeholder = 'language (js, python...)'; langIn.value = block.language;
-      langIn.style.cssText = 'padding:6px 10px;border:none;border-bottom:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;outline:none;width:100%;';
-      langIn.addEventListener('input', () => { block.language = langIn.value; updateCharCount(); });
-      const codeArea = document.createElement('div');
-      codeArea.contentEditable = 'true';
-      codeArea.textContent = block.text;
-      codeArea.style.cssText = 'padding:12px;outline:none;font-family:monospace;min-height:50px;white-space:pre-wrap;tab-size:4;';
-      codeArea.addEventListener('input', () => { block.text = codeArea.textContent; updateCharCount(); });
-      codeArea.addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertText', false, '    '); } });
-      wrap.appendChild(langIn);
-      wrap.appendChild(codeArea);
-      content.appendChild(wrap);
-      content.style.padding = '0';
-      break;
-    }
-
-    case 'bullet-list': case 'ordered-list': {
-      const listDiv = document.createElement('div');
-      listDiv.className = 'list-items';
-      block.items.forEach((item, i) => {
-        const row = document.createElement('div');
-        row.className = 'list-item';
-        const marker = document.createElement('span');
-        marker.className = 'list-marker';
-        marker.textContent = block.type === 'ordered-list' ? `${i + 1}.` : '•';
-        const inp = document.createElement('input');
-        inp.type = 'text'; inp.value = item.text; inp.placeholder = 'List item';
-        inp.addEventListener('input', () => { block.items[i].text = inp.value; updateCharCount(); });
-        inp.addEventListener('keydown', (e) => handleListKeydown(e, block, i));
-        row.appendChild(marker);
-        row.appendChild(inp);
-        listDiv.appendChild(row);
-      });
-      content.appendChild(listDiv);
-      content.style.padding = '6px 12px';
-      break;
-    }
-
-    case 'checklist': {
-      const clDiv = document.createElement('div');
-      clDiv.className = 'checklist-items';
-      block.items.forEach((item, i) => {
-        const row = document.createElement('div');
-        row.className = 'checklist-item';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox'; cb.checked = item.checked;
-        cb.addEventListener('change', () => { block.items[i].checked = cb.checked; updateCharCount(); });
-        const inp = document.createElement('input');
-        inp.type = 'text'; inp.value = item.text; inp.placeholder = 'Todo';
-        inp.addEventListener('input', () => { block.items[i].text = inp.value; updateCharCount(); });
-        row.appendChild(cb);
-        row.appendChild(inp);
-        clDiv.appendChild(row);
-      });
-      const addBtn = document.createElement('button');
-      addBtn.textContent = '+ Add item';
-      addBtn.style.cssText = 'font-size:11px;padding:4px 12px;border:none;background:none;color:var(--text-dim);cursor:pointer;';
-      addBtn.addEventListener('click', () => { block.items.push({ text: '', checked: false }); renderBlocks(); });
-      clDiv.appendChild(addBtn);
-      content.appendChild(clDiv);
-      content.style.padding = '6px 0';
-      break;
-    }
-
-    case 'table': {
-      const table = document.createElement('table');
-      table.className = 'block-table';
-      block.cells.forEach((row, ri) => {
-        const tr = document.createElement('tr');
-        row.cells.forEach((cellText, ci) => {
-          const cell = document.createElement(row.header ? 'th' : 'td');
-          cell.contentEditable = 'true';
-          cell.textContent = cellText;
-          cell.addEventListener('input', () => { block.cells[ri].cells[ci] = cell.textContent; updateCharCount(); });
-          tr.appendChild(cell);
-        });
-        table.appendChild(tr);
-      });
-      content.appendChild(table);
-      const tA = document.createElement('div');
-      tA.style.cssText = 'display:flex;gap:6px;padding:6px 0 2px;';
-      const addR = document.createElement('button');
-      addR.textContent = '+ Row'; addR.style.cssText = 'font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;';
-      addR.addEventListener('click', () => { block.cells.push({ cells: Array(block.cells[0]?.cells.length || 3).fill(''), header: false }); renderBlocks(); });
-      const addC = document.createElement('button');
-      addC.textContent = '+ Col'; addC.style.cssText = addR.style.cssText;
-      addC.addEventListener('click', () => { block.cells.forEach(r => r.cells.push('')); renderBlocks(); });
-      tA.appendChild(addR); tA.appendChild(addC);
-      content.appendChild(tA);
-      content.style.padding = '8px';
-      break;
-    }
-
-    case 'pull-quote': {
-      const pqText = document.createElement('div');
-      pqText.contentEditable = 'true';
-      pqText.innerHTML = block.html || block.text || '';
-      pqText.dataset.placeholder = 'Pull quote...';
-      pqText.addEventListener('input', () => { syncEditableBlock(block, pqText); updateCharCount(); });
-      const pqCite = document.createElement('div');
-      pqCite.contentEditable = 'true'; pqCite.textContent = block.credit;
-      pqCite.dataset.placeholder = '— Author';
-      pqCite.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px;';
-      pqCite.addEventListener('input', () => { block.credit = pqCite.textContent; updateCharCount(); });
-      content.appendChild(pqText); content.appendChild(pqCite);
-      break;
-    }
-
-    case 'details': {
-      const header = document.createElement('div');
-      header.className = `details-header${block.open ? ' open' : ''}`;
-      const chevron = document.createElement('span');
-      chevron.className = 'chevron'; chevron.textContent = '▶';
-      const sumIn = document.createElement('input');
-      sumIn.type = 'text'; sumIn.value = block.summary; sumIn.placeholder = 'Summary';
-      sumIn.addEventListener('input', () => { block.summary = sumIn.value; updateCharCount(); });
-      header.appendChild(chevron); header.appendChild(sumIn);
-      const body = document.createElement('div');
-      body.className = 'details-body';
-      body.contentEditable = 'true';
-      body.innerHTML = block.html || block.body || '';
-      body.style.display = block.open ? 'block' : 'none';
-      body.addEventListener('input', () => { block.html = body.innerHTML; block.body = stripHtml(body.innerHTML); updateCharCount(); });
-      header.addEventListener('click', (e) => { if (e.target !== sumIn) { block.open = !block.open; header.classList.toggle('open', block.open); body.style.display = block.open ? 'block' : 'none'; } });
-      content.appendChild(header); content.appendChild(body);
-      content.style.padding = '0';
-      break;
-    }
-
-    case 'divider':
-      content.innerHTML = '<hr>';
-      break;
-
-    case 'image': case 'video': case 'audio': case 'animation': case 'voicenote': {
-      const row = document.createElement('div');
-      row.className = 'media-fields';
-      const labels = { image: 'Photo', video: 'Video', audio: 'Audio', animation: 'GIF URL', voicenote: 'Voice Note URL' };
-      const urlIn = document.createElement('input');
-      urlIn.type = 'text'; urlIn.value = block.url; urlIn.placeholder = labels[block.type] + ' URL';
-      urlIn.addEventListener('input', () => { block.url = urlIn.value; updateCharCount(); });
-      const capIn = document.createElement('input');
-      capIn.type = 'text'; capIn.value = block.caption; capIn.placeholder = 'Caption';
-      capIn.addEventListener('input', () => { block.caption = capIn.value; updateCharCount(); });
-      row.appendChild(urlIn); row.appendChild(capIn);
-      content.appendChild(row); content.style.padding = '8px 12px';
-      break;
-    }
-
-    case 'collage': case 'slideshow': {
-      const lbl = block.type === 'collage' ? 'Collage' : 'Slideshow';
-      const imgDiv = document.createElement('div');
-      imgDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px;width:100%;';
-      (block.images || []).forEach((img, i) => {
-        const r = document.createElement('div');
-        r.style.cssText = 'display:flex;gap:6px;align-items:center;';
-        const urlI = document.createElement('input');
-        urlI.type = 'text'; urlI.value = img.url || ''; urlI.placeholder = `Image ${i + 1} URL`;
-        urlI.style.cssText = 'flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:11px;outline:none;';
-        urlI.addEventListener('input', () => { block.images[i].url = urlI.value; updateCharCount(); });
-        const rm = document.createElement('button');
-        rm.textContent = '×'; rm.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;';
-        rm.addEventListener('click', () => { block.images.splice(i, 1); renderBlocks(); });
-        r.appendChild(urlI); r.appendChild(rm);
-        imgDiv.appendChild(r);
-      });
-      const addImg = document.createElement('button');
-      addImg.textContent = '+ Image'; addImg.style.cssText = 'font-size:11px;padding:4px 8px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);cursor:pointer;width:fit-content;';
-      addImg.addEventListener('click', () => { block.images.push({ url: '' }); renderBlocks(); });
-      imgDiv.appendChild(addImg);
-      const capIn = document.createElement('input');
-      capIn.type = 'text'; capIn.value = block.caption; capIn.placeholder = 'Caption';
-      capIn.style.cssText = 'padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      capIn.addEventListener('input', () => { block.caption = capIn.value; updateCharCount(); });
-      content.appendChild(imgDiv); content.appendChild(capIn);
-      content.style.padding = '8px 12px';
-      break;
-    }
-
-    case 'map': {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:8px;width:100%;';
-      const lat = document.createElement('input'); lat.type = 'number'; lat.step = 'any'; lat.value = block.latitude;
-      lat.placeholder = 'Latitude'; lat.style.cssText = 'flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;outline:none;';
-      lat.addEventListener('input', () => { block.latitude = parseFloat(lat.value) || 0; updateCharCount(); });
-      const lng = document.createElement('input'); lng.type = 'number'; lng.step = 'any'; lng.value = block.longitude;
-      lng.placeholder = 'Longitude'; lng.style.cssText = lat.style.cssText;
-      lng.addEventListener('input', () => { block.longitude = parseFloat(lng.value) || 0; updateCharCount(); });
-      const zm = document.createElement('input'); zm.type = 'number'; zm.min = '1'; zm.max = '20'; zm.value = block.zoom;
-      zm.placeholder = 'Zoom'; zm.style.cssText = 'width:60px;' + lat.style.cssText;
-      zm.addEventListener('input', () => { block.zoom = parseInt(zm.value) || 15; updateCharCount(); });
-      row.appendChild(lat); row.appendChild(lng); row.appendChild(zm);
-      content.appendChild(row); content.style.padding = '8px 12px';
-      break;
-    }
-
-    case 'math-block': {
-      const inp = document.createElement('input');
-      inp.type = 'text'; inp.value = block.expression;
-      inp.placeholder = 'LaTeX expression: \\frac{a}{b}, \\int_0^1, ...';
-      inp.style.cssText = 'width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-family:monospace;font-size:14px;outline:none;';
-      inp.addEventListener('input', () => { block.expression = inp.value; updateCharCount(); });
-      content.appendChild(inp); content.style.padding = '8px 12px';
-      break;
-    }
-
-    case 'thinking': {
-      const inp = document.createElement('div');
-      inp.contentEditable = 'true';
-      inp.innerHTML = block.html || block.text || '';
-      inp.dataset.placeholder = 'Thinking process...';
-      inp.style.cssText = 'font-size:13px;color:var(--text-muted);font-style:italic;';
-      inp.addEventListener('input', () => { syncEditableBlock(block, inp); updateCharCount(); });
-      content.appendChild(inp);
-      content.style.background = 'var(--surface2)';
-      content.style.borderRadius = '8px';
-      break;
-    }
-
-    case 'anchor': {
-      const inp = document.createElement('input');
-      inp.type = 'text'; inp.value = block.name;
-      inp.placeholder = 'Anchor name (for internal links)';
-      inp.style.cssText = 'width:100%;padding:6px 10px;border:1px dashed var(--border);border-radius:4px;background:transparent;color:var(--text-dim);font-size:12px;outline:none;';
-      inp.addEventListener('input', () => { block.name = inp.value; updateCharCount(); });
-      content.appendChild(inp); content.style.padding = '6px 12px';
-      break;
-    }
-
-    case 'footer':
-      content.contentEditable = 'true';
-      content.textContent = block.text;
-      content.dataset.placeholder = 'Footer...';
-      content.addEventListener('input', () => { block.text = content.textContent; updateCharCount(); });
-      break;
-  }
-
-  card.appendChild(content);
-  card.addEventListener('click', (e) => { if (!e.target.closest('.block-actions')) selectBlock(block.id); });
-  return card;
+function updateChatTitle() {
+  const chat = state.chats.find(c => c.id === state.activeChatId);
+  const el = $('#chat-title-display');
+  if (el) el.textContent = chat ? chat.name : 'No Chat Selected';
 }
 
-function selectBlock(id) {
-  state.selectedBlockId = id;
-  $$('.block-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
-}
+// ===================== RENDER CHAT LIST =====================
+function renderChatList() {
+  const list = $('#chat-list');
+  if (!list) return;
+  list.innerHTML = '';
+  state.chats.forEach(chat => {
+    const item = document.createElement('div');
+    item.className = `chat-item${chat.id === state.activeChatId ? ' active' : ''}`;
+    item.addEventListener('click', () => switchChat(chat.id));
 
-function handleKeydown(e, block, index) {
-  if (e.key === 'Enter' && !e.shiftKey && block.type === 'paragraph') {
-    e.preventDefault();
-    const nb = createBlock('paragraph');
-    state.blocks.splice(index + 1, 0, nb);
-    renderBlocks();
-    setTimeout(() => { const c = $$(`[data-id="${nb.id}"] .block-content`)[0]; if (c) c.focus(); }, 0);
-  }
-  if (e.key === 'Backspace' && block.type === 'paragraph' && block.text === '' && state.blocks.length > 1) {
-    e.preventDefault();
-    const prev = state.blocks[index - 1];
-    state.blocks.splice(index, 1);
-    renderBlocks();
-    if (prev) setTimeout(() => { const c = $$(`[data-id="${prev.id}"] .block-content`)[0]; if (c) c.focus(); }, 0);
-  }
-}
+    const name = document.createElement('span');
+    name.className = 'chat-item-name';
+    name.textContent = chat.name;
 
-function handleListKeydown(e, block, i) {
-  if (e.key === 'Enter') { e.preventDefault(); block.items.splice(i + 1, 0, { text: '' }); renderBlocks(); }
-  if (e.key === 'Backspace' && e.target.value === '' && block.items.length > 1) { e.preventDefault(); block.items.splice(i, 1); renderBlocks(); }
-}
+    const actions = document.createElement('div');
+    actions.className = 'chat-item-actions';
 
-// ===================== CHAR COUNT =====================
-function updateCharCount() {
-  const el = $('#char-count');
-  if (!el) return;
-  let total = 0;
-  state.blocks.forEach(b => {
-    if (b.type === 'code-block' || b.type === 'math-block') total += (b.text || b.expression || '').length;
-    else if (b.type === 'bullet-list' || b.type === 'ordered-list' || b.type === 'checklist')
-      total += b.items.reduce((s, it) => s + (it.text || '').length, 0);
-    else if (b.type === 'table')
-      total += b.cells.reduce((s, r) => s + r.cells.reduce((ss, c) => ss + c.length, 0), 0);
-    else if (b.type === 'map') total += 30;
-    else total += JSON.stringify(b).length;
-  });
-  el.textContent = `${total.toLocaleString()} / 32,768`;
-  el.style.color = total > 32768 ? 'var(--danger)' : '';
-}
-
-// ===================== TOOLBAR =====================
-function initToolbar() {
-  // Inline + block buttons
-  $$('.tb-btn[data-cmd]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cmd = btn.dataset.cmd;
-      const level = btn.dataset.level;
-      if (cmd === 'heading') { insertBlock('heading', { size: parseInt(level) || 2 }); }
-      else if (['bullet-list', 'ordered-list', 'checklist', 'blockquote', 'code-block',
-                'divider', 'table', 'details', 'image', 'video', 'animation', 'voicenote'].includes(cmd)) {
-        insertBlock(cmd);
-      } else {
-        applyInline(cmd);
-      }
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'chat-item-btn';
+    renameBtn.textContent = '✏';
+    renameBtn.title = 'Rename';
+    renameBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text'; input.value = chat.name; input.className = 'rename-input';
+      name.replaceWith(input); input.focus(); input.select();
+      const finish = () => { renameChat(chat.id, input.value.trim()); };
+      input.addEventListener('blur', finish);
+      input.addEventListener('keydown', (ke) => { if (ke.key === 'Enter') finish(); if (ke.key === 'Escape') { renderChatList(); } });
     });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'chat-item-btn danger';
+    deleteBtn.textContent = '🗑';
+    deleteBtn.title = 'Delete';
+    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteChat(chat.id); });
+
+    actions.appendChild(renameBtn);
+    actions.appendChild(deleteBtn);
+    item.appendChild(name);
+    item.appendChild(actions);
+    list.appendChild(item);
   });
-
-  // Plus menu
-  const plusBtn = $('#btn-plus');
-  const plusBtn2 = $('#btn-plus-bottom');
-  const plusMenu = $('#plus-menu');
-  function togglePlus() { plusMenu.classList.toggle('show'); }
-  if (plusBtn) plusBtn.addEventListener('click', togglePlus);
-  if (plusBtn2) plusBtn2.addEventListener('click', togglePlus);
-  $$('.pm-item[data-cmd]').forEach(item => {
-    item.addEventListener('click', () => { insertBlock(item.dataset.cmd); plusMenu.classList.remove('show'); });
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.plus-menu') && !e.target.closest('#btn-plus') && !e.target.closest('#btn-plus-bottom'))
-      plusMenu.classList.remove('show');
-  });
-
-  $('#btn-undo')?.addEventListener('click', () => document.execCommand('undo'));
-  $('#btn-redo')?.addEventListener('click', () => document.execCommand('redo'));
-}
-
-function insertBlock(type, data = {}) {
-  const idx = state.selectedBlockId ? getBlockIndex(state.selectedBlockId) + 1 : state.blocks.length;
-  state.blocks.splice(idx, 0, createBlock(type, data));
-  renderBlocks();
-  setTimeout(() => {
-    const card = $$('.block-content')[idx];
-    if (card && card.contentEditable === 'true') card.focus();
-  }, 0);
-}
-
-function applyInline(type) {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
-  const text = sel.getRangeAt(0).toString();
-  if (!text) return;
-  let wrapper;
-  switch (type) {
-    case 'bold': wrapper = document.createElement('strong'); break;
-    case 'italic': wrapper = document.createElement('em'); break;
-    case 'underline': wrapper = document.createElement('u'); break;
-    case 'strikethrough': wrapper = document.createElement('s'); break;
-    case 'code': wrapper = document.createElement('code'); break;
-    case 'spoiler': wrapper = document.createElement('span'); wrapper.className = 'tg-spoiler'; break;
-    case 'sub': wrapper = document.createElement('sub'); break;
-    case 'sup': wrapper = document.createElement('sup'); break;
-    case 'marked': wrapper = document.createElement('mark'); break;
-    case 'datetime':
-      wrapper = document.createElement('span');
-      wrapper.className = 'tg-datetime';
-      wrapper.dataset.timestamp = Math.floor(Date.now() / 1000);
-      wrapper.textContent = new Date().toLocaleString();
-      break;
-    case 'math-inline':
-      wrapper = document.createElement('span');
-      wrapper.className = 'tg-math';
-      wrapper.textContent = text;
-      break;
-    case 'emoji':
-      wrapper = document.createElement('span');
-      wrapper.className = 'tg-emoji';
-      wrapper.dataset.emojiId = '0';
-      wrapper.textContent = text || '😀';
-      break;
-    default: return;
-  }
-  wrapper.textContent = text;
-  const range = sel.getRangeAt(0);
-  range.deleteContents();
-  range.insertNode(wrapper);
-  sel.removeAllRanges();
-  const newRange = document.createRange();
-  newRange.selectNodeContents(wrapper);
-  sel.addRange(newRange);
-  updateCharCount();
 }
 
 // ===================== THEME =====================
 function applyTheme() {
   const isLight = state.theme === 'light';
   document.body.classList.toggle('light', isLight);
-  const sun = document.getElementById('icon-sun');
-  const moon = document.getElementById('icon-moon');
-  if (sun && moon) {
-    sun.style.display = isLight ? 'none' : '';
-    moon.style.display = isLight ? '' : 'none';
+  const sun = $('#icon-sun'), moon = $('#icon-moon');
+  if (sun && moon) { sun.style.display = isLight ? 'none' : ''; moon.style.display = isLight ? '' : 'none'; }
+}
+
+// ===================== CHAR COUNT =====================
+function updateCharCount() {
+  const el = $('#char-count');
+  if (!el) return;
+  const text = $('#editor').textContent || '';
+  el.textContent = `${text.length.toLocaleString()} / 32,768`;
+  el.style.color = text.length > 32768 ? 'var(--danger)' : '';
+}
+
+// ===================== TOOLBAR COMMANDS =====================
+function execCmd(cmd) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  switch (cmd) {
+    case 'bold': document.execCommand('bold'); break;
+    case 'italic': document.execCommand('italic'); break;
+    case 'underline': document.execCommand('underline'); break;
+    case 'strikethrough': document.execCommand('strikeThrough'); break;
+    case 'code': wrapSelection('code'); break;
+    case 'spoiler': wrapSelection('span', 'tg-spoiler'); break;
+    case 'sub': document.execCommand('subscript'); break;
+    case 'sup': document.execCommand('superscript'); break;
+    case 'marked': wrapSelection('mark'); break;
+    case 'math-inline': wrapSelection('span', 'tg-math'); break;
+    case 'link': insertLink(); break;
+    case 'heading': insertHeading(); break;
+    case 'bullet-list': insertHTML('<ul><li>Item</li></ul>'); break;
+    case 'ordered-list': insertHTML('<ol><li>Item</li></ol>'); break;
+    case 'checklist': insertHTML('<ul><li><input type="checkbox"> Todo</li></ul>'); break;
+    case 'blockquote': document.execCommand('formatBlock', false, 'blockquote'); break;
+    case 'code-block': insertHTML('<pre><code class="language-">Code here</code></pre>'); break;
+    case 'table': insertHTML('<table><tr><th>H1</th><th>H2</th><th>H3</th></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>'); break;
+    case 'divider': insertHTML('<hr>'); break;
+    case 'details': insertHTML('<details><summary>Click to expand</summary>Content here</details>'); break;
+    case 'math-block': insertHTML('<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$formula$$</div>'); break;
+    case 'image': insertMedia('image', '.jpg'); break;
+    case 'video': insertMedia('video', '.mp4'); break;
+    case 'animation': insertMedia('animation', '.gif'); break;
+    case 'audio': insertMedia('audio', '.mp3'); break;
+    case 'voicenote': insertMedia('voicenote', '.ogg'); break;
+    case 'map': insertHTML('<div class="tg-map">📍 Map: lat, long, zoom</div>'); break;
+    case 'collage': insertHTML('<div class="tg-map">⊞ Collage: add image URLs</div>'); break;
+    case 'slideshow': insertHTML('<div class="tg-map">▶⊞ Slideshow: add image URLs</div>'); break;
+  }
+  setTimeout(updateCharCount, 50);
+}
+
+function wrapSelection(tag, className) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const text = sel.getRangeAt(0).toString();
+  if (!text) return;
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  el.textContent = text;
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  range.insertNode(el);
+  sel.removeAllRanges();
+  const nr = document.createRange();
+  nr.selectNodeContents(el);
+  sel.addRange(nr);
+}
+
+function insertLink() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const text = sel.getRangeAt(0).toString() || 'link text';
+  const url = prompt('Enter URL:', 'https://');
+  if (!url) return;
+  const a = document.createElement('a');
+  a.href = url; a.textContent = text; a.target = '_blank';
+  const range = sel.getRangeAt(0);
+  range.deleteContents();
+  range.insertNode(a);
+  const nr = document.createRange();
+  nr.selectNodeContents(a);
+  sel.removeAllRanges();
+  sel.addRange(nr);
+}
+
+function insertHeading() {
+  const level = prompt('Heading level (1-6):', '2');
+  if (!level) return;
+  const h = parseInt(level) || 2;
+  document.execCommand('formatBlock', false, `h${Math.min(6, Math.max(1, h))}`);
+}
+
+function insertHTML(html) {
+  document.execCommand('insertHTML', false, html + '<br>');
+}
+
+function insertMedia(type, ext) {
+  const url = prompt(`Enter ${type} URL (should end with ${ext}):`, 'https://');
+  if (!url) return;
+  if (type === 'image' || type === 'animation') {
+    document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:300px;border-radius:8px" alt="${type}"><br>`);
+  } else {
+    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">📎 ${type}: ${url}</a><br>`);
   }
 }
-function initTheme() {
-  applyTheme();
-  $('#btn-theme')?.addEventListener('click', () => {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('tfr-theme', state.theme);
-    applyTheme();
-  });
+
+// ===================== MARKDOWN CONVERSION =====================
+function editorToMarkdown() {
+  const html = $('#editor').innerHTML;
+  return htmlToMarkdown(html);
 }
 
-// ===================== MODE =====================
-function initModeTabs() {
-  $$('.mode-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      state.mode = tab.dataset.mode;
-      $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
-      if (state.mode === 'edit') state.editMessageId = state.settings.editId || null;
+function htmlToMarkdown(html) {
+  let md = html;
+  // Block elements
+  md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n');
+  md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n');
+  md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n');
+  md = md.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n');
+  md = md.replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n');
+  md = md.replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n');
+  md = md.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, (_, inner) => inner.split('\n').map(l => `> ${l.replace(/<[^>]+>/g, '')}`).join('\n') + '\n');
+  md = md.replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, (_, code) => '```\n' + decodeEntities(code.trim()) + '\n```\n');
+  md = md.replace(/<hr\s*\/?>/gi, '---\n');
+  md = md.replace(/<details[^>]*><summary[^>]*>(.*?)<\/summary>([\s\S]*?)<\/details>/gi, '<details><summary>$1</summary>\n$2\n</details>\n');
+  md = md.replace(/<div class="tg-math"[^>]*>\$\$(.*?)\$\$<\/div>/gi, '$$$1$$\n');
+  md = md.replace(/<div class="tg-map"[^>]*>.*?([\d.-]+)[,\s]+([\d.-]+)[,\s]+([\d.-]+).*?<\/div>/gi, '<tg-map lat="$1" long="$2" zoom="$3"/>\n');
+  md = md.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, items) => {
+    const lis = items.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+    return lis ? lis.map(li => {
+      const text = li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').replace(/<[^>]+>/g, '');
+      const checked = li.includes('checked');
+      return checked ? `- [x] ${text}` : `- ${text}`;
+    }).join('\n') + '\n' : '';
+  });
+  md = md.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (_, items) => {
+    const lis = items.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+    return lis ? lis.map((li, i) => {
+      const text = li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').replace(/<[^>]+>/g, '');
+      return `${i + 1}. ${text}`;
+    }).join('\n') + '\n' : '';
+  });
+  // Table
+  md = md.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, table) => {
+    const rows = [];
+    const trs = table.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
+    if (!trs) return '';
+    trs.forEach((tr, ri) => {
+      const cells = [];
+      const isHeader = ri === 0;
+      const cellTag = isHeader ? 'th' : 'td';
+      const cellRegex = new RegExp(`<${cellTag}[^>]*>([\\s\\S]*?)<\\/${cellTag}>`, 'gi');
+      let m; while ((m = cellRegex.exec(tr)) !== null) cells.push(m[1].replace(/<[^>]+>/g, ''));
+      rows.push('| ' + cells.join(' | ') + ' |');
+      if (ri === 0) rows.push('| ' + cells.map(() => '---').join(' | ') + ' |');
     });
+    return rows.join('\n') + '\n';
   });
+  // Map tag
+  md = md.replace(/<div class="tg-map">📍 Map: ([\d.-]+), ([\d.-]+), ([\d.-]+)<\/div>/gi, '<tg-map lat="$1" long="$2" zoom="$3"/>\n');
+  md = md.replace(/<div class="tg-map">[^<]*<\/div>/gi, '');
+  // Inline elements
+  md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+  md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
+  md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+  md = md.replace(/<i>(.*?)<\/i>/gi, '*$1*');
+  md = md.replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>');
+  md = md.replace(/<s>(.*?)<\/s>/gi, '~~$1~~');
+  md = md.replace(/<del>(.*?)<\/del>/gi, '~~$1~~');
+  md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
+  md = md.replace(/<a href="(.*?)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+  md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
+  md = md.replace(/<sub>(.*?)<\/sub>/gi, '<sub>$1</sub>');
+  md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
+  md = md.replace(/<mark>(.*?)<\/mark>/gi, '==$1==');
+  md = md.replace(/<span class="tg-math">(.*?)<\/span>/gi, '$$$1$$');
+  md = md.replace(/<span class="tg-datetime"[^>]*>(.*?)<\/span>/gi, '<time>$1</time>');
+  md = md.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![]($1)');
+  md = md.replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
+  md = md.replace(/<br\s*\/?>/gi, '\n');
+  md = md.replace(/<\/?div[^>]*>/gi, '\n');
+  md = md.replace(/<[^>]+>/g, '');
+  md = decodeEntities(md);
+  md = md.replace(/\n{3,}/g, '\n\n');
+  return md.trim();
 }
 
-// ===================== RTL / ENTITY CHECKS =====================
-function initFlags() {
-  const rtlChk = $('#chk-rtl');
-  const entChk = $('#chk-skip-entities');
-  if (rtlChk) rtlChk.addEventListener('change', () => { state.isRtl = rtlChk.checked; });
-  if (entChk) entChk.addEventListener('change', () => { state.skipEntityDetection = entChk.checked; });
-}
+function decodeEntities(s) { const el = document.createElement('div'); el.innerHTML = s; return el.textContent || ''; }
 
 // ===================== SETTINGS =====================
 function initSettings() {
   const overlay = $('#settings-overlay');
   const open = () => {
-    $('#input-token').value = state.settings.token;
-    $('#input-chat').value = state.settings.chatId;
-    $('#input-edit-id').value = state.settings.editId;
-    $('#input-lang').value = state.settings.lang;
+    $('#input-token').value = state.settings.token || '';
+    $('#input-chat').value = state.settings.chatId || '';
+    $('#input-edit-id').value = state.settings.editId || '';
     overlay.classList.remove('hidden');
   };
   const close = () => overlay.classList.add('hidden');
@@ -580,378 +344,266 @@ function initSettings() {
     state.settings.token = $('#input-token').value.trim();
     state.settings.chatId = $('#input-chat').value.trim();
     state.settings.editId = $('#input-edit-id').value.trim();
-    state.settings.lang = $('#input-lang').value;
     state.settings.tokenSet = !!state.settings.token;
-    localStorage.setItem('tfr-token', state.settings.token);
-    localStorage.setItem('tfr-chat', state.settings.chatId);
-    localStorage.setItem('tfr-edit-id', state.settings.editId);
-    localStorage.setItem('tfr-lang', state.settings.lang);
+    saveSettings();
     updateStatus(); close(); toast('Settings saved', 'success');
   });
 
   $('#btn-test-connection')?.addEventListener('click', async () => {
     const token = $('#input-token').value.trim();
     if (!token) { toast('Enter bot token', 'error'); return; }
-    const statusEl = $('#connection-status');
-    statusEl.textContent = 'Testing...'; statusEl.className = '';
+    const el = $('#connection-status');
+    el.textContent = 'Testing...'; el.className = '';
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
       const data = await res.json();
-      if (data.ok) { statusEl.textContent = `✓ @${data.result.username} connected`; statusEl.className = 'ok'; }
-      else { statusEl.textContent = `✗ ${data.description}`; statusEl.className = 'error'; }
-    } catch { statusEl.textContent = '✗ Network error'; statusEl.className = 'error'; }
+      if (data.ok) { el.textContent = `✓ @${data.result.username} connected`; el.className = 'ok'; }
+      else { el.textContent = `✗ ${data.description}`; el.className = 'error'; }
+    } catch { el.textContent = '✗ Network error'; el.className = 'error'; }
   });
   updateStatus();
 }
 
 function updateStatus() {
-  const dot = $('#status-dot');
-  const text = $('#status-text');
+  const dot = $('#status-dot'), text = $('#status-text');
   if (state.settings.tokenSet) {
     dot.className = 'status-dot connected';
     text.textContent = state.settings.chatId ? `→ ${state.settings.chatId}` : 'Bot connected';
-  } else {
-    dot.className = 'status-dot';
-    text.textContent = 'Connect bot to send';
-  }
+  } else { dot.className = 'status-dot'; text.textContent = 'Connect bot'; }
 }
 
 // ===================== SEND =====================
-function initSend() { $('#btn-send')?.addEventListener('click', sendMessage); }
-
 async function sendMessage() {
   if (!state.settings.tokenSet) { toast('Configure bot token', 'error'); return; }
   if (!state.settings.chatId) { toast('Set chat ID', 'error'); return; }
-  if (state.blocks.length === 0) { toast('Nothing to send', 'error'); return; }
+  const content = $('#editor').innerHTML.trim();
+  if (!content) { toast('Nothing to send', 'error'); return; }
 
-  const markdown = blocksToMarkdown();
-  const token = state.settings.token;
-  const chatId = state.settings.chatId;
-
-  const body = { chat_id: chatId, rich_message: { markdown } };
+  const markdown = editorToMarkdown();
+  const body = { chat_id: state.settings.chatId, rich_message: { markdown } };
   if (state.isRtl) body.rich_message.is_rtl = true;
   if (state.skipEntityDetection) body.rich_message.skip_entity_detection = true;
 
   try {
     const sendBtn = $('#btn-send');
     sendBtn.style.opacity = '0.5'; sendBtn.disabled = true;
-
     let res;
     if (state.mode === 'draft') {
-      body.rich_message = { markdown: blocksToMarkdown(true) };
-      res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessageDraft`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/sendRichMessageDraft`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-    } else if (state.mode === 'edit' && state.editMessageId) {
-      res = await fetch(`https://api.telegram.org/bot${token}/editMessageText`, {
+    } else if (state.mode === 'edit' && state.settings.editId) {
+      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/editMessageText`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, message_id: state.editMessageId }),
+        body: JSON.stringify({ ...body, message_id: state.settings.editId }),
       });
     } else {
-      res = await fetch(`https://api.telegram.org/bot${token}/sendRichMessage`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/sendRichMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
     }
-
     const data = await res.json();
-    if (data.ok) toast(state.mode === 'draft' ? 'Draft sent (30s)' : state.mode === 'edit' ? 'Edited!' : 'Sent!', 'success');
+    if (data.ok) toast(state.mode === 'draft' ? 'Draft sent' : state.mode === 'edit' ? 'Edited!' : 'Sent!', 'success');
     else toast(`Error: ${data.description}`, 'error');
     sendBtn.style.opacity = '1'; sendBtn.disabled = false;
   } catch { toast('Network error', 'error'); $('#btn-send').style.opacity = '1'; $('#btn-send').disabled = false; }
 }
 
-// ===================== MARKDOWN CONVERSION =====================
-function blocksToMarkdown(draft = false) {
-  const lines = [];
-  state.blocks.forEach(block => {
-    switch (block.type) {
-      case 'paragraph':
-        lines.push(block.html ? inlineToMd(block.html) : (block.text || ''));
-        lines.push('');
-        break;
-      case 'heading':
-        lines.push(`${'#'.repeat(block.size)} ${inlineToMd(block.html || block.text || '')}`);
-        lines.push('');
-        break;
-      case 'blockquote':
-        (inlineToMd(block.html || block.text || '').split('\n').forEach(l => lines.push(`> ${l}`)));
-        if (block.credit) lines.push(`> — ${block.credit}`);
-        lines.push('');
-        break;
-      case 'pull-quote':
-        lines.push(`> ${inlineToMd(block.html || block.text || '')}`);
-        if (block.credit) lines.push(`> — ${block.credit}`);
-        lines.push('');
-        break;
-      case 'code-block':
-        lines.push('```' + (block.language || ''));
-        lines.push(block.text || '');
-        lines.push('```');
-        lines.push('');
-        break;
-      case 'bullet-list':
-        block.items.forEach(item => lines.push(`- ${item.text}`));
-        lines.push('');
-        break;
-      case 'ordered-list':
-        block.items.forEach((item, i) => lines.push(`${i + 1}. ${item.text}`));
-        lines.push('');
-        break;
-      case 'checklist':
-        block.items.forEach(item => lines.push(`- [${item.checked ? 'x' : ' '}] ${item.text}`));
-        lines.push('');
-        break;
-      case 'table': {
-        if (!block.cells.length) break;
-        lines.push('| ' + block.cells[0].cells.join(' | ') + ' |');
-        lines.push('| ' + block.cells[0].cells.map(() => '---').join(' | ') + ' |');
-        block.cells.slice(1).forEach(row => lines.push('| ' + row.cells.join(' | ') + ' |'));
-        lines.push('');
-        break;
-      }
-      case 'details':
-        lines.push('<details>');
-        lines.push(`<summary>${block.summary}</summary>`);
-        lines.push(block.html ? inlineToMd(block.html) : block.body || '');
-        lines.push('</details>');
-        lines.push('');
-        break;
-      case 'divider':
-        lines.push('---');
-        lines.push('');
-        break;
-      case 'footer':
-        lines.push(`_${block.text}_`);
-        lines.push('');
-        break;
-      case 'image': case 'video': case 'audio': case 'animation': case 'voicenote':
-        if (block.url) {
-          const cap = block.caption ? ` "${block.caption}"` : '';
-          lines.push(`![](${block.url}${cap})`);
-        }
-        lines.push('');
-        break;
-      case 'collage':
-        lines.push('<tg-collage>');
-        (block.images || []).forEach(img => { if (img.url) lines.push(`  <img src="${img.url}"/>`); });
-        lines.push('</tg-collage>');
-        if (block.caption) lines.push(block.caption);
-        lines.push('');
-        break;
-      case 'slideshow':
-        lines.push('<tg-slideshow>');
-        (block.images || []).forEach(img => { if (img.url) lines.push(`  <img src="${img.url}"/>`); });
-        lines.push('</tg-slideshow>');
-        if (block.caption) lines.push(block.caption);
-        lines.push('');
-        break;
-      case 'map':
-        lines.push(`<tg-map lat="${block.latitude}" long="${block.longitude}" zoom="${block.zoom}"/>`);
-        lines.push('');
-        break;
-      case 'math-block':
-        lines.push(`$$${block.expression}$$`);
-        lines.push('');
-        break;
-      case 'thinking':
-        lines.push(`<thinking>${inlineToMd(block.html || block.text || '')}</thinking>`);
-        lines.push('');
-        break;
-      case 'anchor':
-        lines.push(`<a name="${block.name}"></a>`);
-        lines.push('');
-        break;
-    }
-  });
-  return lines.join('\n').trim();
-}
-
-function inlineToMd(html) {
-  if (!html) return '';
-  let md = html;
-  md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
-  md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
-  md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
-  md = md.replace(/<i>(.*?)<\/i>/gi, '*$1*');
-  md = md.replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>');
-  md = md.replace(/<s>(.*?)<\/s>/gi, '~~$1~~');
-  md = md.replace(/<del>(.*?)<\/del>/gi, '~~$1~~');
-  md = md.replace(/<code>(.*?)<\/code>/gi, '`$1`');
-  md = md.replace(/<a href="(.*?)">(.*?)<\/a>/gi, '[$2]($1)');
-  md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
-  md = md.replace(/<sub>(.*?)<\/sub>/gi, '<sub>$1</sub>');
-  md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
-  md = md.replace(/<mark>(.*?)<\/mark>/gi, '==$1==');
-  md = md.replace(/<span class="tg-datetime"[^>]*>(.*?)<\/span>/gi, '<time>$1</time>');
-  md = md.replace(/<span class="tg-math"[^>]*>(.*?)<\/span>/gi, '$$$1$$');
-  md = md.replace(/<span class="tg-emoji"[^>]*>(.*?)<\/span>/gi, '$1');
-  md = md.replace(/<br\s*\/?>/gi, '\n');
-  md = md.replace(/<\/?div[^>]*>/gi, '\n');
-  md = md.replace(/<\/?p[^>]*>/gi, '\n');
-  md = md.replace(/<[^>]+>/g, '');
-  return md.trim();
-}
-
 // ===================== TEST MESSAGE =====================
-function initTestMessage() {
-  $('#btn-test-message')?.addEventListener('click', loadTestMessage);
-}
-
 function loadTestMessage() {
-  const now = Math.floor(Date.now() / 1000);
-  const emojiId = '5365287242976311112'; // TG star emoji ID (public)
-  state.blocks = [
-    // ====================================================
-    // SECTION 1: ALL RichText (Inline) Types = 25 types
-    // ====================================================
-    createBlock('heading', { size: 1, html:
-      'TelegramFreeRich <strong>Rich Text</strong> — All 25 Inline Types' }),
-    createBlock('paragraph', { html:
-      '1️⃣ <strong>Bold</strong> &bull; 2️⃣ <em>Italic</em> &bull; 3️⃣ <u>Underline</u> &bull; ' +
-      '4️⃣ <s>Strikethrough</s> &bull; 5️⃣ <span class="tg-spoiler">Spoiler (tap to reveal)</span>' }),
-    createBlock('paragraph', { html:
-      '6️⃣ <sub>Subscript</sub> (H₂O) &bull; 7️⃣ <sup>Superscript</sup> (E=mc²) &bull; ' +
-      '8️⃣ <mark>Marked/Highlighted</mark> text' }),
-    createBlock('paragraph', { html:
-      '9️⃣ <code>Inline code</code> &bull; ' +
-      '🔟 <time class="tg-datetime" timestamp="' + now + '">' + new Date().toLocaleString() + '</time> (DateTime)' }),
-    createBlock('paragraph', { html:
-      '1️⃣1️⃣ <span class="tg-math">\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}</span> (Math Inline) &bull; ' +
-      '1️⃣2️⃣ <span class="tg-emoji" emoji-id="' + emojiId + '">⭐</span> (Custom Emoji)' }),
-    createBlock('paragraph', { html:
-      '1️⃣3️⃣ <a href="https://telegram.org">URL / Link</a> &bull; ' +
-      '1️⃣4️⃣ <a href="mailto:user@example.com">Email Address</a> &bull; ' +
-      '1️⃣5️⃣ <a href="tel:+1234567890">Phone Number</a>'}),
-    createBlock('paragraph', { html:
-      '1️⃣6️⃣ <span class="tg-bankcard">1234 5678 9012 3456</span> (Bank Card) &bull; ' +
-      '1️⃣7️⃣ <span class="tg-mention">@username</span> (Mention) &bull; ' +
-      '1️⃣8️⃣ <span class="tg-hashtag">#hashtag</span> (Hashtag)' }),
-    createBlock('paragraph', { html:
-      '1️⃣9️⃣ <span class="tg-cashtag">$STARS</span> (Cashtag) &bull; ' +
-      '2️⃣0️⃣ <span class="tg-botcommand">/start@BotFather</span> (Bot Command) &bull; ' +
-      '2️⃣1️⃣ <span class="tg-textmention">Text Mention</span> (by user ID)' }),
-    createBlock('paragraph', { html:
-      '2️⃣2️⃣ <a name="section-top"></a>Anchor (named section) &bull; ' +
-      '2️⃣3️⃣ <a href="#section-top">Anchor Link</a> &bull; ' +
-      '2️⃣4️⃣ <span class="tg-ref">Reference</span> &bull; ' +
-      '2️⃣5️⃣ <a href="#ref-1">Reference Link</a>'}),
+  const editor = $('#editor');
+  editor.innerHTML = `<h1>TelegramFreeRich <strong>Full Test</strong></h1>
 
-    // ====================================================
-    // SECTION 2: ALL Block Types = 21 blocks
-    // ====================================================
-    createBlock('divider'),
-    createBlock('heading', { size: 1, html: 'Section 2 — All 21 Block Types' }),
-    createBlock('heading', { size: 2, html: '2. Paragraph (already seen above) &amp; Headings H1-H6' }),
-    createBlock('heading', { size: 6, html: '2a. Heading H6 — smallest heading' }),
-    createBlock('heading', { size: 4, html: '2b. Heading H4 — medium heading' }),
-    createBlock('heading', { size: 3, html: '2c. Heading H3 — section heading' }),
+<h2>Section 1 — All 25 Inline Types</h2>
 
-    createBlock('heading', { size: 3, html: '2d. Block Quote (with credit)' }),
-    createBlock('blockquote', { html: '<strong>"The only way to do great work is to love what you do."</strong>', credit: '— Steve Jobs' }),
+<p>1. <strong>Bold</strong> &bull; 2. <em>Italic</em> &bull; 3. <u>Underline</u> &bull; 4. <s>Strikethrough</s> &bull; 5. <span class="tg-spoiler">Spoiler</span></p>
 
-    createBlock('heading', { size: 3, html: '2e. Pull Quote (centered)' }),
-    createBlock('pull-quote', { html: 'This is a centered pull quote that visually stands out from the main content flow.', credit: 'TelegramFreeRich' }),
+<p>6. <sub>Subscript</sub> (H₂O) &bull; 7. <sup>Superscript</sup> (E=mc²) &bull; 8. <mark>Marked/Highlighted</mark></p>
 
-    createBlock('heading', { size: 3, html: '2f. Preformatted / Code Block' }),
-    createBlock('code-block', { language: 'python', text: 'def fibonacci(n):\n    """Return the nth Fibonacci number."""\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\n\nprint(fibonacci(10))  # Output: 55' }),
+<p>9. <code>Inline code</code> &bull; 10. <time class="tg-datetime">${new Date().toLocaleString()}</time> (DateTime)</p>
 
-    createBlock('heading', { size: 3, html: '2g. Bullet List &amp; 2h. Ordered List' }),
-    createBlock('bullet-list', { items: [
-      { text: 'Unordered item A' },
-      { text: 'Unordered item B with <code>inline</code>' },
-      { text: 'Unordered item C' },
-    ]}),
-    createBlock('ordered-list', { items: [
-      { text: 'First ordered item' },
-      { text: 'Second ordered item' },
-      { text: 'Third ordered item with <b>bold</b>' },
-    ]}),
+<p>11. <span class="tg-math">\\frac{a}{b}</span> (Math Inline) &bull; 12. ⭐ (Custom Emoji)</p>
 
-    createBlock('heading', { size: 3, html: '2i. Checklist' }),
-    createBlock('checklist', { items: [
-      { text: 'Completed task', checked: true },
-      { text: 'In progress task', checked: false },
-      { text: 'Pending task with notes', checked: false },
-    ]}),
+<p>13. <a href="https://telegram.org">URL / Link</a> &bull; 14. <a href="mailto:user@example.com">Email</a> &bull; 15. <a href="tel:+1234567890">Phone</a></p>
 
-    createBlock('heading', { size: 3, html: '2j. Table' }),
-    createBlock('table', { cells: [
-      { cells: ['Telegram Bot API', 'Version', 'Rich Text Support', 'Blocks Support'], header: true },
-      { cells: ['Bold / Italic', '10.1', '✅', '—'], header: false },
-      { cells: ['Table block', '10.1', '—', '✅'], header: false },
-      { cells: ['Collage / Slideshow', '10.2', '—', '✅'], header: false },
-      { cells: ['Thinking block', '10.2', '—', '✅'], header: false },
-    ]}),
+<p>16. 1234 5678 9012 3456 (Bank Card) &bull; 17. <span style="color:var(--accent)">@username</span> (Mention) &bull; 18. <span style="color:var(--accent)">#hashtag</span> (Hashtag)</p>
 
-    createBlock('heading', { size: 3, html: '2k. Details (spoiler/expandable)' }),
-    createBlock('details', { summary: '🔽 Click to expand — hidden content inside', html: 'This content is <strong>hidden</strong> by default. Telegram renders it as a collapsible block. The user can tap to expand and read the full text.', open: false }),
+<p>19. <span style="color:var(--success)">$STARS</span> (Cashtag) &bull; 20. <span style="color:var(--accent)">/start@BotFather</span> (Bot Command) &bull; 21. Text Mention</p>
 
-    createBlock('heading', { size: 3, html: '2l. Divider' }),
-    createBlock('divider'),
+<p>22. <a name="anchor-top"></a>Anchor &bull; 23. <a href="#anchor-top">Anchor Link</a> &bull; 24. Reference &bull; 25. <a href="#ref">Ref Link</a></p>
 
-    createBlock('heading', { size: 3, html: '2m. Footer' }),
-    createBlock('footer', { text: 'This is a footer block — italic, smaller, separated from the main content.' }),
+<hr>
 
-    createBlock('heading', { size: 3, html: '2n. Math Block (block-level LaTeX)' }),
-    createBlock('math-block', { expression: '\\int_{0}^{2\\pi} \\sin^2(x) \\, dx = \\pi' }),
+<h2>Section 2 — All Block Types (21 types)</h2>
 
-    createBlock('heading', { size: 3, html: '2o. Thinking Block (AI reasoning)' }),
-    createBlock('thinking', { text: 'This is a "thinking" block that represents the AI\'s internal chain-of-thought reasoning process. It should appear with a distinct visual style (e.g., grey/italic background) to indicate it is not part of the final response.' }),
+<h3>2a. Headings H1-H6</h3>
+<h1>H1 — Largest</h1>
+<h2>H2 — Section</h2>
+<h3>H3 — Subsection</h3>
+<h4>H4 — Medium</h4>
+<h5>H5 — Small</h5>
+<h6>H6 — Smallest</h6>
 
-    createBlock('heading', { size: 3, html: '2p. Media Blocks (Photo, Video, GIF, Audio, Voice)' }),
-    createBlock('paragraph', { html: '⚠️ Photo/Video/GIF/Audio/Voice blocks require file upload via <code>media</code> field (tg://photo?id=). URLs are not supported directly. Use the editor UI to add these blocks when sending from a bot that can upload files.' }),
+<h3>2b. Block Quote</h3>
+<blockquote><strong>"The only way to do great work is to love what you do."</strong> — Steve Jobs</blockquote>
 
-    createBlock('heading', { size: 3, html: '2q. Collage (multi-image grid)' }),
-    createBlock('paragraph', { html: '⚠️ Collage block requires media uploads via <code>media</code> field. Add images through the editor UI when your bot can upload files.' }),
+<h3>2c. Code Block</h3>
+<pre><code class="language-python">def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
 
-    createBlock('heading', { size: 3, html: '2r. Slideshow (carousel)' }),
-    createBlock('paragraph', { html: '⚠️ Slideshow block requires media uploads via <code>media</code> field. Add images through the editor UI when your bot can upload files.' }),
+print(fibonacci(10))</code></pre>
 
-    createBlock('heading', { size: 3, html: '2s. Map (location pin)' }),
-    createBlock('map', { latitude: 35.6892, longitude: 51.3890, zoom: 13 }),
+<h3>2d. Lists</h3>
+<ul>
+<li>Unordered item A</li>
+<li>Unordered item B with <code>code</code></li>
+<li>Unordered item C</li>
+</ul>
+<ol>
+<li>First ordered item</li>
+<li>Second ordered item</li>
+<li>Third with <strong>bold</strong></li>
+</ol>
 
-    createBlock('heading', { size: 3, html: '2t. Anchor (named position)' }),
-    createBlock('anchor', { name: 'section-bottom' }),
+<h3>2e. Checklist</h3>
+<ul>
+<li><input type="checkbox" checked> Completed task</li>
+<li><input type="checkbox"> In progress task</li>
+<li><input type="checkbox"> Pending task</li>
+</ul>
 
-    createBlock('heading', { size: 3, html: '2u. List Item (rich nested)' }),
-    createBlock('bullet-list', { items: [
-      { text: 'Main item with <b>rich text</b> support' },
-      { text: 'Sub-item reference <a href="#section-bottom">link to anchor</a>' },
-      { text: 'Final item with <code>code</code> inline' },
-    ]}),
+<h3>2f. Table</h3>
+<table>
+<tr><th>Feature</th><th>Version</th><th>Status</th></tr>
+<tr><td>Bold / Italic</td><td>10.1</td><td>✅</td></tr>
+<tr><td>Table block</td><td>10.1</td><td>✅</td></tr>
+<tr><td>Collage</td><td>10.2</td><td>✅</td></tr>
+<tr><td>Map</td><td>10.2</td><td>✅</td></tr>
+</table>
 
-    // ====================================================
-    // SECTION 3: InputRichMessage Features
-    // ====================================================
-    createBlock('divider'),
-    createBlock('heading', { size: 1, html: 'Section 3 — InputRichMessage Features' }),
-    createBlock('paragraph', { html:
-      '✅ <strong>is_rtl</strong> — Enable below (RTL toggle) for Arabic/Persian/Hebrew text<br/>' +
-      '✅ <strong>skip_entity_detection</strong> — Enable below (No Detect toggle) to send raw text without URL/hashtag auto-linking<br/>' +
-      '✅ <strong>media field</strong> — Use tg://photo?id= links in markdown for file attachment<br/>' +
-      '✅ <strong>Three modes</strong> — Rich (sendRichMessage) / Draft (sendRichMessageDraft, auto-deletes after 30s) / Edit (editMessageText)'}),
+<h3>2g. Details (Collapsible)</h3>
+<details>
+<summary>🔽 Click to expand — hidden content</summary>
+<p>This content is <strong>hidden</strong> by default. Telegram renders it as a collapsible block.</p>
+<table>
+<tr><th>Key</th><th>Value</th></tr>
+<tr><td>A</td><td>1</td></tr>
+</table>
+</details>
 
-    createBlock('footer', { text: 'Generated by TelegramFreeRich — covers all 25 RichText + 21 RichBlock + InputRichMessage features' }),
-  ];
-  renderBlocks();
-  toast('Full API test loaded: 25 RichText + 21 blocks + msg features', 'success');
+<h3>2h. Divider</h3>
+<hr>
+
+<h3>2i. Footer</h3>
+<p><em>This is footer-style text — italic and smaller.</em></p>
+
+<h3>2j. Math Block</h3>
+<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$\\int_{0}^{2\\pi} \\sin^2(x) dx = \\pi$$</div>
+
+<h3>2k. Map</h3>
+<div class="tg-map">📍 Tehran: 35.6892, 51.3890, zoom 13</div>
+
+<h3>2l. Anchor</h3>
+<a name="section-end"></a>
+<p><em>Anchor named "section-end" positioned here.</em></p>
+
+<hr>
+
+<h2>Section 3 — InputRichMessage Features</h2>
+<p>✅ <strong>is_rtl</strong> — RTL toggle below<br>
+✅ <strong>skip_entity_detection</strong> — No Detect toggle below<br>
+✅ <strong>media field</strong> — tg://photo?id= for file uploads<br>
+✅ <strong>Three modes</strong> — Rich / Draft / Edit</p>
+
+<p><em>Generated by TelegramFreeRich — covers all Bot API 10.1/10.2 rich message features</em></p>`;
+  updateCharCount();
+  toast('Full test loaded', 'success');
 }
+
+// ===================== INIT =====================
 function init() {
-  if (state.blocks.length === 0) {
-    state.blocks.push(createBlock('heading', { size: 2, html: 'TelegramFreeRich', text: 'TelegramFreeRich' }));
-    state.blocks.push(createBlock('paragraph', { html: 'Free rich text editor for Telegram Bot API 10.1/10.2.', text: 'Free rich text editor for Telegram Bot API 10.1/10.2.' }));
-    state.blocks.push(createBlock('paragraph', { html: 'All block types: headings, tables, lists, code, math, media, collage, slideshow, maps, thinking, and more.', text: 'All block types: headings, tables, lists, code, math, media, collage, slideshow, maps, thinking, and more.' }));
-  }
-  renderBlocks();
-  initToolbar();
-  initTheme();
-  initModeTabs();
-  initFlags();
+  // Theme
+  applyTheme();
+  $('#btn-theme')?.addEventListener('click', () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, state.theme);
+    applyTheme();
+  });
+
+  // Chat sidebar toggle
+  $('#btn-sidebar-toggle')?.addEventListener('click', () => $('#chat-sidebar').classList.toggle('open'));
+
+  // New chat buttons
+  const newChat = () => { createChat('Chat ' + (state.chats.length + 1)); };
+  $('#btn-new-chat')?.addEventListener('click', newChat);
+  $('#btn-new-chat-sidebar')?.addEventListener('click', newChat);
+
+  // Toolbar
+  $$('.tb-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('click', () => execCmd(btn.dataset.cmd));
+  });
+
+  // Test button
+  $('#btn-test-message')?.addEventListener('click', loadTestMessage);
+
+  // Settings
   initSettings();
-  initSend();
-  initTestMessage();
+
+  // Send
+  $('#btn-send')?.addEventListener('click', sendMessage);
+
+  // Mode tabs
+  $$('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      state.mode = tab.dataset.mode;
+      $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
+    });
+  });
+
+  // RTL / entity flags
+  $('#chk-rtl')?.addEventListener('change', (e) => { state.isRtl = e.target.checked; });
+  $('#chk-skip-entities')?.addEventListener('change', (e) => { state.skipEntityDetection = e.target.checked; });
+
+  // Chat title rename on click
+  $('#chat-title-display')?.addEventListener('click', () => {
+    const chat = state.chats.find(c => c.id === state.activeChatId);
+    if (!chat) return;
+    const name = prompt('Rename chat:', chat.name);
+    if (name) renameChat(chat.id, name);
+  });
+
+  // Editor input → save + char count
+  $('#editor')?.addEventListener('input', () => {
+    updateCharCount();
+    const chat = state.chats.find(c => c.id === state.activeChatId);
+    if (chat) { chat.content = $('#editor').innerHTML; save(); }
+  });
+
+  // Auto-save on content change
+  $('#editor')?.addEventListener('blur', () => saveCurrentChatContent());
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); execCmd('bold'); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); execCmd('italic'); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); execCmd('underline'); }
+  });
+
+  // Load chats
+  renderChatList();
+  if (state.chats.length) {
+    state.activeChatId = state.chats[0].id;
+    loadActiveChat();
+    updateChatTitle();
+    renderChatList();
+  } else {
+    createChat('Welcome');
+    $('#editor').innerHTML = '<h2>TelegramFreeRich v3.0</h2><p>Free-form rich text editor for Telegram Bot API 10.1/10.2.</p><p>Start typing or click <strong>✓</strong> to load the full test message.</p><p>Use the <strong>+</strong> button (top right) to create new chats.</p>';
+    updateCharCount();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
