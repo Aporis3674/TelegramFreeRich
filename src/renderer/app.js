@@ -1,16 +1,11 @@
 /**
- * TelegramFreeRich v3.0 — Free-form rich text editor with chat sessions
- * Single contenteditable, no block system. Markdown conversion via HTML.
+ * TelegramFreeRich v4.0 — Compact free-form editor
+ * Bottom toolbar with 6 dropdown icons, single contenteditable, minimal UI.
  */
 
-// ===================== STATE =====================
-const CHATS_KEY = 'tfr-chats';
 const SETTINGS_KEY = 'tfr-settings';
 const THEME_KEY = 'tfr-theme';
-
 const state = {
-  chats: JSON.parse(localStorage.getItem(CHATS_KEY) || '[]'),
-  activeChatId: null,
   theme: localStorage.getItem(THEME_KEY) || 'dark',
   settings: JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'),
   isRtl: false,
@@ -20,8 +15,7 @@ const state = {
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
-function save() { localStorage.setItem(CHATS_KEY, JSON.stringify(state.chats)); }
-function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); }
+
 function toast(msg, type = 'info') {
   const t = document.createElement('div');
   t.className = `toast ${type}`; t.textContent = msg;
@@ -29,161 +23,101 @@ function toast(msg, type = 'info') {
   setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .2s'; setTimeout(() => t.remove(), 200); }, 2500);
 }
 
-// ===================== CHAT MANAGEMENT =====================
-function createChat(name) {
-  const chat = { id: `chat_${Date.now()}`, name: name || 'New Chat', content: '', created: Date.now() };
-  state.chats.unshift(chat);
-  state.activeChatId = chat.id;
-  save();
-  renderChatList();
-  loadActiveChat();
-  return chat;
-}
-
-function deleteChat(id) {
-  state.chats = state.chats.filter(c => c.id !== id);
-  if (state.activeChatId === id) {
-    state.activeChatId = state.chats.length ? state.chats[0].id : null;
-  }
-  save();
-  renderChatList();
-  loadActiveChat();
-}
-
-function renameChat(id, newName) {
-  const chat = state.chats.find(c => c.id === id);
-  if (chat) { chat.name = newName || 'Untitled'; save(); renderChatList(); updateChatTitle(); }
-}
-
-function switchChat(id) {
-  saveCurrentChatContent();
-  state.activeChatId = id;
-  save();
-  renderChatList();
-  loadActiveChat();
-  updateChatTitle();
-}
-
-function saveCurrentChatContent() {
-  const chat = state.chats.find(c => c.id === state.activeChatId);
-  if (chat) { chat.content = $('#editor').innerHTML; save(); }
-}
-
-function loadActiveChat() {
-  const chat = state.chats.find(c => c.id === state.activeChatId);
-  const editor = $('#editor');
-  if (chat) {
-    editor.innerHTML = chat.content || '';
-  } else {
-    editor.innerHTML = '';
-  }
-  updateCharCount();
-}
-
-function updateChatTitle() {
-  const chat = state.chats.find(c => c.id === state.activeChatId);
-  const el = $('#chat-title-display');
-  if (el) el.textContent = chat ? chat.name : 'No Chat Selected';
-}
-
-// ===================== RENDER CHAT LIST =====================
-function renderChatList() {
-  const list = $('#chat-list');
-  if (!list) return;
-  list.innerHTML = '';
-  state.chats.forEach(chat => {
-    const item = document.createElement('div');
-    item.className = `chat-item${chat.id === state.activeChatId ? ' active' : ''}`;
-    item.addEventListener('click', () => switchChat(chat.id));
-
-    const name = document.createElement('span');
-    name.className = 'chat-item-name';
-    name.textContent = chat.name;
-
-    const actions = document.createElement('div');
-    actions.className = 'chat-item-actions';
-
-    const renameBtn = document.createElement('button');
-    renameBtn.className = 'chat-item-btn';
-    renameBtn.textContent = '✏';
-    renameBtn.title = 'Rename';
-    renameBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const input = document.createElement('input');
-      input.type = 'text'; input.value = chat.name; input.className = 'rename-input';
-      name.replaceWith(input); input.focus(); input.select();
-      const finish = () => { renameChat(chat.id, input.value.trim()); };
-      input.addEventListener('blur', finish);
-      input.addEventListener('keydown', (ke) => { if (ke.key === 'Enter') finish(); if (ke.key === 'Escape') { renderChatList(); } });
-    });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'chat-item-btn danger';
-    deleteBtn.textContent = '🗑';
-    deleteBtn.title = 'Delete';
-    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteChat(chat.id); });
-
-    actions.appendChild(renameBtn);
-    actions.appendChild(deleteBtn);
-    item.appendChild(name);
-    item.appendChild(actions);
-    list.appendChild(item);
-  });
-}
-
 // ===================== THEME =====================
 function applyTheme() {
   const isLight = state.theme === 'light';
   document.body.classList.toggle('light', isLight);
-  const sun = $('#icon-sun'), moon = $('#icon-moon');
-  if (sun && moon) { sun.style.display = isLight ? 'none' : ''; moon.style.display = isLight ? '' : 'none'; }
 }
 
 // ===================== CHAR COUNT =====================
 function updateCharCount() {
-  const el = $('#char-count');
-  if (!el) return;
-  const text = $('#editor').textContent || '';
+  const el = $('#char-count'); if (!el) return;
+  const text = ($('#editor').textContent || '');
   el.textContent = `${text.length.toLocaleString()} / 32,768`;
   el.style.color = text.length > 32768 ? 'var(--danger)' : '';
 }
 
-// ===================== TOOLBAR COMMANDS =====================
+// ===================== POPUP MENU SYSTEM =====================
+let openPopupId = null;
+
+function showPopup(id, anchorEl) {
+  closeAllPopups();
+  const popup = $(id);
+  if (!popup) return;
+  popup.classList.remove('hidden');
+  const rect = anchorEl.getBoundingClientRect();
+  let top = rect.top - popup.offsetHeight - 8;
+  let left = rect.left + (rect.width - popup.offsetWidth) / 2;
+  if (top < 4) top = rect.bottom + 8;
+  if (left < 4) left = 4;
+  if (left + popup.offsetWidth > window.innerWidth - 4) left = window.innerWidth - popup.offsetWidth - 4;
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  openPopupId = id;
+  $('#popup-overlay').classList.remove('hidden');
+}
+
+function closeAllPopups() {
+  $$('.popup-menu').forEach(p => p.classList.add('hidden'));
+  $('#popup-overlay').classList.add('hidden');
+  openPopupId = null;
+}
+
+// ===================== EDITOR COMMANDS =====================
 function execCmd(cmd) {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  const editor = $('#editor');
+  editor.focus();
+
   switch (cmd) {
+    // Heading submenu
+    case 'back-formatting': showPopup('#popup-formatting', $('#btn-formatting')); return;
+    case 'h1': document.execCommand('formatBlock', false, 'h1'); break;
+    case 'h2': document.execCommand('formatBlock', false, 'h2'); break;
+    case 'h3': document.execCommand('formatBlock', false, 'h3'); break;
+    case 'h4': document.execCommand('formatBlock', false, 'h4'); break;
+    case 'h5': document.execCommand('formatBlock', false, 'h5'); break;
+    case 'h6': document.execCommand('formatBlock', false, 'h6'); break;
+
+    // Formatting menu
+    case 'text': document.execCommand('formatBlock', false, 'p'); break;
+    case 'blockquote': document.execCommand('formatBlock', false, 'blockquote'); break;
+    case 'pullquote': insertHTML('<blockquote style="border-left-color:var(--warning)"><em>Pull quote text</em></blockquote>'); break;
+    case 'code-block': insertHTML('<pre><code class="language-">Code here</code></pre>'); break;
+    case 'footer': insertHTML('<footer>Footer text</footer>'); break;
+    case 'divider': insertHTML('<hr>'); break;
+    case 'math-block': insertHTML('<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$formula$$</div>'); break;
+    case 'details': insertHTML('<details><summary>Click to expand</summary><p>Content here</p></details>'); break;
+
+    // Text style
     case 'bold': document.execCommand('bold'); break;
     case 'italic': document.execCommand('italic'); break;
     case 'underline': document.execCommand('underline'); break;
     case 'strikethrough': document.execCommand('strikeThrough'); break;
-    case 'code': wrapSelection('code'); break;
     case 'spoiler': wrapSelection('span', 'tg-spoiler'); break;
     case 'sub': document.execCommand('subscript'); break;
     case 'sup': document.execCommand('superscript'); break;
     case 'marked': wrapSelection('mark'); break;
-    case 'math-inline': wrapSelection('span', 'tg-math'); break;
-    case 'link': insertLink(); break;
-    case 'heading': insertHeading(); break;
+
+    // List menu
     case 'bullet-list': insertHTML('<ul><li>Item</li></ul>'); break;
     case 'ordered-list': insertHTML('<ol><li>Item</li></ol>'); break;
     case 'checklist': insertHTML('<ul><li><input type="checkbox"> Todo</li></ul>'); break;
-    case 'blockquote': document.execCommand('formatBlock', false, 'blockquote'); break;
-    case 'code-block': insertHTML('<pre><code class="language-">Code here</code></pre>'); break;
-    case 'table': insertHTML('<table><tr><th>H1</th><th>H2</th><th>H3</th></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>'); break;
-    case 'divider': insertHTML('<hr>'); break;
-    case 'details': insertHTML('<details><summary>Click to expand</summary>Content here</details>'); break;
-    case 'math-block': insertHTML('<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$formula$$</div>'); break;
-    case 'image': insertMedia('image', '.jpg'); break;
-    case 'video': insertMedia('video', '.mp4'); break;
-    case 'animation': insertMedia('animation', '.gif'); break;
+
+    // Table — insert directly
+    case 'table':
+      insertHTML('<table><tr><th>H1</th><th>H2</th><th>H3</th></tr><tr><td>cell</td><td>cell</td><td>cell</td></tr><tr><td>cell</td><td>cell</td><td>cell</td></tr></table>');
+      break;
+
+    // Link — show panel
+    case 'link': showLinkPanel(); return;
+
+    // Media
+    case 'image': insertMedia('photo/video', '.jpg/.mp4'); break;
     case 'audio': insertMedia('audio', '.mp3'); break;
-    case 'voicenote': insertMedia('voicenote', '.ogg'); break;
-    case 'map': insertHTML('<div class="tg-map">📍 Map: lat, long, zoom</div>'); break;
-    case 'collage': insertHTML('<div class="tg-map">⊞ Collage: add image URLs</div>'); break;
-    case 'slideshow': insertHTML('<div class="tg-map">▶⊞ Slideshow: add image URLs</div>'); break;
   }
+
   setTimeout(updateCharCount, 50);
+  closeAllPopups();
 }
 
 function wrapSelection(tag, className) {
@@ -198,33 +132,7 @@ function wrapSelection(tag, className) {
   range.deleteContents();
   range.insertNode(el);
   sel.removeAllRanges();
-  const nr = document.createRange();
-  nr.selectNodeContents(el);
-  sel.addRange(nr);
-}
-
-function insertLink() {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
-  const text = sel.getRangeAt(0).toString() || 'link text';
-  const url = prompt('Enter URL:', 'https://');
-  if (!url) return;
-  const a = document.createElement('a');
-  a.href = url; a.textContent = text; a.target = '_blank';
-  const range = sel.getRangeAt(0);
-  range.deleteContents();
-  range.insertNode(a);
-  const nr = document.createRange();
-  nr.selectNodeContents(a);
-  sel.removeAllRanges();
-  sel.addRange(nr);
-}
-
-function insertHeading() {
-  const level = prompt('Heading level (1-6):', '2');
-  if (!level) return;
-  const h = parseInt(level) || 2;
-  document.execCommand('formatBlock', false, `h${Math.min(6, Math.max(1, h))}`);
+  const nr = document.createRange(); nr.selectNodeContents(el); sel.addRange(nr);
 }
 
 function insertHTML(html) {
@@ -234,22 +142,53 @@ function insertHTML(html) {
 function insertMedia(type, ext) {
   const url = prompt(`Enter ${type} URL (should end with ${ext}):`, 'https://');
   if (!url) return;
-  if (type === 'image' || type === 'animation') {
-    document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:300px;border-radius:8px" alt="${type}"><br>`);
+  if (type === 'photo/video') {
+    document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:300px;border-radius:8px" alt="media"><br>`);
   } else {
     document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">📎 ${type}: ${url}</a><br>`);
   }
+  closeAllPopups();
+}
+
+// ===================== LINK PANEL =====================
+function showLinkPanel() {
+  closeAllPopups();
+  const sel = window.getSelection();
+  const text = sel && sel.rangeCount ? sel.getRangeAt(0).toString() : '';
+  $('#link-text').value = text;
+  $('#link-url').value = '';
+  showPopup('#link-panel', $('#btn-link'));
+  setTimeout(() => $('#link-text').focus(), 50);
+}
+
+function createLink() {
+  const text = $('#link-text').value.trim() || 'link text';
+  const url = $('#link-url').value.trim();
+  if (!url) { toast('Enter a URL', 'error'); return; }
+  const editor = $('#editor');
+  editor.focus();
+  const a = document.createElement('a');
+  a.href = url; a.textContent = text; a.target = '_blank';
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(a);
+    const nr = document.createRange(); nr.selectNodeContents(a); sel.removeAllRanges(); sel.addRange(nr);
+  } else {
+    editor.appendChild(a);
+  }
+  closeAllPopups();
+  updateCharCount();
 }
 
 // ===================== MARKDOWN CONVERSION =====================
 function editorToMarkdown() {
-  const html = $('#editor').innerHTML;
-  return htmlToMarkdown(html);
+  return htmlToMarkdown($('#editor').innerHTML);
 }
 
 function htmlToMarkdown(html) {
   let md = html;
-  // Block elements
   md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n');
   md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n');
   md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n');
@@ -261,7 +200,6 @@ function htmlToMarkdown(html) {
   md = md.replace(/<hr\s*\/?>/gi, '---\n');
   md = md.replace(/<details[^>]*><summary[^>]*>(.*?)<\/summary>([\s\S]*?)<\/details>/gi, '<details><summary>$1</summary>\n$2\n</details>\n');
   md = md.replace(/<div class="tg-math"[^>]*>\$\$(.*?)\$\$<\/div>/gi, '$$$1$$\n');
-  md = md.replace(/<div class="tg-map"[^>]*>.*?([\d.-]+)[,\s]+([\d.-]+)[,\s]+([\d.-]+).*?<\/div>/gi, '<tg-map lat="$1" long="$2" zoom="$3"/>\n');
   md = md.replace(/<ul[^>]*>([\s\S]*?)<\/ul>/gi, (_, items) => {
     const lis = items.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
     return lis ? lis.map(li => {
@@ -272,31 +210,20 @@ function htmlToMarkdown(html) {
   });
   md = md.replace(/<ol[^>]*>([\s\S]*?)<\/ol>/gi, (_, items) => {
     const lis = items.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
-    return lis ? lis.map((li, i) => {
-      const text = li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').replace(/<[^>]+>/g, '');
-      return `${i + 1}. ${text}`;
-    }).join('\n') + '\n' : '';
+    return lis ? lis.map((li, i) => `${i + 1}. ${li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').replace(/<[^>]+>/g, '')}`).join('\n') + '\n' : '';
   });
-  // Table
   md = md.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, table) => {
     const rows = [];
     const trs = table.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
     if (!trs) return '';
     trs.forEach((tr, ri) => {
-      const cells = [];
-      const isHeader = ri === 0;
-      const cellTag = isHeader ? 'th' : 'td';
-      const cellRegex = new RegExp(`<${cellTag}[^>]*>([\\s\\S]*?)<\\/${cellTag}>`, 'gi');
-      let m; while ((m = cellRegex.exec(tr)) !== null) cells.push(m[1].replace(/<[^>]+>/g, ''));
+      const cells = []; const regex = ri === 0 ? /<th[^>]*>([\s\S]*?)<\/th>/gi : /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      let m; while ((m = regex.exec(tr)) !== null) cells.push(m[1].replace(/<[^>]+>/g, ''));
       rows.push('| ' + cells.join(' | ') + ' |');
       if (ri === 0) rows.push('| ' + cells.map(() => '---').join(' | ') + ' |');
     });
     return rows.join('\n') + '\n';
   });
-  // Map tag
-  md = md.replace(/<div class="tg-map">📍 Map: ([\d.-]+), ([\d.-]+), ([\d.-]+)<\/div>/gi, '<tg-map lat="$1" long="$2" zoom="$3"/>\n');
-  md = md.replace(/<div class="tg-map">[^<]*<\/div>/gi, '');
-  // Inline elements
   md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
   md = md.replace(/<b>(.*?)<\/b>/gi, '**$1**');
   md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
@@ -311,8 +238,7 @@ function htmlToMarkdown(html) {
   md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
   md = md.replace(/<mark>(.*?)<\/mark>/gi, '==$1==');
   md = md.replace(/<span class="tg-math">(.*?)<\/span>/gi, '$$$1$$');
-  md = md.replace(/<span class="tg-datetime"[^>]*>(.*?)<\/span>/gi, '<time>$1</time>');
-  md = md.replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![]($1)');
+  md = md.replace(/<footer>(.*?)<\/footer>/gi, '_$1_');
   md = md.replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
   md = md.replace(/<br\s*\/?>/gi, '\n');
   md = md.replace(/<\/?div[^>]*>/gi, '\n');
@@ -324,6 +250,36 @@ function htmlToMarkdown(html) {
 
 function decodeEntities(s) { const el = document.createElement('div'); el.innerHTML = s; return el.textContent || ''; }
 
+// ===================== TEST MESSAGE =====================
+function loadTestMessage() {
+  const e = $('#editor');
+  e.innerHTML = `<h2>TelegramFreeRich — Full Feature Test</h2>
+<p>Covers all Bot API 10.1/10.2 rich message capabilities.</p>
+<hr>
+<h3>1. Inline Formatting (25 types)</h3>
+<p><strong>Bold</strong> · <em>Italic</em> · <u>Underline</u> · <s>Strikethrough</s> · <span class="tg-spoiler">Spoiler</span></p>
+<p><sub>Subscript</sub> · <sup>Superscript</sup> · <mark>Marked</mark> · <code>Inline Code</code></p>
+<p><span class="tg-math">E = mc²</span> · <time>${new Date().toLocaleString()}</time></p>
+<p><a href="https://telegram.org">URL/Link</a> · <a href="mailto:user@example.com">Email</a> · <a href="tel:+1234567890">Phone</a></p>
+<p>1234 5678 9012 3456 (Bank Card) · <span style="color:var(--accent)">@username</span> · <span style="color:var(--accent)">#hashtag</span> · <span style="color:var(--success)">$STARS</span> · <span style="color:var(--accent)">@botfather</span> · Reference</p>
+<hr>
+<h3>2. Block Elements</h3>
+<h1>H1</h1><h2>H2</h2><h3>H3</h3><h4>H4</h4><h5>H5</h5><h6>H6</h6>
+<blockquote><strong>"Great work requires love."</strong> — Steve Jobs</blockquote>
+<pre><code class="language-python">def greet(name): return f"Hello, {name}!"</code></pre>
+<ul><li>Bullet item A</li><li>Bullet item B</li></ul>
+<ol><li>First</li><li>Second</li><li>Third</li></ol>
+<ul><li><input type="checkbox" checked> Done</li><li><input type="checkbox"> Todo</li></ul>
+<table><tr><th>Feature</th><th>Ver</th><th>Status</th></tr><tr><td>Bold</td><td>10.1</td><td>✅</td></tr><tr><td>Collage</td><td>10.2</td><td>✅</td></tr></table>
+<details><summary>Click to expand</summary><p>Hidden content here with <strong>markdown</strong> inside.</p></details>
+<hr>
+<footer>Footer text — italic small</footer>
+<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$\\int_{0}^{2\\pi} \\sin^2(x) dx = \\pi$$</div>
+<p><em>— Full test complete —</em></p>`;
+  updateCharCount();
+  toast('Full test loaded', 'success');
+}
+
 // ===================== SETTINGS =====================
 function initSettings() {
   const overlay = $('#settings-overlay');
@@ -331,29 +287,30 @@ function initSettings() {
     $('#input-token').value = state.settings.token || '';
     $('#input-chat').value = state.settings.chatId || '';
     $('#input-edit-id').value = state.settings.editId || '';
+    $('#input-lang').value = state.settings.lang || 'en';
+    $('#input-theme').value = state.theme;
     overlay.classList.remove('hidden');
   };
-  const close = () => overlay.classList.add('hidden');
-
   $('#btn-settings')?.addEventListener('click', open);
-  $('#btn-settings-bottom')?.addEventListener('click', open);
-  $('#btn-close-settings')?.addEventListener('click', close);
-  overlay?.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  $('#btn-close-settings')?.addEventListener('click', () => overlay.classList.add('hidden'));
+  overlay?.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
 
   $('#btn-save-settings')?.addEventListener('click', () => {
     state.settings.token = $('#input-token').value.trim();
     state.settings.chatId = $('#input-chat').value.trim();
     state.settings.editId = $('#input-edit-id').value.trim();
+    state.settings.lang = $('#input-lang').value;
     state.settings.tokenSet = !!state.settings.token;
-    saveSettings();
-    updateStatus(); close(); toast('Settings saved', 'success');
+    const newTheme = $('#input-theme').value;
+    if (newTheme !== state.theme) { state.theme = newTheme; localStorage.setItem(THEME_KEY, state.theme); applyTheme(); }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+    updateStatus(); overlay.classList.add('hidden'); toast('Settings saved', 'success');
   });
 
   $('#btn-test-connection')?.addEventListener('click', async () => {
     const token = $('#input-token').value.trim();
     if (!token) { toast('Enter bot token', 'error'); return; }
-    const el = $('#connection-status');
-    el.textContent = 'Testing...'; el.className = '';
+    const el = $('#connection-status'); el.textContent = 'Testing...'; el.className = '';
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
       const data = await res.json();
@@ -365,11 +322,9 @@ function initSettings() {
 }
 
 function updateStatus() {
-  const dot = $('#status-dot'), text = $('#status-text');
-  if (state.settings.tokenSet) {
-    dot.className = 'status-dot connected';
-    text.textContent = state.settings.chatId ? `→ ${state.settings.chatId}` : 'Bot connected';
-  } else { dot.className = 'status-dot'; text.textContent = 'Connect bot'; }
+  const dot = $('#status-dot');
+  if (state.settings.tokenSet) { dot.className = 'status-dot connected'; }
+  else { dot.className = 'status-dot'; }
 }
 
 // ===================== SEND =====================
@@ -385,8 +340,7 @@ async function sendMessage() {
   if (state.skipEntityDetection) body.rich_message.skip_entity_detection = true;
 
   try {
-    const sendBtn = $('#btn-send');
-    sendBtn.style.opacity = '0.5'; sendBtn.disabled = true;
+    const sendBtn = $('#btn-send'); sendBtn.style.opacity = '0.5'; sendBtn.disabled = true;
     let res;
     if (state.mode === 'draft') {
       res = await fetch(`https://api.telegram.org/bot${state.settings.token}/sendRichMessageDraft`, {
@@ -409,145 +363,43 @@ async function sendMessage() {
   } catch { toast('Network error', 'error'); $('#btn-send').style.opacity = '1'; $('#btn-send').disabled = false; }
 }
 
-// ===================== TEST MESSAGE =====================
-function loadTestMessage() {
-  const editor = $('#editor');
-  editor.innerHTML = `<h1>TelegramFreeRich <strong>Full Test</strong></h1>
-
-<h2>Section 1 — All 25 Inline Types</h2>
-
-<p>1. <strong>Bold</strong> &bull; 2. <em>Italic</em> &bull; 3. <u>Underline</u> &bull; 4. <s>Strikethrough</s> &bull; 5. <span class="tg-spoiler">Spoiler</span></p>
-
-<p>6. <sub>Subscript</sub> (H₂O) &bull; 7. <sup>Superscript</sup> (E=mc²) &bull; 8. <mark>Marked/Highlighted</mark></p>
-
-<p>9. <code>Inline code</code> &bull; 10. <time class="tg-datetime">${new Date().toLocaleString()}</time> (DateTime)</p>
-
-<p>11. <span class="tg-math">\\frac{a}{b}</span> (Math Inline) &bull; 12. ⭐ (Custom Emoji)</p>
-
-<p>13. <a href="https://telegram.org">URL / Link</a> &bull; 14. <a href="mailto:user@example.com">Email</a> &bull; 15. <a href="tel:+1234567890">Phone</a></p>
-
-<p>16. 1234 5678 9012 3456 (Bank Card) &bull; 17. <span style="color:var(--accent)">@username</span> (Mention) &bull; 18. <span style="color:var(--accent)">#hashtag</span> (Hashtag)</p>
-
-<p>19. <span style="color:var(--success)">$STARS</span> (Cashtag) &bull; 20. <span style="color:var(--accent)">/start@BotFather</span> (Bot Command) &bull; 21. Text Mention</p>
-
-<p>22. <a name="anchor-top"></a>Anchor &bull; 23. <a href="#anchor-top">Anchor Link</a> &bull; 24. Reference &bull; 25. <a href="#ref">Ref Link</a></p>
-
-<hr>
-
-<h2>Section 2 — All Block Types (21 types)</h2>
-
-<h3>2a. Headings H1-H6</h3>
-<h1>H1 — Largest</h1>
-<h2>H2 — Section</h2>
-<h3>H3 — Subsection</h3>
-<h4>H4 — Medium</h4>
-<h5>H5 — Small</h5>
-<h6>H6 — Smallest</h6>
-
-<h3>2b. Block Quote</h3>
-<blockquote><strong>"The only way to do great work is to love what you do."</strong> — Steve Jobs</blockquote>
-
-<h3>2c. Code Block</h3>
-<pre><code class="language-python">def fibonacci(n):
-    a, b = 0, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
-
-print(fibonacci(10))</code></pre>
-
-<h3>2d. Lists</h3>
-<ul>
-<li>Unordered item A</li>
-<li>Unordered item B with <code>code</code></li>
-<li>Unordered item C</li>
-</ul>
-<ol>
-<li>First ordered item</li>
-<li>Second ordered item</li>
-<li>Third with <strong>bold</strong></li>
-</ol>
-
-<h3>2e. Checklist</h3>
-<ul>
-<li><input type="checkbox" checked> Completed task</li>
-<li><input type="checkbox"> In progress task</li>
-<li><input type="checkbox"> Pending task</li>
-</ul>
-
-<h3>2f. Table</h3>
-<table>
-<tr><th>Feature</th><th>Version</th><th>Status</th></tr>
-<tr><td>Bold / Italic</td><td>10.1</td><td>✅</td></tr>
-<tr><td>Table block</td><td>10.1</td><td>✅</td></tr>
-<tr><td>Collage</td><td>10.2</td><td>✅</td></tr>
-<tr><td>Map</td><td>10.2</td><td>✅</td></tr>
-</table>
-
-<h3>2g. Details (Collapsible)</h3>
-<details>
-<summary>🔽 Click to expand — hidden content</summary>
-<p>This content is <strong>hidden</strong> by default. Telegram renders it as a collapsible block.</p>
-<table>
-<tr><th>Key</th><th>Value</th></tr>
-<tr><td>A</td><td>1</td></tr>
-</table>
-</details>
-
-<h3>2h. Divider</h3>
-<hr>
-
-<h3>2i. Footer</h3>
-<p><em>This is footer-style text — italic and smaller.</em></p>
-
-<h3>2j. Math Block</h3>
-<div class="tg-math" style="text-align:center;font-size:16px;padding:8px">$$\\int_{0}^{2\\pi} \\sin^2(x) dx = \\pi$$</div>
-
-<h3>2k. Map</h3>
-<div class="tg-map">📍 Tehran: 35.6892, 51.3890, zoom 13</div>
-
-<h3>2l. Anchor</h3>
-<a name="section-end"></a>
-<p><em>Anchor named "section-end" positioned here.</em></p>
-
-<hr>
-
-<h2>Section 3 — InputRichMessage Features</h2>
-<p>✅ <strong>is_rtl</strong> — RTL toggle below<br>
-✅ <strong>skip_entity_detection</strong> — No Detect toggle below<br>
-✅ <strong>media field</strong> — tg://photo?id= for file uploads<br>
-✅ <strong>Three modes</strong> — Rich / Draft / Edit</p>
-
-<p><em>Generated by TelegramFreeRich — covers all Bot API 10.1/10.2 rich message features</em></p>`;
-  updateCharCount();
-  toast('Full test loaded', 'success');
-}
-
 // ===================== INIT =====================
 function init() {
-  // Theme
   applyTheme();
-  $('#btn-theme')?.addEventListener('click', () => {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(THEME_KEY, state.theme);
-    applyTheme();
+
+  // --- Popup toolbar buttons ---
+  $('#btn-formatting')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-formatting', e.currentTarget); });
+  $('#btn-text-style')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-text-style', e.currentTarget); });
+  $('#btn-list')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-list', e.currentTarget); });
+  $('#btn-table')?.addEventListener('click', (e) => { e.stopPropagation(); execCmd('table'); });
+  $('#btn-link')?.addEventListener('click', (e) => { e.stopPropagation(); showLinkPanel(); });
+  $('#btn-media')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-media', e.currentTarget); });
+
+  // Heading submenu
+  $('[data-cmd="heading"]')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-heading', e.currentTarget); });
+
+  // All popup items
+  $$('.pm-item').forEach(item => {
+    if (item.dataset.cmd && !item.classList.contains('pm-back') && item.dataset.cmd !== 'heading') {
+      item.addEventListener('click', (e) => { e.stopPropagation(); execCmd(item.dataset.cmd); });
+    }
   });
 
-  // Chat sidebar toggle
-  $('#btn-sidebar-toggle')?.addEventListener('click', () => $('#chat-sidebar').classList.toggle('open'));
+  // Back button in heading submenu
+  $('[data-cmd="back-formatting"]')?.addEventListener('click', (e) => { e.stopPropagation(); showPopup('#popup-formatting', $('#btn-formatting')); });
 
-  // New chat buttons
-  const newChat = () => { createChat('Chat ' + (state.chats.length + 1)); };
-  $('#btn-new-chat')?.addEventListener('click', newChat);
-  $('#btn-new-chat-sidebar')?.addEventListener('click', newChat);
+  // Link panel
+  $('.lp-cancel')?.addEventListener('click', closeAllPopups);
+  $('.lp-create')?.addEventListener('click', createLink);
+  $('#link-url')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') createLink(); });
 
-  // Toolbar
-  $$('.tb-btn[data-cmd]').forEach(btn => {
-    btn.addEventListener('click', () => execCmd(btn.dataset.cmd));
+  // Close popups on overlay click
+  $('#popup-overlay')?.addEventListener('click', closeAllPopups);
+
+  // Clear button
+  $('#btn-clear')?.addEventListener('click', () => {
+    if (confirm('Clear all content?')) { $('#editor').innerHTML = ''; updateCharCount(); toast('Cleared'); }
   });
-
-  // Test button
-  $('#btn-test-message')?.addEventListener('click', loadTestMessage);
 
   // Settings
   initSettings();
@@ -563,47 +415,18 @@ function init() {
     });
   });
 
-  // RTL / entity flags
-  $('#chk-rtl')?.addEventListener('change', (e) => { state.isRtl = e.target.checked; });
-  $('#chk-skip-entities')?.addEventListener('change', (e) => { state.skipEntityDetection = e.target.checked; });
-
-  // Chat title rename on click
-  $('#chat-title-display')?.addEventListener('click', () => {
-    const chat = state.chats.find(c => c.id === state.activeChatId);
-    if (!chat) return;
-    const name = prompt('Rename chat:', chat.name);
-    if (name) renameChat(chat.id, name);
-  });
-
-  // Editor input → save + char count
-  $('#editor')?.addEventListener('input', () => {
-    updateCharCount();
-    const chat = state.chats.find(c => c.id === state.activeChatId);
-    if (chat) { chat.content = $('#editor').innerHTML; save(); }
-  });
-
-  // Auto-save on content change
-  $('#editor')?.addEventListener('blur', () => saveCurrentChatContent());
+  // Editor input
+  $('#editor')?.addEventListener('input', updateCharCount);
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); execCmd('bold'); }
     if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); execCmd('italic'); }
     if ((e.ctrlKey || e.metaKey) && e.key === 'u') { e.preventDefault(); execCmd('underline'); }
+    if (e.key === 'Escape') closeAllPopups();
   });
 
-  // Load chats
-  renderChatList();
-  if (state.chats.length) {
-    state.activeChatId = state.chats[0].id;
-    loadActiveChat();
-    updateChatTitle();
-    renderChatList();
-  } else {
-    createChat('Welcome');
-    $('#editor').innerHTML = '<h2>TelegramFreeRich v3.0</h2><p>Free-form rich text editor for Telegram Bot API 10.1/10.2.</p><p>Start typing or click <strong>✓</strong> to load the full test message.</p><p>Use the <strong>+</strong> button (top right) to create new chats.</p>';
-    updateCharCount();
-  }
+  updateCharCount();
 }
 
 document.addEventListener('DOMContentLoaded', init);
