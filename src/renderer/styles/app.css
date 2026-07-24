@@ -16,6 +16,10 @@ body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;h
 .header-left .badge{font-size:10px;color:var(--text-dim);background:var(--surface2);padding:1px 5px;border-radius:4px}
 .header-right{display:flex;align-items:center;gap:4px}
 .header-right .sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.header-right .icon-btn{background:transparent;border:none;color:var(--text-dim);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.header-right .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.header-right .icon-btn:hover{background:var(--surface2);color:var(--accent)}
+.header-right .icon-btn:active{transform:scale(.92)}
 
 /* === TOOLBAR === */
 .toolbar-bar{display:flex;align-items:center;flex-wrap:nowrap;gap:2px;background:var(--surface);border-bottom:1px solid var(--border);padding:2px 8px;overflow-x:auto;flex-shrink:0;min-height:36px}
