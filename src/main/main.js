@@ -1,8 +1,13 @@
 const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require('electron');
 const path = require('path');
 const https = require('https');
-const http = require('http');
 const fs = require('fs');
+
+// --- Input Validation ---
+const VALID_TOKEN_RE = /^\d{8,10}:[A-Za-z0-9_-]{35}$/;
+const VALID_CHATID_RE = /^(@[a-zA-Z][a-zA-Z0-9_]{3,}|-\d{5,})$/;
+const HTTP_TIMEOUT_MS = 30000;
+const MAX_RESPONSE_BYTES = 1048576; // 1MB
 
 let mainWindow;
 let secureToken = '';
@@ -91,6 +96,9 @@ ipcMain.handle('tg-api', async (event, { method, body }) => {
   if (!secureToken) {
     return { ok: false, description: 'Bot token not configured' };
   }
+  if (!method || typeof method !== 'string') {
+    return { ok: false, description: 'Invalid API method' };
+  }
 
   return new Promise((resolve, reject) => {
     const url = `https://api.telegram.org/bot${secureToken}/${method}`;
@@ -102,9 +110,15 @@ ipcMain.handle('tg-api', async (event, { method, body }) => {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(data),
       },
+      timeout: HTTP_TIMEOUT_MS,
     }, (res) => {
       let body = '';
-      res.on('data', chunk => body += chunk);
+      let size = 0;
+      res.on('data', chunk => {
+        size += chunk.length;
+        if (size > MAX_RESPONSE_BYTES) { req.destroy(); reject(new Error('Response too large')); return; }
+        body += chunk;
+      });
       res.on('end', () => {
         try {
           resolve(JSON.parse(body));
@@ -122,9 +136,15 @@ ipcMain.handle('tg-api', async (event, { method, body }) => {
 
 // Save settings — token encrypted via safeStorage
 ipcMain.handle('save-settings', async (event, { token, chatId, lang }) => {
-  if (token !== undefined) secureToken = token;
-  if (chatId !== undefined) secureChatId = chatId;
-  if (lang !== undefined) secureLang = lang;
+  if (token !== undefined) {
+    if (!VALID_TOKEN_RE.test(token)) return { ok: false, description: 'Invalid bot token format' };
+    secureToken = token;
+  }
+  if (chatId !== undefined) {
+    if (!VALID_CHATID_RE.test(chatId)) return { ok: false, description: 'Invalid chat ID format' };
+    secureChatId = chatId;
+  }
+  if (lang !== undefined && ['en', 'fa'].includes(lang)) secureLang = lang;
   saveSecureSettings();
   return { ok: true };
 });

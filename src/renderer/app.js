@@ -3,11 +3,10 @@
  * Bottom toolbar with 6 dropdown icons, single contenteditable, minimal UI.
  */
 
-const SETTINGS_KEY = 'tfr-settings';
 const THEME_KEY = 'tfr-theme';
 const state = {
   theme: localStorage.getItem(THEME_KEY) || 'dark',
-  settings: JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'),
+  settings: { tokenSet: false, chatId: '', editId: '', lang: 'en' },
   isRtl: false,
   skipEntityDetection: false,
   mode: 'rich',
@@ -282,9 +281,16 @@ function loadTestMessage() {
 
 // ===================== SETTINGS =====================
 function initSettings() {
+  // Load settings from main process (token NEVER enters renderer)
+  window.app?.loadSettings().then(s => {
+    if (s) { state.settings = { ...state.settings, ...s }; updateStatus(); }
+  });
+
   const overlay = $('#settings-overlay');
-  const open = () => {
-    $('#input-token').value = state.settings.token || '';
+  const open = async () => {
+    const s = await window.app?.loadSettings();
+    if (s) { state.settings = { ...state.settings, ...s }; }
+    $('#input-token').value = state.settings.tokenSet ? '••••••••' : '';
     $('#input-chat').value = state.settings.chatId || '';
     $('#input-edit-id').value = state.settings.editId || '';
     $('#input-lang').value = state.settings.lang || 'en';
@@ -295,29 +301,32 @@ function initSettings() {
   $('#btn-close-settings')?.addEventListener('click', () => overlay.classList.add('hidden'));
   overlay?.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
 
-  $('#btn-save-settings')?.addEventListener('click', () => {
-    state.settings.token = $('#input-token').value.trim();
-    state.settings.chatId = $('#input-chat').value.trim();
-    state.settings.editId = $('#input-edit-id').value.trim();
-    state.settings.lang = $('#input-lang').value;
-    state.settings.tokenSet = !!state.settings.token;
+  $('#btn-save-settings')?.addEventListener('click', async () => {
+    const payload = {
+      chatId: $('#input-chat').value.trim(),
+      editId: $('#input-edit-id').value.trim(),
+      lang: $('#input-lang').value,
+    };
+    // Only send token if user actually typed a new one (not the dots placeholder)
+    const tokenInput = $('#input-token').value.trim();
+    if (tokenInput && tokenInput !== '••••••••') payload.token = tokenInput;
+    await window.app?.saveSettings(payload);
+    const s = await window.app?.loadSettings();
+    if (s) state.settings = { ...state.settings, ...s };
     const newTheme = $('#input-theme').value;
     if (newTheme !== state.theme) { state.theme = newTheme; localStorage.setItem(THEME_KEY, state.theme); applyTheme(); }
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
     updateStatus(); overlay.classList.add('hidden'); toast('Settings saved', 'success');
   });
 
   $('#btn-test-connection')?.addEventListener('click', async () => {
-    const token = $('#input-token').value.trim();
-    if (!token) { toast('Enter bot token', 'error'); return; }
     const el = $('#connection-status'); el.textContent = 'Testing...'; el.className = '';
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
-      const data = await res.json();
-      if (data.ok) { el.textContent = `✓ @${data.result.username} connected`; el.className = 'ok'; }
-      else { el.textContent = `✗ ${data.description}`; el.className = 'error'; }
+      const data = await window.app?.testConnection();
+      if (data?.ok) { el.textContent = `✓ @${data.result.username} connected`; el.className = 'ok'; }
+      else { el.textContent = `✗ ${data?.description || 'Unknown error'}`; el.className = 'error'; }
     } catch { el.textContent = '✗ Network error'; el.className = 'error'; }
   });
+
   updateStatus();
 }
 
@@ -335,32 +344,25 @@ async function sendMessage() {
   if (!content) { toast('Nothing to send', 'error'); return; }
 
   const markdown = editorToMarkdown();
-  const body = { chat_id: state.settings.chatId, rich_message: { markdown } };
-  if (state.isRtl) body.rich_message.is_rtl = true;
-  if (state.skipEntityDetection) body.rich_message.skip_entity_detection = true;
+  const richBody = { chat_id: state.settings.chatId, rich_message: { markdown } };
+  if (state.isRtl) richBody.rich_message.is_rtl = true;
+  if (state.skipEntityDetection) richBody.rich_message.skip_entity_detection = true;
 
   try {
     const sendBtn = $('#btn-send'); sendBtn.style.opacity = '0.5'; sendBtn.disabled = true;
-    let res;
+    let method, payload;
     if (state.mode === 'draft') {
-      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/sendRichMessageDraft`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      });
+      method = 'sendRichMessageDraft'; payload = richBody;
     } else if (state.mode === 'edit' && state.settings.editId) {
-      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/editMessageText`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, message_id: state.settings.editId }),
-      });
+      method = 'editMessageText'; payload = { ...richBody, message_id: state.settings.editId };
     } else {
-      res = await fetch(`https://api.telegram.org/bot${state.settings.token}/sendRichMessage`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      });
+      method = 'sendRichMessage'; payload = richBody;
     }
-    const data = await res.json();
+    const data = await window.app?.api(method, payload);
     if (data.ok) toast(state.mode === 'draft' ? 'Draft sent' : state.mode === 'edit' ? 'Edited!' : 'Sent!', 'success');
     else toast(`Error: ${data.description}`, 'error');
     sendBtn.style.opacity = '1'; sendBtn.disabled = false;
-  } catch { toast('Network error', 'error'); $('#btn-send').style.opacity = '1'; $('#btn-send').disabled = false; }
+  } catch (e) { toast(`Error: ${e.message}`, 'error'); $('#btn-send').style.opacity = '1'; $('#btn-send').disabled = false; }
 }
 
 // ===================== INIT =====================
