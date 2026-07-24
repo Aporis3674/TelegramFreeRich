@@ -16,20 +16,18 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
-      "icon": "src/renderer/icon.png"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
     "linux": {
-      "target": "dir",
-      "icon": "src/renderer/icon.png"
+      "target": "AppImage"
     }
   },
   "devDependencies": {
     "electron": "^35.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^24.13.3"
   }
 }
