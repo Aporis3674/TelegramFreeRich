@@ -8,289 +8,130 @@
 <link rel="stylesheet" href="styles/app.css">
 </head>
 <body>
-<div id="app">
-  <!-- Header -->
-  <header id="header">
-    <div class="header-left">
-      <svg class="logo" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M11.944.042C5.347.042.042 5.347.042 11.944c0 6.596 5.305 11.902 11.902 11.902 6.596 0 11.902-5.306 11.902-11.902C23.846 5.347 18.54.042 11.944.042zM17.92 8.182l-2.057 9.668c-.153.695-.558.865-1.13.538l-3.117-2.298-1.505 1.448c-.166.166-.306.306-.63.306l.44-3.128 5.69-5.142c.248-.22-.054-.343-.384-.122l-7.04 4.435-3.032-.988c-.66-.206-.673-.66.138-.977l11.83-4.56c.55-.203 1.03.136.852.97z" fill="currentColor"/>
-      </svg>
-      <span class="title">TelegramFreeRich</span>
-    </div>
-    <div class="header-right">
-      <button id="btn-theme" class="icon-btn" title="Toggle Theme" aria-label="Toggle Theme">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-      </button>
-      <button id="btn-settings" class="icon-btn" title="Settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-      </button>
-    </div>
-  </header>
 
-  <!-- Main Editor Area -->
-  <main id="editor-main">
-    <div id="blocks-container"></div>
-    <button id="add-block-btn" class="add-block-btn" aria-label="Add block">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span>Add Block</span>
-    </button>
-  </main>
-
-  <!-- Floating Bottom Toolbar -->
-  <div id="toolbar" class="floating-toolbar" role="toolbar" aria-label="Formatting toolbar">
-    <!-- Toolbar Item 1: Formatting (Aa) -->
-    <div class="toolbar-item" data-toolbar="formatting">
-      <button class="toolbar-btn" id="btn-formatting" aria-label="Text Formatting" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-aa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <text x="2" y="18" font-size="14" font-weight="bold">Aa</text>
-        </svg>
-        <span class="tooltip">Formatting</span>
-      </button>
-      <div class="dropdown-menu" id="dropdown-formatting" role="menu" aria-label="Formatting options">
-        <div class="dropdown-section">
-          <span class="dropdown-label">Headings</span>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="1">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="11" font-weight="bold">H1</text></svg>
-            <span>Heading 1</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="2">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="11" font-weight="bold">H2</text></svg>
-            <span>Heading 2</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="3">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="11" font-weight="bold">H3</text></svg>
-            <span>Heading 3</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="4">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="10" font-weight="bold">H4</text></svg>
-            <span>Heading 4</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="5">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="10" font-weight="bold">H5</text></svg>
-            <span>Heading 5</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="heading" data-level="6">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="17" font-size="10" font-weight="bold">H6</text></svg>
-            <span>Heading 6</span>
-          </button>
-        </div>
-        <div class="dropdown-divider"></div>
-        <div class="dropdown-section">
-          <span class="dropdown-label">Text Blocks</span>
-          <button class="dropdown-item" role="menuitem" data-cmd="paragraph">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-            <span>Text</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="blockquote">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V21c0 1.25.75 2 2 2h1"/></svg>
-            <span>Quote</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="pull-quote">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12c0-1.25.75-2 2-2h1"/><path d="M21 12c0 1.25-.75 2-2 2h-1"/><path d="M3 8c0-2 2-3 5-3"/><path d="M21 16c0 2-2 3-5 3"/></svg>
-            <span>Pullquote</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="code-block">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            <span>Code Block</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="footer">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="19" x2="20" y2="19"/><text x="2" y="14" font-size="7">F</text></svg>
-            <span>Footer</span>
-          </button>
-          <button class="dropdown-item" role="menuitem" data-cmd="divider">
-            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/></svg>
-            <span>Divider</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toolbar Item 2: Inline Formatting (B) -->
-    <div class="toolbar-item" data-toolbar="inline">
-      <button class="toolbar-btn" id="btn-inline" aria-label="Inline Formatting" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-        </svg>
-        <span class="tooltip">Inline</span>
-      </button>
-      <div class="dropdown-menu" id="dropdown-inline" role="menu" aria-label="Inline formatting options">
-        <button class="dropdown-item" role="menuitem" data-cmd="bold">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-          <span>Bold</span>
-          <kbd>Ctrl+B</kbd>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="italic">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
-          <span>Italic</span>
-          <kbd>Ctrl+I</kbd>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="underline">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
-          <span>Underline</span>
-          <kbd>Ctrl+U</kbd>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="strikethrough">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-          <span>Strikethrough</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="spoiler">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
-          <span>Spoiler</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="subscript">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="18" font-size="10">x</text><text x="10" y="20" font-size="6">2</text></svg>
-          <span>Subscript</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="superscript">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><text x="2" y="12" font-size="10">x</text><text x="10" y="10" font-size="6">2</text></svg>
-          <span>Superscript</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="marked">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M8 12l3 3 5-5"/></svg>
-          <span>Marked</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Toolbar Item 3: Lists -->
-    <div class="toolbar-item" data-toolbar="lists">
-      <button class="toolbar-btn" id="btn-lists" aria-label="Lists" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-          <circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/>
-        </svg>
-        <span class="tooltip">Lists</span>
-      </button>
-      <div class="dropdown-menu" id="dropdown-lists" role="menu" aria-label="List options">
-        <button class="dropdown-item" role="menuitem" data-cmd="ordered-list">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="8" font-size="7">1</text><text x="3" y="14" font-size="7">2</text><text x="3" y="20" font-size="7">3</text></svg>
-          <span>Ordered List</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="bullet-list">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
-          <span>Bullet List</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="checklist">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
-          <span>Checklist</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="details">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-          <span>Details</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Toolbar Item 4: Table -->
-    <div class="toolbar-item" data-toolbar="table">
-      <button class="toolbar-btn" id="btn-table" aria-label="Insert Table" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-table" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
-        </svg>
-        <span class="tooltip">Table</span>
-      </button>
-      <div class="dropdown-menu" id="dropdown-table" role="menu" aria-label="Table options">
-        <button class="dropdown-item" role="menuitem" data-cmd="table">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-          <span>Insert Table (3x3)</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Toolbar Item 5: Link -->
-    <div class="toolbar-item" data-toolbar="link">
-      <button class="toolbar-btn" id="btn-link" aria-label="Insert Link" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-        </svg>
-        <span class="tooltip">Link</span>
-      </button>
-      <div class="dropdown-menu dropdown-panel" id="dropdown-link" role="dialog" aria-label="Create link">
-        <div class="panel-header">Create Link</div>
-        <div class="panel-body">
-          <label>Text</label>
-          <input type="text" id="link-text" placeholder="Link text" aria-label="Link text">
-          <label>URL</label>
-          <input type="text" id="link-url" placeholder="https://example.com" aria-label="URL">
-        </div>
-        <div class="panel-actions">
-          <button class="btn-secondary" id="link-cancel">Cancel</button>
-          <button class="btn-primary" id="link-create">Create</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toolbar Item 6: Media -->
-    <div class="toolbar-item" data-toolbar="media">
-      <button class="toolbar-btn" id="btn-media" aria-label="Insert Media" aria-expanded="false" aria-haspopup="true">
-        <svg class="icon-media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-        </svg>
-        <span class="tooltip">Media</span>
-      </button>
-      <div class="dropdown-menu" id="dropdown-media" role="menu" aria-label="Media options">
-        <button class="dropdown-item" role="menuitem" data-cmd="image">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <span>Photo or Video</span>
-        </button>
-        <button class="dropdown-item" role="menuitem" data-cmd="audio">
-          <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-          <span>Audio File</span>
-        </button>
-      </div>
-    </div>
+<!-- Header -->
+<header id="header">
+  <div class="header-left">
+    <svg class="logo" viewBox="0 0 24 24" width="20" height="20">
+      <path d="M11.944.042C5.347.042.042 5.347.042 11.944c0 6.596 5.305 11.902 11.902 11.902 6.596 0 11.902-5.306 11.902-11.902C23.846 5.347 18.54.042 11.944.042zM17.92 8.182l-2.057 9.668c-.153.695-.558.865-1.13.538l-3.117-2.298-1.505 1.448c-.166.166-.306.306-.63.306l.44-3.128 5.69-5.142c.248-.22-.054-.343-.384-.122l-7.04 4.435-3.032-.988c-.66-.206-.673-.66.138-.977l11.83-4.56c.55-.203 1.03.136.852.97z" fill="currentColor"/>
+    </svg>
+    <span class="title">FreeRich</span>
+    <span class="badge">v2.0</span>
   </div>
-
-  <!-- Bottom Action Bar -->
-  <div id="action-bar" class="action-bar">
-    <button id="btn-clear" class="action-btn clear-btn" title="Clear All" aria-label="Clear All">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-      </svg>
+  <div class="header-right">
+    <button id="btn-undo" class="icon-btn" title="Undo"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg></button>
+    <button id="btn-redo" class="icon-btn" title="Redo"><svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/></svg></button>
+    <div class="sep"></div>
+    <button id="btn-theme" class="icon-btn" title="Toggle Theme">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
     </button>
-    <button id="btn-send" class="action-btn send-btn" title="Send Message" aria-label="Send Message">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7"/>
-      </svg>
+    <button id="btn-settings" class="icon-btn" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </div>
+</header>
 
-  <!-- Settings Overlay -->
-  <div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-    <div id="settings-panel" class="panel">
-      <div class="panel-header">
-        <h3 id="settings-title">Settings</h3>
-        <button id="btn-close-settings" class="close-btn" aria-label="Close">&times;</button>
-      </div>
-      <div class="panel-body">
-        <label>Bot Token</label>
-        <input type="password" id="input-token" placeholder="Enter bot token from @BotFather" autocomplete="off">
-        <label>Chat ID</label>
-        <input type="text" id="input-chat" placeholder="@channel or numeric ID">
-        <label>Default Language</label>
-        <select id="input-lang">
-          <option value="en">English</option>
-          <option value="fa">فارسی</option>
-        </select>
-        <button id="btn-test-connection" class="btn-primary">Test Connection</button>
-        <div id="connection-status"></div>
-        <button id="btn-save-settings" class="btn-primary">Save</button>
-      </div>
-    </div>
+<!-- Top Toolbar (Formatting Bar) -->
+<div id="toolbar" class="toolbar-bar">
+  <div class="toolbar-group">
+    <button class="tb-btn" data-cmd="bold" title="Bold"><svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
+    <button class="tb-btn" data-cmd="italic" title="Italic"><svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></button>
+    <button class="tb-btn" data-cmd="underline" title="Underline"><svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg></button>
+    <button class="tb-btn" data-cmd="strikethrough" title="Strikethrough"><svg viewBox="0 0 24 24"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg></button>
+    <button class="tb-btn" data-cmd="code" title="Inline Code"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
+    <button class="tb-btn" data-cmd="spoiler" title="Spoiler"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button>
   </div>
-
-  <!-- Toast Container -->
-  <div id="toast-container" aria-live="polite"></div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <button class="tb-btn" data-cmd="heading" data-level="1" title="H1"><span class="tb-h">H1</span></button>
+    <button class="tb-btn" data-cmd="heading" data-level="2" title="H2"><span class="tb-h">H2</span></button>
+    <button class="tb-btn" data-cmd="heading" data-level="3" title="H3"><span class="tb-h">H3</span></button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <button class="tb-btn" data-cmd="bullet-list" title="Bullet List"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg></button>
+    <button class="tb-btn" data-cmd="ordered-list" title="Numbered List"><svg viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="8" font-size="7">1</text><text x="3" y="14" font-size="7">2</text><text x="3" y="20" font-size="7">3</text></svg></button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <button class="tb-btn" data-cmd="blockquote" title="Quote"><svg viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V21c0 1.25.75 2 2 2h1"/></svg></button>
+    <button class="tb-btn" id="btn-plus" title="Insert Block"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+  </div>
 </div>
+
+<!-- Plus Menu -->
+<div id="plus-menu" class="plus-menu">
+  <button class="pm-item" data-cmd="code-block"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Code Block</button>
+  <button class="pm-item" data-cmd="table"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> Table</button>
+  <button class="pm-item" data-cmd="details"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg> Details</button>
+  <button class="pm-item" data-cmd="checklist"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg> Checklist</button>
+  <button class="pm-item" data-cmd="divider"><svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/></svg> Divider</button>
+  <div class="pm-sep"></div>
+  <button class="pm-item" data-cmd="image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photo</button>
+  <button class="pm-item" data-cmd="video"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg> Video</button>
+</div>
+
+<!-- Editor Area -->
+<main id="editor-main">
+  <div id="scroll-container">
+    <div id="blocks-container"></div>
+    <div class="editor-bottom">
+      <button id="btn-plus-bottom" class="plus-bottom-btn" title="Add block">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div id="char-count" class="char-count"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Bottom Bar -->
+<div id="bottom-bar" class="bottom-bar">
+  <div class="bottom-left">
+    <button id="btn-settings-bottom" class="bb-btn" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <div class="status-dot" id="status-dot" title="Not connected"></div>
+    <span class="status-text" id="status-text">Connect bot to send</span>
+  </div>
+  <div class="bottom-right">
+    <div class="mode-tabs" id="mode-tabs">
+      <button class="mode-tab active" data-mode="rich">Rich</button>
+      <button class="mode-tab" data-mode="draft">Draft</button>
+      <button class="mode-tab" data-mode="edit">Edit</button>
+    </div>
+    <button id="btn-send" class="send-btn" title="Send">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Settings Overlay -->
+<div id="settings-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+  <div class="panel" id="settings-panel">
+    <div class="panel-header">
+      <h3>Settings</h3>
+      <button id="btn-close-settings" class="close-btn">&times;</button>
+    </div>
+    <div class="panel-body">
+      <label>Bot Token</label>
+      <input type="password" id="input-token" placeholder="From @BotFather" autocomplete="off">
+      <label>Chat ID</label>
+      <input type="text" id="input-chat" placeholder="@channel or numeric ID">
+      <label>Default language</label>
+      <select id="input-lang">
+        <option value="en">English</option>
+        <option value="fa">فارسی</option>
+      </select>
+      <button id="btn-test-connection" class="btn-primary">Test Connection</button>
+      <div id="connection-status"></div>
+      <button id="btn-save-settings" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast-container" aria-live="polite"></div>
+
 <script src="app.js"></script>
 </body>
 </html>
