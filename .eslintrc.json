@@ -32,13 +32,26 @@
   },
   "overrides": [
     {
-      "files": ["src/main/**/*.js", "src/shared/**/*.js"],
+      "files": ["src/main/**/*.js"],
       "env": {
         "browser": false,
         "node": true
       },
       "parserOptions": {
         "sourceType": "script"
+      },
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["src/shared/**/*.js"],
+      "env": {
+        "browser": false,
+        "node": true
+      },
+      "parserOptions": {
+        "sourceType": "module"
       },
       "rules": {
         "no-console": "off"
