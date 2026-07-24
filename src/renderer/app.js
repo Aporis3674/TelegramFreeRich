@@ -914,24 +914,13 @@ function loadTestMessage() {
     createBlock('thinking', { text: 'This is a "thinking" block that represents the AI\'s internal chain-of-thought reasoning process. It should appear with a distinct visual style (e.g., grey/italic background) to indicate it is not part of the final response.' }),
 
     createBlock('heading', { size: 3, html: '2p. Media Blocks (Photo, Video, GIF, Audio, Voice)' }),
-    createBlock('image', { url: 'https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg', caption: 'Photo: Telegram logo (SVG)' }),
-    createBlock('video', { url: 'https://www.w3schools.com/html/mov_bbb.mp4', caption: 'Video: Big Buck Bunny sample' }),
-    createBlock('animation', { url: 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif', caption: 'Animation/GIF: dancing cat' }),
-    createBlock('audio', { url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', caption: 'Audio: SoundHelix sample track' }),
-    createBlock('voicenote', { url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', caption: 'Voice Note sample' }),
+    createBlock('paragraph', { html: '⚠️ Photo/Video/GIF/Audio/Voice blocks require file upload via <code>media</code> field (tg://photo?id=). URLs are not supported directly. Use the editor UI to add these blocks when sending from a bot that can upload files.' }),
 
     createBlock('heading', { size: 3, html: '2q. Collage (multi-image grid)' }),
-    createBlock('collage', { images: [
-      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/240px-Telegram_logo.svg.png' },
-      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/240px-Instagram_icon.png' },
-      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter_logo.png/240px-Twitter_logo.png' },
-    ], caption: 'A collage of social media logos' }),
+    createBlock('paragraph', { html: '⚠️ Collage block requires media uploads via <code>media</code> field. Add images through the editor UI when your bot can upload files.' }),
 
     createBlock('heading', { size: 3, html: '2r. Slideshow (carousel)' }),
-    createBlock('slideshow', { images: [
-      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/240px-PNG_transparency_demonstration_1.png' },
-      { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/JPEG_example_flower.jpg/240px-JPEG_example_flower.jpg' },
-    ], caption: 'A slideshow of sample images' }),
+    createBlock('paragraph', { html: '⚠️ Slideshow block requires media uploads via <code>media</code> field. Add images through the editor UI when your bot can upload files.' }),
 
     createBlock('heading', { size: 3, html: '2s. Map (location pin)' }),
     createBlock('map', { latitude: 35.6892, longitude: 51.3890, zoom: 13 }),
