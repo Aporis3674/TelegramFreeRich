@@ -726,24 +726,11 @@ function blocksToMarkdown(draft = false) {
         lines.push(`_${block.text}_`);
         lines.push('');
         break;
-      case 'image':
-        if (block.url) lines.push(`![${block.caption || ''}](${block.url})`);
-        lines.push('');
-        break;
-      case 'video':
-        if (block.url) lines.push(`![${block.caption || ''}](${block.url})`);
-        lines.push('');
-        break;
-      case 'audio':
-        if (block.url) lines.push(`![audio](${block.url})`);
-        lines.push('');
-        break;
-      case 'animation':
-        if (block.url) lines.push(`![${block.caption || 'GIF'}](${block.url})`);
-        lines.push('');
-        break;
-      case 'voicenote':
-        if (block.url) lines.push(`![voice](${block.url})`);
+      case 'image': case 'video': case 'audio': case 'animation': case 'voicenote':
+        if (block.url) {
+          const cap = block.caption ? ` "${block.caption}"` : '';
+          lines.push(`![](${block.url}${cap})`);
+        }
         lines.push('');
         break;
       case 'collage':
@@ -761,7 +748,7 @@ function blocksToMarkdown(draft = false) {
         lines.push('');
         break;
       case 'map':
-        lines.push(`[map](${block.latitude},${block.longitude})`);
+        lines.push(`<tg-map lat="${block.latitude}" long="${block.longitude}" zoom="${block.zoom}"/>`);
         lines.push('');
         break;
       case 'math-block':
@@ -796,9 +783,9 @@ function inlineToMd(html) {
   md = md.replace(/<span class="tg-spoiler">(.*?)<\/span>/gi, '||$1||');
   md = md.replace(/<sub>(.*?)<\/sub>/gi, '<sub>$1</sub>');
   md = md.replace(/<sup>(.*?)<\/sup>/gi, '<sup>$1</sup>');
-  md = md.replace(/<mark>(.*?)<\/mark>/gi, '<mark>$1</mark>');
+  md = md.replace(/<mark>(.*?)<\/mark>/gi, '==$1==');
   md = md.replace(/<span class="tg-datetime"[^>]*>(.*?)<\/span>/gi, '<time>$1</time>');
-  md = md.replace(/<span class="tg-math"[^>]*>(.*?)<\/span>/gi, '\\($1\\)');
+  md = md.replace(/<span class="tg-math"[^>]*>(.*?)<\/span>/gi, '$$$1$$');
   md = md.replace(/<span class="tg-emoji"[^>]*>(.*?)<\/span>/gi, '$1');
   md = md.replace(/<br\s*\/?>/gi, '\n');
   md = md.replace(/<\/?div[^>]*>/gi, '\n');
