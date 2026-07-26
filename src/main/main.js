@@ -112,10 +112,14 @@ async function resolveTelegramProxy() {
 /**
  * Telegram requests ride Chromium's stack, so they follow the proxy resolved
  * above — that is what makes a system proxy (v2rayN and friends) work.
+ *
+ * The session is fetched per request, never here: `session.defaultSession`
+ * throws "Session can only be received when app is ready" if it is read while
+ * this module is still loading, which crashed the app on startup.
  */
 const tgRequest = createRequester({
   net,
-  session: session.defaultSession,
+  getSession: () => session.defaultSession,
   getProxy: () => secureProxy,
 });
 

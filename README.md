@@ -8,12 +8,12 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.1-2ca5e0" alt="Version 5.1.1">
+  <img src="https://img.shields.io/badge/version-5.1.2-2ca5e0" alt="Version 5.1.2">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-214%20passing-4fc3a1" alt="214 tests">
+  <img src="https://img.shields.io/badge/tests-227%20passing-4fc3a1" alt="227 tests">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -285,10 +285,10 @@ Renderer (React)                     Main process (Electron)
 
 ```bash
 npm run dev           # Vite + Electron with hot reload
-npm test              # 214 unit tests (Vitest)
+npm test              # 227 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.1.exe
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.2.exe
 npm run build:linux   # AppImage
 ```
 
@@ -334,7 +334,7 @@ src/
     ├── constants.js            limits and defaults
     └── utils.js                sanitizeUrl, validation, helpers
 
-tests/unit/                     214 tests — HTML serializer, proxy, parsers,
+tests/unit/                     227 tests — HTML serializer, proxy, packaging, parsers,
                                 i18n parity, stylesheets, validation
 ```
 

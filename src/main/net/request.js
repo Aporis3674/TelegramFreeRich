@@ -45,9 +45,15 @@ function proxyHint(error, proxyConfig) {
 
 /**
  * Build the request function.
+ *
+ * `getSession` is a getter rather than a session, because Electron's
+ * `session.defaultSession` throws unless the app is already ready — reading it
+ * while the main process is still loading its modules crashes the app before a
+ * window exists.
+ *
  * @param {{
  *   net: object,
- *   session: object,
+ *   getSession: () => object,
  *   getProxy: () => object,
  *   timeoutMs?: number,
  *   maxBytes?: number,
@@ -56,7 +62,7 @@ function proxyHint(error, proxyConfig) {
  */
 function createRequester({
   net,
-  session,
+  getSession,
   getProxy,
   timeoutMs = HTTP_TIMEOUT_MS,
   maxBytes = MAX_RESPONSE_BYTES,
@@ -69,7 +75,7 @@ function createRequester({
       const request = net.request({
         method: isPost ? 'POST' : 'GET',
         url,
-        session,
+        session: getSession(),
         useSessionCookies: false,
       });
 

@@ -43,14 +43,18 @@ function fakeNet(script = {}) {
 
 const make = (script, options = {}) => {
   const { net, calls } = fakeNet(script);
+  const sessionReads = [];
   const request = createRequester({
     net,
-    session: { id: 'default' },
+    getSession: () => {
+      sessionReads.push(true);
+      return { id: 'default' };
+    },
     getProxy: () => options.proxy || { mode: 'system' },
     timeoutMs: options.timeoutMs ?? 1000,
     maxBytes: options.maxBytes ?? 1048576,
   });
-  return { request, calls };
+  return { request, calls, sessionReads };
 };
 
 describe('createRequester', () => {
@@ -77,6 +81,15 @@ describe('createRequester', () => {
     await request('https://api.telegram.org/botX/getMe');
     expect(calls[0].session).toEqual({ id: 'default' });
     expect(calls[0].useSessionCookies).toBe(false);
+  });
+
+  it('reads the session per request, not while being built', async () => {
+    // `session.defaultSession` throws unless the app is ready, so touching it
+    // at construction time crashed the main process on startup.
+    const { request, sessionReads } = make({ body: '{"ok":true}' });
+    expect(sessionReads).toHaveLength(0);
+    await request('https://api.telegram.org/botX/getMe');
+    expect(sessionReads).toHaveLength(1);
   });
 
   it('rejects on invalid JSON', async () => {

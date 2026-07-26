@@ -95,4 +95,18 @@ describe('main process', () => {
     expect(main).toMatch(/requestSingleInstanceLock\(\)/);
     expect(main).toMatch(/'second-instance'/);
   });
+
+  it('never touches session.defaultSession while the module is loading', () => {
+    // Electron throws "Session can only be received when app is ready" — read
+    // it at module scope and the app dies before a window exists. Every use
+    // must therefore be deferred: behind an arrow, or inside a function that
+    // only runs after `whenReady`.
+    const eager = main
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => !/^(\*|\/\/|\/\*)/.test(line))
+      .filter((line) => line.includes('session.defaultSession'))
+      .filter((line) => !/=>|\bawait\b|\breturn\b/.test(line));
+    expect(eager).toEqual([]);
+  });
 });

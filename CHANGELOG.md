@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.1.2] - 2026-07-26
+
+### Fixed (Critical) — the app crashed on launch
+- Every launch died with **"Uncaught Exception: TypeError: Session can only be received when app
+  is ready"** before a window appeared. `src/main/main.js` built the Telegram requester at module
+  scope and passed it `session.defaultSession`, but Electron throws on that property until
+  `app.whenReady()` has fired — so the crash happened while the main process was still loading
+  its modules. Introduced in 5.1.0 with the proxy work; **5.1.0 and 5.1.1 cannot start at all**
+- `createRequester` now takes a `getSession` getter and reads the session per request, when the
+  app is long past ready. Verified in a real Electron 35 runtime: the requester is constructed
+  before ready without throwing, then resolves the session and sends
+- `packaging.test.js` fails if any line in `main.js` reaches `session.defaultSession` without
+  deferring it, and `request.test.js` asserts the getter is untouched at construction time
+
 ## [5.1.1] - 2026-07-26
 
 ### Fixed — the Windows installer refused to upgrade an existing install
