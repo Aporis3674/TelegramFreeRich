@@ -27,34 +27,34 @@ export default function TableBubble({ editor }) {
       shouldShow={({ editor: ed }) => ed.isActive('table')}
       tippyOptions={{ placement: 'top', duration: 120 }}
     >
-      <div className="bubble">
-        <button type="button" className="bubble-btn" title={t('table.addRow')} onClick={cmd((c) => c.addRowAfter())}>
+      <div className="table-bubble">
+        <button type="button" className="table-bubble-btn" title={t('table.addRow')} onClick={cmd((c) => c.addRowAfter())}>
           + {t('table.row')}
         </button>
         <button
           type="button"
-          className="bubble-btn"
+          className="table-bubble-btn"
           title={t('table.addColumn')}
           onClick={cmd((c) => c.addColumnAfter())}
         >
           + {t('table.column')}
         </button>
-        <span className="bubble-sep" />
-        <button type="button" className="bubble-btn" title={t('table.deleteRow')} onClick={cmd((c) => c.deleteRow())}>
+        <span className="table-bubble-sep" />
+        <button type="button" className="table-bubble-btn" title={t('table.deleteRow')} onClick={cmd((c) => c.deleteRow())}>
           − {t('table.row')}
         </button>
         <button
           type="button"
-          className="bubble-btn"
+          className="table-bubble-btn"
           title={t('table.deleteColumn')}
           onClick={cmd((c) => c.deleteColumn())}
         >
           − {t('table.column')}
         </button>
-        <span className="bubble-sep" />
+        <span className="table-bubble-sep" />
         <button
           type="button"
-          className="bubble-btn danger"
+          className="table-bubble-btn danger"
           title={t('table.delete')}
           onClick={cmd((c) => c.deleteTable())}
         >

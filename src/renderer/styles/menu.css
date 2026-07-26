@@ -140,12 +140,6 @@
   flex-shrink: 0;
 }
 
-.menu-sep {
-  height: 1px;
-  background: var(--outline);
-  margin: 4px 6px;
-}
-
 /* ─────────────────────────── Palette panel ─────────────────────────── */
 
 .popover-palette {
@@ -192,20 +186,9 @@
   overflow-y: auto;
 }
 
-.palette-foot {
-  border-top: 1px solid var(--outline);
-  margin-top: 6px;
-  padding: 7px 6px 2px;
-  font-size: 10.5px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* ─────────────────────── Table bubble menu ─────────────────────── */
 
-.bubble {
+.table-bubble {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -216,7 +199,7 @@
   box-shadow: var(--shadow);
 }
 
-.bubble-btn {
+.table-bubble-btn {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -231,15 +214,15 @@
   white-space: nowrap;
 }
 
-.bubble-btn:hover {
+.table-bubble-btn:hover {
   background: var(--hover);
 }
 
-.bubble-btn.danger {
+.table-bubble-btn.danger {
   color: var(--danger);
 }
 
-.bubble-sep {
+.table-bubble-sep {
   width: 1px;
   height: 16px;
   background: var(--outline);

@@ -1,202 +1,202 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="120" alt="TelegramFreeRich">
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
-  <img src="https://img.shields.io/badge/Desktop-Electron-47848f?logo=electron" alt="Electron">
-  <img src="https://img.shields.io/badge/Editor-TipTap-purple" alt="TipTap">
-  <img src="https://img.shields.io/badge/UI-React-61dafb?logo=react" alt="React">
-  <img src="https://img.shields.io/badge/Tests-147%20passing-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/%D8%B1%D8%A7%DB%8C%DA%AF%D8%A7%D9%86-success" alt="Free">
+  <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="110" alt="TelegramFreeRich">
 </p>
 
 <h1 align="center">تله‌گرام‌فری‌ریچ</h1>
 
-<p align="center"><strong>ویرایشگر متن غنی رایگان برای تلگرام — نسخه دسکتاپ</strong></p>
-<p align="center">چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</p>
-
-<p align="center"><a href="README.md">[ English ]</a></p>
+<p align="center"><strong>ویرایشگر متن غنی تلگرام — برای همه، بدون پرمیوم.</strong></p>
+<p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <a href="#دانلود">دانلود</a> •
-  <a href="#رابط-کاربری">رابط کاربری</a> •
-  <a href="#قابلیت‌ها">قابلیت‌ها</a> •
-  <a href="#معماری">معماری</a> •
-  <a href="#نصب">نصب</a> •
-  <a href="#نحوه-استفاده">نحوه استفاده</a> •
-  <a href="#بیلد">بیلد</a> •
-  <a href="#توسعه">توسعه</a>
+  <img src="https://img.shields.io/badge/version-4.1.1-2ca5e0" alt="نسخه ۴٫۱٫۱">
+  <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
+  <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
+  <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
+  <img src="https://img.shields.io/badge/tests-151%20passing-4fc3a1" alt="۱۵۱ تست">
+  <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
+</p>
+
+<p align="center">
+  <a href="README.md">🇬🇧 English</a> &nbsp;•&nbsp;
+  <a href="#-شروع-سریع">شروع سریع</a> &nbsp;•&nbsp;
+  <a href="#-پنجرهٔ-برنامه">پنجرهٔ برنامه</a> &nbsp;•&nbsp;
+  <a href="#️-چه-چیزهایی-می‌توانی-بفرستی">قابلیت‌ها</a> &nbsp;•&nbsp;
+  <a href="#-چطور-کار-می‌کند">معماری</a> &nbsp;•&nbsp;
+  <a href="#-امنیت">امنیت</a> &nbsp;•&nbsp;
+  <a href="#-توسعه">توسعه</a>
+</p>
+
+<p align="center">
+  <img src="screenshot.jpg" width="880" alt="تله‌گرام‌فری‌ریچ — ویرایشگر و پیش‌نمایش زنده">
 </p>
 
 ---
 
-## دانلود
+## چرا این پروژه ساخته شد؟
 
-| پلتفرم | دانلود |
-|---------|--------|
-| **ویندوز** | [TelegramFreeRich-Setup.exe](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) |
+تلگرام در ژوئن ۲۰۲۶ ویرایشگر متن غنی را معرفی کرد و آن را پشت پرمیوم قفل کرد. دقیقاً همان
+قالب‌بندی‌ها از طریق Bot API 10.1 برای **هر باتی، رایگان** در دسترس است.
 
-ویندوز ۱۰ یا بالاتر. نیازی به نصب Node.js یا سایر وابستگی‌ها نیست.
+|  | پرمیوم تلگرام | یک بات + این برنامه |
+|---|---|---|
+| عنوان، نقل‌قول، جدول، بلوک کد | 💎 پرمیوم | ✅ رایگان |
+| اسپویلر، هایلایت، زیرنویس/بالانویس | 💎 پرمیوم | ✅ رایگان |
+| چک‌لیست، بخش تاشو، فرمول | 💎 پرمیوم | ✅ رایگان |
+| هزینهٔ ماهانه | 💸 | **۰** |
 
----
-
-## این پروژه چیه؟
-
-تلگرام در ژوئن ۲۰۲۶ ویرایشگر متن غنی معرفی کرد (Bot API 10.1)، اما فقط برای کاربران Premium. در حالی که دقیقاً همان API به بات‌ها همان قابلیت‌ها را به صورت رایگان می‌دهد.
-
-این اپ دسکتاپ به هر کسی اجازه می‌دهد -- نه فقط مشترکین Premium -- پیام‌های حرفه‌ای و قالب‌بندی شده از طریق Bot API تلگرام ارسال کند.
-
-بدون نیاز به کدنویسی. بدون نیاز به Premium. بدون نیاز به سرور.
+بدون کدنویسی، بدون سرور، بدون اشتراک. فقط توکن بات و شناسهٔ چت را بده و بنویس.
 
 ---
 
-## رابط کاربری
+## 🚀 شروع سریع
 
-![TelegramFreeRich](screenshot.jpg)
+**۱ — یک بات بساز.** به [@BotFather](https://t.me/BotFather) پیام بده، `/newbot` بفرست و توکن را
+کپی کن. بات را به‌عنوان ادمین به کانال یا گروهت اضافه کن.
 
-پنجره، بازسازی دقیق ویرایشگر متن غنی تلگرام دسکتاپ است: پنجرهٔ بدون قاب و تیره، دکمه‌های
-قرص‌مانند با حاشیهٔ مویی و یک دکمهٔ ارسال صورتی‌آجری. هر دکمهٔ منودار یک فهرست عمودی باز می‌کند؛
-جدول، پیوند و فرمول با یک کلیک کار می‌کنند.
+**۲ — نصب کن.** فایل نصبی را از
+[صفحهٔ انتشار](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) بگیر، یا از سورس اجرا کن:
 
-```
-┌ ─────────────────────────────────────────────────────────  ─  □  ✕ ┐
-│  ( ↶ )( ↷ )   ( Aa )( B )( ☰ )( ▦ )( 🔗 )( 🖼 )( Σ )               │
-│                                                                    │
-│  پیام                                            │  پیش‌نمایش زنده  │
-│                                                 │                  │
-│  ( ✦A )                        341 / 32,768   ( 🗑 )        ( ➤ )  │
-└────────────────────────────────────────────────────────────────────┘
+```bash
+git clone https://github.com/Aporis3674/TelegramFreeRich.git
+cd TelegramFreeRich
+npm install
+npm run dev
 ```
 
-| کنترل | کارکرد |
-|-------|--------|
-| ↶ ↷ | بازگردانی / انجام دوباره (تاریخچهٔ کامل ProseMirror) |
-| **Aa** | منوی *قالب‌بندی* — عنوان (H1 تا H6 را باز می‌کند)، متن، نقل‌قول، نقل‌قول برجسته، بلوک کد، پاورقی، جداکننده |
-| **B** | منوی *سبک متن* — پررنگ، کج، زیرخط‌دار، خط‌خورده، اسپویلر، زیرنویس، بالانویس، هایلایت |
-| ☰ | *درج فهرست* — شماره‌دار، نقطه‌ای، چک‌لیست (با `sendChecklist` ارسال می‌شود)، بخش تاشو |
-| ▦ | *درج جدول* — یک جدول ۳×۳ آمادهٔ ویرایش می‌گذارد؛ با کنترل‌های شناور ردیف و ستون کم و زیاد می‌شود و پهنای ستون‌ها با موس کشیده می‌شود |
-| 🔗 | *درج پیوند* — پنل **ساخت پیوند** با دو فیلد متن و نشانی |
-| 🖼 | *درج رسانه* — عکس یا ویدیو (دو مورد یا بیشتر، اسلایدشو می‌شود)، فایل صوتی، موقعیت مکانی |
-| Σ | *درج فرمول* — فرمول را می‌پرسد و بلوک ریاضی می‌سازد |
-| ✦A | پالت درج — فهرست جست‌وجوپذیر همهٔ بلوک‌ها و قالب‌ها، از جمله مواردی که در منوها نیستند (تک‌فاصله، فرمول درون‌خطی، کلاژ، پاک‌کردن قالب) |
-| 🗑 | پاک‌کردن پیام (با تأیید) |
-| ➤ | ارسال. با کلیک راست، حالت ارسال را انتخاب کنید: پیام غنی، پیش‌نویس یا ویرایش |
+**۳ — تنظیم کن.** روی چرخ‌دندهٔ ⚙ در نوار عنوان بزن، توکن و شناسهٔ چت (`@کانال` یا شناسهٔ عددی) را
+وارد کن، **تست اتصال** را بزن و **ذخیره** کن.
 
-دکمهٔ ایموجی وجود ندارد: ایموجی سفارشی یک موجودیت مخصوص پرمیوم است و ربات نمی‌تواند آن را با
-API پیام غنی بفرستد. ایموجی‌های معمولی یونیکد که از صفحه‌کلید تایپ می‌شوند مثل متن ساده ارسال می‌شوند.
-
-نوار عنوان شامل چرخ‌دندهٔ تنظیمات (با نقطهٔ وضعیت اتصال)، کلید پیش‌نمایش و کلید راست‌به‌چپ پیام است.
+پیامت را بنویس و <kbd>Ctrl</kbd>+<kbd>Enter</kbd> بزن. تمام.
 
 ---
 
-## قابلیت‌ها
+## 🪟 پنجرهٔ برنامه
 
-### قالب‌بندی درون‌خطی
-- پررنگ، کج، زیرخط‌دار، خط‌خورده
-- اسپویلر، هایلایت (Marked)، زیرنویس، بالانویس
-- تک‌فاصله (کد) و فرمول درون‌خطی (از پالت درج)
-
-### المان‌های بلوکی
-- سرتیتر H1 تا H6
-- نقل‌قول، نقل‌قول برجسته (Pull Quote)
-- بلوک کد با انتخاب زبان
-- خط جداکننده
-- بلوک تاشو (جزئیات)
-- پانویس (Footer)
-
-### لیست‌ها و جدول
-- لیست گلوله‌ای، لیست شماره‌دار
-- چک‌لیست (از طریق API جداگانه `sendChecklist` ارسال می‌شود)
-- سلول‌های قابل ویرایش
-
-### رسانه
-- عکس یا ویدیو از نشانی — دو مورد یا بیشتر، اسلایدشو می‌شود
-- فایل صوتی
-- کلاژ (از پالت درج)
-- موقعیت مکانی (عرض/طول جغرافیایی)
-
-### ریاضی
-- بلوک فرمول و فرمول درون‌خطی (LaTeX)
-
-### اتصال به API
-- ارسال با `sendRichMessage` و **JSON ساختاریافته بلوک‌ها** (نه markdown)
-- ویرایش پیام با `editMessageText` + `rich_message`
-- ارسال پیش‌نویس با `sendRichMessageDraft` (۳۰ ثانیه)
-- چک‌لیست از طریق API جداگانه `sendChecklist` ارسال می‌شود
-- دکمه تست اتصال (`getMe`)
-
-### امکانات ویرایشگر
-- **رابط ویرایشگر تلگرام دسکتاپ** — پنجرهٔ بدون قاب با نوار عنوان اختصاصی، نوار ابزار قرصی،
-  منوهای عمودی بازشو و دکمهٔ ارسال صورتی‌آجری
-- **ویرایشگر مبتنی بر TipTap** — مدل سند ProseMirror با بازگردانی/انجام دوبارهٔ واقعی
-- قواعد ورودی مارک‌داون — `## `، `> `، `- `، `1. `، ` ``` `، `**پررنگ**`، `` `کد` ``
-- **پیش‌نمایش زنده** — پنل تاشو که همان Block State ارسالی را به شکل حبابِ تلگرام نشان می‌دهد
-- پالت درج — جست‌وجوی هر بلوک و قالب با نام
-- تم تاریک (پیش‌فرض) + تم روشن
-- کلیدهای میانبر، از جمله Ctrl+Enter برای ارسال
-- شمارشگر کاراکتر (حداکثر ۳۲٬۷۶۸)
-- دیالوگ‌های اختصاصی به جای `prompt()` و `confirm()` مرورگر
-- راست‌به‌چپ کامل: رابط فارسی کل پنجره را قرینه می‌کند، مستقل از پرچم RTL هر پیام
-
----
-
-## معماری
-
-### v4.0 — رابط بومی تلگرام + Block State با موجودیت‌های درون‌خطی (نسخه فعلی)
-
-ویرایشگر از **TipTap** (مبتنی بر ProseMirror) برای ویرایش متن غنی استفاده می‌کند. محتوای کاربر از یک معماری **Block State** عبور می‌کند که مستقیماً با انواع JSON ساختاریافته Bot API تلگرام 10.1 مطابقت دارد:
+بازسازی دقیق ویرایشگر تلگرام دسکتاپ: بدون قاب، تیره، دکمه‌های قرص‌مانند با حاشیهٔ مویی و یک دکمهٔ
+ارسال صورتی‌آجری.
 
 ```
-ویرایشگر TipTap (DOM ProseMirror)
+┌ ⚙ ▣ ¶ ────────────────────────────────────────────  ─  □  ✕ ┐
+│  ( ↶ )( ↷ )   ( Aa )( B )( ☰ )( ▦ )( 🔗 )( 🖼 )( Σ )         │
+│                                                              │
+│  پیام                                        │  پیش‌نمایش زنده │
+│                                             │                │
+│  ( ✦ )                       342 / 32,768  ( 🗑 )      ( ➤ ) │
+└──────────────────────────────────────────────────────────────┘
+```
+
+| دکمه | با کلیک چه می‌شود |
+|:--:|---|
+| ↶ ↷ | بازگردانی / انجام دوباره — تاریخچهٔ کامل ProseMirror |
+| **Aa** | **قالب‌بندی** ← عنوان (H1 تا H6 را باز می‌کند)، متن، نقل‌قول، نقل‌قول برجسته، بلوک کد، پاورقی، جداکننده |
+| **B** | **سبک متن** ← پررنگ، کج، زیرخط‌دار، خط‌خورده، اسپویلر، زیرنویس، بالانویس، هایلایت |
+| ☰ | **درج فهرست** ← شماره‌دار، نقطه‌ای، چک‌لیست، بخش تاشو |
+| ▦ | **درج جدول** ← یک جدول ۳×۳ آمادهٔ ویرایش؛ نوار شناور ردیف و ستون را کم و زیاد می‌کند و پهنای ستون‌ها با موس کشیده می‌شود |
+| 🔗 | **درج پیوند** ← پنل *ساخت پیوند* با دو فیلد **متن** و **نشانی** |
+| 🖼 | **درج رسانه** ← عکس یا ویدیو (دو مورد یا بیشتر، اسلایدشو می‌شود)، فایل صوتی، موقعیت مکانی |
+| Σ | **درج فرمول** ← فرمول را می‌پرسد و بلوک ریاضی می‌گذارد |
+| ✦ | پالت درج — جست‌وجوی همهٔ بلوک‌ها و قالب‌ها با نام |
+| 🗑 ➤ | پاک‌کردن پیام · ارسال (با کلیک راست: پیام غنی، پیش‌نویس یا ویرایش) |
+
+نوار عنوان شامل چرخ‌دندهٔ تنظیمات با نقطهٔ وضعیت اتصال، کلید پیش‌نمایش زنده و کلید راست‌به‌چپِ
+پیامی است که می‌نویسی.
+
+> **دکمهٔ ایموجی وجود ندارد.** ایموجی سفارشی یک موجودیت مخصوص پرمیوم است و بات نمی‌تواند آن را با
+> API پیام غنی بفرستد. ایموجی‌های معمولی یونیکد که از صفحه‌کلید تایپ می‌کنی مثل متن ساده ارسال می‌شوند.
+
+---
+
+## ✍️ چه چیزهایی می‌توانی بفرستی
+
+| | |
+|---|---|
+| **متن** | پررنگ · کج · زیرخط‌دار · خط‌خورده · اسپویلر · هایلایت · زیرنویس · بالانویس · تک‌فاصله · فرمول درون‌خطی · پیوند |
+| **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول · نقل‌قول برجسته · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
+| **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(از طریق API جداگانهٔ `sendChecklist`)* |
+| **جدول** | ردیف سرصفحه، سلول‌های قابل ویرایش، تغییر پهنای ستون با موس |
+| **رسانه** | عکس · ویدیو · صدا · اسلایدشو · کلاژ · موقعیت مکانی |
+
+و هنگام نوشتن:
+
+- **پیش‌نمایش زنده** — حباب واقعی تلگرام، ساخته‌شده از همان بلوک‌هایی که ارسال می‌شوند
+- **میان‌برهای مارک‌داون** — `## `، `> `، `- `، `1. `، ` ``` `، `**پررنگ**`، `` `کد` ``
+- **پالت درج** — یک کادر جست‌وجو روی تمام بلوک‌ها و قالب‌ها
+- **تم تیره و روشن**، رابط انگلیسی و فارسی، پشتیبانی کامل راست‌به‌چپ
+- **شمارشگر کاراکتر** برای محدودیت ۳۲٬۷۶۸ تایی تلگرام
+
+### حالت‌های ارسال
+
+روی دکمهٔ ارسال کلیک راست کن:
+
+| حالت | چه می‌کند |
+|---|---|
+| **پیام غنی** | `sendRichMessage` — مسیر معمول |
+| **پیش‌نویس** | `sendRichMessageDraft` — پیش‌نمایش ۳۰ ثانیه‌ای، فقط چت خصوصی |
+| **ویرایش** | `editMessageText` — پیام موجود را بازنویسی می‌کند (شناسه از تنظیمات) |
+
+### کلیدهای میانبر
+
+| | | | |
+|---|---|---|---|
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> ارسال | <kbd>Ctrl</kbd>+<kbd>K</kbd> پیوند | <kbd>Ctrl</kbd>+<kbd>P</kbd> پیش‌نمایش | <kbd>Ctrl</kbd>+<kbd>,</kbd> تنظیمات |
+| <kbd>Ctrl</kbd>+<kbd>B</kbd> پررنگ | <kbd>Ctrl</kbd>+<kbd>I</kbd> کج | <kbd>Ctrl</kbd>+<kbd>U</kbd> زیرخط‌دار | <kbd>Ctrl</kbd>+<kbd>E</kbd> تک‌فاصله |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> خط‌خورده | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> اسپویلر | <kbd>Ctrl</kbd>+<kbd>Z</kbd> بازگردانی | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> انجام دوباره |
+
+---
+
+## 🧩 چطور کار می‌کند
+
+پیام‌های غنی تلگرام **مارک‌داون نیستند**. این API آرایه‌ای از اشیای ساختاریافتهٔ `InputRichBlock*`
+می‌خواهد، و برنامه دقیقاً همین را می‌سازد — هم بلوک‌ها و هم قطعه‌های سبک‌دار داخلشان:
+
+```
+سند TipTap (ProseMirror)
         │
         ▼
-پارسر بلوک (DOM → Block State JSON[])
-   ├─ سطح بلوک    → پاراگراف، عنوان، جدول، چک‌لیست، رسانه، …
-   └─ سطح درون‌خطی → قطعه‌های سبک‌دار (پررنگ، اسپویلر، پیوند، ریاضی، …)
+پارسر بلوک ────────────────────────────────► Block State (JSON[])
+   ├─ سطح بلوک     پاراگراف، عنوان، جدول، چک‌لیست، رسانه، …
+   └─ سطح درون‌خطی  قطعه‌های { text, marks[], href? }
         │
         ▼
-سریالایزر بلوک (Block State → JSON API تلگرام)
+سریالایزر بلوک
    ├─ blocks     → InputRichBlock*
-   └─ rich_text  → اشیای تودرتوی RichText*
+   └─ rich_text  → RichText* تودرتو   (پررنگ داخل کج داخل پیوند)
         │
-        ├──→ sendRichMessage(blocks[])      [پیام‌های غنی]
-        ├──→ sendRichMessageDraft(blocks[]) [پیش‌نویس ۳۰ ثانیه‌ای]
-        └──→ sendChecklist(items[])         [فقط چک‌لیست]
+        ├──► sendRichMessage        پیام غنی
+        ├──► sendRichMessageDraft   پیش‌نویس ۳۰ ثانیه‌ای
+        └──► sendChecklist          چک‌لیست، همیشه فراخوانی جداگانه
 ```
 
-قالب‌بندی درون‌خطی دیگر با `textContent` از دست نمی‌رود: `inline-parser.js` محتوای درون‌خطی هر
-بلوک را به قطعه‌های `{ text, marks[], href? }` تبدیل می‌کند و سریالایزر آن‌ها را به اشیای
-تودرتوی `RichText*` (پررنگ درون کج درون پیوند و …) در کنار فیلد سادهٔ `text` تبدیل می‌کند.
+<details>
+<summary><strong>انواع بلوک ← API تلگرام</strong></summary>
 
-**چرا JSON بلوک‌ها به جای Markdown؟**
-Bot API تلگرام 10.1 از انواع `InputRichBlock*` ساختاریافته پشتیبانی می‌کند که تمام قابلیت‌ها را پوشش می‌دهد (اسپویلر، جزئیات، جدول، ریاضی و ...). Markdown فقط زیرمجموعه‌ای را بیان می‌کند. JSON بلوک‌ها ۱۰۰٪ برابری قابلیت فراهم می‌کنند.
-
-### انواع بلوک
-
-| نوع بلوک | نوع Telegram API |
-|-----------|-------------------|
+| بلوک | نوع API |
+|---|---|
 | paragraph | `InputRichBlockParagraph` |
 | heading | `InputRichBlockHeading` |
 | blockquote | `InputRichBlockBlockquote` |
-| pullquote | `InputRichBlockPullquote` |
-| code_block | `InputRichBlockCodeBlock` |
+| pullquote | `InputRichBlockAside` |
+| code_block | `InputRichBlockPreformatted` |
 | divider | `InputRichBlockDivider` |
 | list | `InputRichBlockList` |
 | table | `InputRichBlockTable` |
 | details | `InputRichBlockDetails` |
 | footer | `InputRichBlockFooter` |
-| photo / video / audio | `InputRichBlockPhoto` و غیره |
+| photo / video / audio | `InputRichBlockPhoto` / `…Video` / `…Audio` |
 | slideshow / collage | `InputRichBlockSlideshow` / `InputRichBlockCollage` |
 | map | `InputRichBlockMap` |
 | math_block | `InputRichBlockMath` |
-| checklist | جداگانه با `sendChecklist` ارسال می‌شود |
+| checklist | جداگانه با `sendChecklist` |
 
-### انواع درون‌خطی
+</details>
 
-| نشانهٔ قطعه | نوع Telegram API |
-|-------------|-------------------|
-| پررنگ / کج / زیرخط‌دار / خط‌خورده | `RichTextBold`، `RichTextItalic`، … |
+<details>
+<summary><strong>نشانه‌های درون‌خطی ← اشیای RichText</strong></summary>
+
+| نشانه | نوع API |
+|---|---|
+| پررنگ / کج / زیرخط‌دار / خط‌خورده | `RichTextBold`، `RichTextItalic`، `RichTextUnderline`، `RichTextStrikethrough` |
 | اسپویلر | `RichTextSpoiler` |
 | هایلایت | `RichTextMarked` |
 | کد | `RichTextCode` |
@@ -204,280 +204,137 @@ Bot API تلگرام 10.1 از انواع `InputRichBlock*` ساختاریافت
 | پیوند | `RichTextLink` (شامل `url`) |
 | ریاضی | `RichTextMath` |
 
-### مدل امنیتی
+قطعه‌ای که چند نشانه دارد از درون به بیرون تودرتو می‌شود؛ یعنی `**_کلمه_**` می‌شود
+`italic( bold( text ) )`.
 
-```
-┌─────────────────────────────────────────────────┐
-│  پردازشگر Renderer (React)                      │
-│                                                 │
-│  ❌ توکن ربات اینجا ذخیره نمی‌شود              │
-│  ❌ بدون fetch() مستقیم به API تلگرام           │
-│  ✅ فراخوانی window.app.api(method, body)       │
-└──────────────────────┬──────────────────────────┘
-                       │ IPC (contextBridge)
-┌──────────────────────▼──────────────────────────┐
-│  پردازشگر Main (Electron)                       │
-│                                                 │
-│  ✅ توکن با safeStorage ذخیره می‌شود (رمزنگاری) │
-│  ✅ تمام فراخوانی‌های API از اینجا انجام می‌شود │
-│  ✅ اعتبارسنجی ورودی در هر کانال IPC           │
-│  ✅ تایم‌اوت HTTP (۳۰ ثانیه) + محدودیت حجم     │
-│  ✅ لیست سفید متدها (فقط متدهای مجاز تلگرام)   │
-└─────────────────────────────────────────────────┘
-```
+</details>
 
 ---
 
-## تکنولوژی
+## 🔒 امنیت
 
-| لایه | تکنولوژی |
-|------|-----------|
-| پوسته دسکتاپ | Electron 35 |
-| فریم‌ورک UI | React 19 |
-| ویرایشگر متن | TipTap 2.11+ (ProseMirror) |
-| ابزار بیلد | Vite 6 |
-| تست | Vitest 2.1 + jsdom |
-| مدل داده | Block State (JSON array → JSON API تلگرام) |
-| امنیت | پل IPC، safeStorage، اعتبارسنجی ورودی |
-| تم | متغیرهای CSS (پالت Night تلگرام، تاریک + روشن) |
-| زبان | فارسی، English |
-| پکیج‌بندی | electron-builder (NSIS، AppImage) |
-| CI/CD | GitHub Actions (lint، test، build) |
-
----
-
-## ساختار پروژه
+توکن بات تنها رازِ این برنامه است و هرگز به پنجره‌ای که در آن تایپ می‌کنی نمی‌رسد.
 
 ```
-TelegramFreeRich/
-├── src/
-│   ├── main/                    # پردازشگر اصلی Electron
-│   │   ├── main.js              # نقطه ورود، handlerهای IPC، فراخوانی TG API
-│   │   ├── preload.js           # پل ارتباطی امن IPC (contextBridge)
-│   │   └── security/
-│   │       └── validation.js    # اعتبارسنجی ورودی، لیست سفید متدها
-│   │
-│   ├── renderer/                # رابط کاربری React (سرور Vite)
-│   │   ├── main.jsx             # نقطه ورود React
-│   │   ├── App.jsx              # پوسته: state، منطق ارسال، میانبرها
-│   │   ├── components/
-│   │   │   ├── TitleBar.jsx     # نوار عنوان پنجرهٔ بدون قاب
-│   │   │   ├── Toolbar.jsx      # نوار ابزار قرصی تلگرام + منوها
-│   │   │   ├── ActionMenu.jsx   # رندر منوهای بازشو
-│   │   │   ├── Popover.jsx      # پنل شناور لنگرشده
-│   │   │   ├── InsertPalette.jsx# پالت درج جست‌وجوپذیر
-│   │   │   ├── TableBubble.jsx  # کنترل‌های شناور ردیف و ستون جدول
-│   │   │   ├── BottomBar.jsx    # پالت، شمارشگر، پاک‌کردن، ارسال
-│   │   │   ├── Preview.jsx      # حباب تلگرام (المان‌های React)
-│   │   │   ├── Settings.jsx     # برگهٔ تنظیمات (توکن، چت، زبان)
-│   │   │   ├── Dialog.jsx       # prompt / confirm مبتنی بر Promise
-│   │   │   ├── Toast.jsx        # سیستم اعلان توست
-│   │   │   ├── Icons.jsx        # مجموعهٔ آیکون‌های SVG
-│   │   │   ├── useTfrEditor.js  # ساخت ویرایشگر TipTap
-│   │   │   └── extensions.js    # نودها و مارک‌های سفارشی TipTap
-│   │   ├── lib/
-│   │   │   └── editor-actions.js# رجیستری کنش‌ها (منوها + پالت)
-│   │   ├── i18n/                # ترجمه‌ها (en، fa) + provider
-│   │   ├── styles/              # theme، app، toolbar، menu، editor، preview
-│   │   └── index.html           # HTML نقطه ورود (CSP meta tag)
-│   │
-│   └── shared/                  # مشترک بین main و renderer
-│       ├── block-types.js       # انواع BlockType / InlineType
-│       ├── block-parser.js      # تبدیل DOM → Block State
-│       ├── inline-parser.js     # DOM درون‌خطی → قطعه‌های سبک‌دار
-│       ├── block-serializer.js  # تبدیل Block State → JSON API تلگرام
-│       ├── block-manager.js     # مدیریت state با undo/redo
-│       ├── constants.js         # ثابت‌های سراسری
-│       └── utils.js             # ابزارها (sanitizeUrl و ...)
-│
-├── tests/
-│   └── unit/                    # تست‌های unit با Vitest (۱۴۷ تست)
-│       ├── block-manager.test.js
-│       ├── block-parser.test.js
-│       ├── block-serializer.test.js
-│       ├── inline-parser.test.js
-│       ├── editor-actions.test.js
-│       ├── i18n.test.js
-│       ├── utils.test.js
-│       └── validation.test.js
-│
-├── vite.config.js               # تنظیمات Vite (پلاگین React)
-├── vitest.config.js             # تنظیمات Vitest (jsdom، coverage)
-├── package.json                 # وابستگی‌ها + اسکریپت‌ها
-├── .eslintrc.json               # تنظیمات ESLint
-├── .prettierrc                  # تنظیمات Prettier
-└── .github/workflows/
-    ├── ci.yml                   # Lint + test + build (CI)
-    └── build.yml                # ساخت ویندوز + انتشار
+Renderer (React)                     پردازشگر Main (Electron)
+─────────────────                    ───────────────────────
+✗ هرگز توکن را نگه نمی‌دارد            ✓ توکن با safeStorage رمزنگاری می‌شود
+✗ هرگز به شبکه وصل نمی‌شود   ──IPC──► ✓ همهٔ درخواست‌های تلگرام از اینجا می‌روند
+✓ فقط می‌داند «توکنی وجود دارد»        ✓ متد، شناسهٔ چت و زبان را اعتبارسنجی می‌کند
+                                     ✓ تایم‌اوت ۳۰ ثانیه · سقف پاسخ ۱ مگابایت
 ```
-
----
-
-## نصب
-
-### پیش‌نیازها
-- Node.js نسخه ۱۸ یا بالاتر (فقط برای ساخت از سورس)
-- یک ربات تلگرام (از [@BotFather](https://t.me/BotFather) بگیرید)
-- شناسه چت (کانال یا گروه)
-
-### شروع سریع (دانلود)
-
-1. آخرین نسخه را از [صفحه دانلود](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) دانلود کنید
-2. `TelegramFreeRich-Setup.exe` را اجرا کنید
-3. اپ را باز کنید
-4. روی تنظیمات (آیکون چرخ دنده) کلیک کنید
-5. توکن ربات را وارد کنید (از @BotFather)
-6. شناسه چت را وارد کنید (`@channel` یا شناسه عددی)
-7. «تست اتصال» را بزنید
-8. شروع به نوشتن کنید و «ارسال» را بزنید
-
-### از سورس
-
-```bash
-git clone https://github.com/Aporis3674/TelegramFreeRich.git
-cd TelegramFreeRich
-npm install
-npm start
-```
-
----
-
-## نحوه استفاده
-
-۱. در ویرایشگر بنویسید — منوهای نوار ابزار بلوک درج می‌کنند و پالت (✦A) همه را جست‌وجو می‌کند
-۲. پیش‌نمایش زنده را از نوار عنوان (یا Ctrl+P) باز کنید تا حباب تلگرام را ببینید
-۳. **Ctrl+Enter** را بزنید یا روی دکمهٔ ارسال کلیک کنید
-
-### حالت‌های ارسال
-
-روی دکمهٔ ارسال کلیک راست کنید (یا نگه دارید) تا حالت را انتخاب کنید:
-
-| حالت | زمان استفاده |
-|------|--------------|
-| **پیام غنی** | پیام فرمت‌شده (پیش‌فرض) |
-| **پیش‌نویس** | پیش‌نمایش ۳۰ ثانیه‌ای (فقط چت خصوصی) |
-| **ویرایش** | ویرایش پیام موجود (شناسهٔ پیام از تنظیمات خوانده می‌شود) |
-
-### کلیدهای میانبر
-
-| کلید | عملکرد |
-|------|--------|
-| Ctrl+Enter | ارسال |
-| Ctrl+K | افزودن / حذف پیوند |
-| Ctrl+P | نمایش/پنهان‌کردن پیش‌نمایش |
-| Ctrl+, | باز کردن تنظیمات |
-| Ctrl+B | پررنگ |
-| Ctrl+I | کج |
-| Ctrl+U | زیرخط‌دار |
-| Ctrl+E | تک‌فاصله (کد) |
-| Ctrl+Shift+X | خط‌خورده |
-| Ctrl+Shift+P | اسپویلر |
-| Ctrl+Shift+7 / Ctrl+Shift+8 | فهرست شماره‌دار / نقطه‌ای |
-| Ctrl+Z / Ctrl+Shift+Z | بازگشت / انجام مجدد |
-
----
-
-## تست‌ها
-
-```bash
-# اجرای تمام تست‌ها
-npm test
-
-# اجرا در حالت watch
-npm run test:watch
-
-# اجرا با coverage
-npx vitest --coverage
-```
-
-**۱۴۷ تست** پوشش دهنده:
-- مدیریت بلوک (CRUD، undo/redo، listenerها)
-- پارسر بلوک (DOM → Block State، شامل چک‌لیست، رسانه، گالری و نقشه)
-- پارسر درون‌خطی (قطعه‌های سبک‌دار، تشخیص موجودیت، ادغام قطعه‌ها)
-- سریالایزر بلوک (Block State → JSON API تلگرام، `RichText*` تودرتو)
-- رجیستری کنش‌های ویرایشگر (تمام دستورهای منو، پاک‌سازی نشانی، جست‌وجوی پالت)
-- i18n (یکسانی کلیدهای زبان‌ها، جایگزین‌ها، fallback) و دادهٔ ایموجی
-- ابزارها (sanitizeUrl، تولید ID، اعتبارسنجی)
-- اعتبارسنجی امنیتی (توکن، شناسه چت، لیست سفید متدها)
-
----
-
-## توسعه
-
-```bash
-# نصب وابستگی‌ها
-npm install
-
-# اجرای dev mode (Vite + Electron)
-npm run dev
-
-# لینت
-npm run lint
-
-# بیلد برای تولید
-npm run build
-```
-
-### اکستنشن‌های سفارشی TipTap
-
-| اکستنشن | نوع | توضیح |
-|----------|------|-------|
-| Spoiler | Mark | `<span data-spoiler>` — متن پنهان تا لمس شود |
-| InlineMath | Mark | `<span data-inline-math>` — فرمول درون‌خطی |
-| PullQuote | Node | `<blockquote data-pullquote>` — نقل‌قول برجسته |
-| Details | Node | `<details>` — محتوای تاشو با خلاصه |
-| Footer | Node | `<footer>` — متن پانویس |
-| MathBlock | Node | بلوک فرمول ریاضی (LaTeX) |
-| MediaBlock | Node | بلوک `<video>` / `<audio>` |
-| GalleryBlock | Node | `div.tg-gallery` — اسلایدشو یا کلاژ |
-| MapBlock | Node | `div.tg-map` — عرض / طول جغرافیایی |
-
-برای افزودن یک دستور، فقط یک ورودی به `src/renderer/lib/editor-actions.js` اضافه کنید: منوهای
-نوار ابزار، پالت درج و تست‌ها همه از همان رجیستری می‌خوانند.
-
----
-
-## بیلد
-
-### ویندوز
-
-```bash
-npm run build
-# خروجی: dist/TelegramFreeRich-Setup-4.1.0.exe
-```
-
-### CI/CD
-
-GitHub Actions به صورت خودکار:
-- Lint و اجرای تست‌ها در هر push
-- ساخت اینستالر ویندوز در هر tag push
-- ایجاد GitHub Release با اینستالر
-
----
-
-## امنیتی
 
 | لایه | محافظت |
-|------|---------|
-| ذخیره توکن | `safeStorage` (رمزنگاری با کلید OS) |
-| پل IPC | `contextBridge` — رندرر به Node API دسترسی ندارد |
-| اعتبارسنجی ورودی | لیست سفید برای متدهای API، شناسه‌های چت، زبان‌ها |
-| HTTP | تایم‌اوت ۳۰ ثانیه، محدودیت حجم پاسخ ۱ مگابایت |
-| اعتبارسنجی URL | مسدود کردن `javascript:`، `data:`، `vbscript:` |
-| CSP | متا تگ Content Security Policy در index.html |
+|---|---|
+| ذخیرهٔ توکن | `safeStorage` — رمزنگاری با کلیدخانهٔ سیستم‌عامل، روی دیسک در `settings.enc` |
+| پل IPC | `contextBridge` با `contextIsolation` — هیچ API نودی در رندرر نیست |
+| اعتبارسنجی ورودی | فهرست سفید برای متدهای API، شناسهٔ چت و زبان |
+| HTTP | تایم‌اوت ۳۰ ثانیه، سقف پاسخ ۱ مگابایت |
+| نشانی‌ها | طرح‌های `javascript:`، `data:` و `vbscript:` رد می‌شوند |
+| رندر | پیش‌نمایش المان‌های React می‌سازد — هرگز `innerHTML` |
+| CSP | تگ Content-Security-Policy در `index.html` |
 
 ---
 
-## تاریخچه تغییرات
+## 🛠 توسعه
 
-مشاهده [CHANGELOG.md](CHANGELOG.md) برای تاریخچه کامل نسخه‌ها.
+```bash
+npm run dev           # Vite + Electron با هات‌ریلود
+npm test              # ۱۵۱ تست واحد (Vitest)
+npm run lint          # ESLint، بدون هشدار
+npm run format        # Prettier
+npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-4.1.1.exe
+npm run build:linux   # AppImage
+```
+
+<details>
+<summary><strong>ساختار پروژه</strong></summary>
+
+```
+src/
+├── main/                       پردازشگر اصلی Electron
+│   ├── main.js                 پنجره، هندلرهای IPC، درخواست‌های تلگرام
+│   ├── preload.js              contextBridge — تنها سطح تماس رندرر
+│   └── security/validation.js  فهرست سفید متد / شناسهٔ چت / زبان
+│
+├── renderer/                   رابط کاربری React
+│   ├── App.jsx                 پوسته: state، منطق ارسال، میان‌برها
+│   ├── components/
+│   │   ├── TitleBar.jsx        نوار عنوان پنجرهٔ بدون قاب
+│   │   ├── Toolbar.jsx         نوار هفت‌دکمه‌ای + منوها
+│   │   ├── ActionMenu.jsx      رندر منو، تا دو سطح
+│   │   ├── Popover.jsx         پنل شناور لنگرشده
+│   │   ├── TableBubble.jsx     کنترل‌های شناور ردیف و ستون جدول
+│   │   ├── InsertPalette.jsx   پالت جست‌وجوپذیر
+│   │   ├── BottomBar.jsx       پالت · شمارشگر · پاک‌کردن · ارسال
+│   │   ├── Preview.jsx         حباب زندهٔ تلگرام
+│   │   ├── Settings.jsx        توکن، چت، زبان، پوسته
+│   │   ├── Dialog.jsx          prompt / confirm / پنل پیوند مبتنی بر Promise
+│   │   ├── Toast.jsx           اعلان‌ها
+│   │   ├── Icons.jsx           مجموعهٔ SVG
+│   │   ├── useTfrEditor.js     راه‌اندازی TipTap
+│   │   └── extensions.js       نودها و مارک‌های سفارشی
+│   ├── lib/editor-actions.js   یک رجیستری پشت همهٔ منوها
+│   ├── i18n/                   en · fa · provider
+│   └── styles/                 theme · app · toolbar · menu · editor · preview
+│
+└── shared/                     مشترک بین دو پردازشگر
+    ├── block-types.js          انواع BlockType / InlineType
+    ├── block-parser.js         DOM → Block State
+    ├── inline-parser.js        DOM درون‌خطی → قطعه‌های سبک‌دار
+    ├── block-serializer.js     Block State → JSON تلگرام
+    ├── block-manager.js        CRUD + undo/redo
+    ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
+    └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
+
+tests/unit/                     ۱۵۱ تست — پارسرها، سریالایزر، رجیستری،
+                                یکسانی i18n، استایل‌ها، اعتبارسنجی
+```
+
+برای افزودن یک دستور کافی است **یک ورودی** به `src/renderer/lib/editor-actions.js` اضافه شود؛
+منوها، پالت و تست‌ها همه از همان رجیستری می‌خوانند.
+
+</details>
+
+<details>
+<summary><strong>اکستنشن‌های سفارشی TipTap</strong></summary>
+
+| اکستنشن | نوع | خروجی HTML |
+|---|---|---|
+| Spoiler | mark | `<span data-spoiler>` |
+| InlineMath | mark | `<span data-inline-math>` |
+| PullQuote | node | `<blockquote data-pullquote>` |
+| Details | node | `<details>` با بدنهٔ قابل ویرایش |
+| Footer | node | `<footer>` |
+| MathBlock | node | `div.tg-math` |
+| MediaBlock | node | `<video>` / `<audio>` |
+| GalleryBlock | node | `div.tg-gallery` — اسلایدشو یا کلاژ |
+| MapBlock | node | `div.tg-map` |
+
+</details>
 
 ---
 
-## مجوز
+## 📦 پشتهٔ فناوری
 
-MIT
+| لایه | انتخاب |
+|---|---|
+| پوستهٔ دسکتاپ | Electron 35 — پنجرهٔ بدون قاب، `safeStorage`، `contextBridge` |
+| رابط کاربری | React 19 + Vite 6 |
+| ویرایشگر | TipTap 2 (ProseMirror) |
+| مدل داده | Block State ← `InputRichBlock*` / `RichText*` |
+| تست | Vitest 2 + jsdom |
+| بسته‌بندی | electron-builder — نصب‌کنندهٔ NSIS، AppImage |
+| CI | GitHub Actions — لینت، تست، بیلد |
 
 ---
 
-> بهترین چیزهای زندگی رایگان هستند. دومین چیزهای خوب هم رایگان هستند -- اگر از یه بات استفاده کنید.
+<p align="center">
+  <a href="CHANGELOG.md">تاریخچهٔ تغییرات</a> •
+  <a href="Documentation.html">سند طراحی</a> •
+  <a href="https://core.telegram.org/bots/api">مستندات Bot API</a>
+</p>
+
+<p align="center">MIT © Aporis3674</p>
+
+<p align="center"><sub>بهترین چیزهای زندگی رایگان‌اند. دومین‌های بهترین هم رایگان‌اند، اگر از یک بات استفاده کنی.</sub></p>

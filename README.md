@@ -1,479 +1,341 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="120" alt="TelegramFreeRich">
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Bot%20API-10.1-blue?logo=telegram" alt="Bot API 10.1">
-  <img src="https://img.shields.io/badge/Desktop-Electron-47848f?logo=electron" alt="Electron">
-  <img src="https://img.shields.io/badge/Editor-TipTap-purple" alt="TipTap">
-  <img src="https://img.shields.io/badge/UI-React-61dafb?logo=react" alt="React">
-  <img src="https://img.shields.io/badge/Tests-147%20passing-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/Premium-Free-success" alt="Free">
-  <img src="https://github.com/Aporis3674/TelegramFreeRich/actions/workflows/build.yml/badge.svg" alt="Build">
+  <img src="https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/master/telegram.svg" width="110" alt="TelegramFreeRich">
 </p>
 
 <h1 align="center">TelegramFreeRich</h1>
 
-<p align="center"><strong>Free Rich Text Editor for Telegram — Desktop Edition</strong></p>
-<p align="center">Because bots should not have more rights than humans.</p>
-
-<p align="center"><a href="README_fa.md">[ فارسی ]</a></p>
-
----
+<p align="center"><strong>Telegram's rich text editor — for everyone, without Premium.</strong></p>
+<p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <a href="#download">Download</a> •
-  <a href="#interface">Interface</a> •
-  <a href="#features">Features</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#build">Build</a> •
-  <a href="#development">Development</a>
+  <img src="https://img.shields.io/badge/version-4.1.1-2ca5e0" alt="Version 4.1.1">
+  <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
+  <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
+  <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
+  <img src="https://img.shields.io/badge/tests-151%20passing-4fc3a1" alt="151 tests">
+  <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
+</p>
+
+<p align="center">
+  <a href="README_fa.md">🇮🇷 فارسی</a> &nbsp;•&nbsp;
+  <a href="#-quick-start">Quick start</a> &nbsp;•&nbsp;
+  <a href="#-the-window">The window</a> &nbsp;•&nbsp;
+  <a href="#️-what-you-can-send">Features</a> &nbsp;•&nbsp;
+  <a href="#-how-it-works">Architecture</a> &nbsp;•&nbsp;
+  <a href="#-security">Security</a> &nbsp;•&nbsp;
+  <a href="#-development">Development</a>
+</p>
+
+<p align="center">
+  <img src="screenshot.jpg" width="880" alt="TelegramFreeRich — editor and live preview">
 </p>
 
 ---
 
-## Download
+## Why this exists
 
-| Platform | Download |
-|----------|----------|
-| **Windows** | [TelegramFreeRich-Setup.exe](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) |
+In June 2026 Telegram shipped a rich text editor — and locked it behind Premium. The very same
+formatting is available to **every bot, for free**, through Bot API 10.1.
 
-Requires Windows 10 or later. No installation of Node.js or other dependencies needed.
+|  | Telegram Premium | A bot + this app |
+|---|---|---|
+| Headings, quotes, tables, code blocks | 💎 Premium | ✅ Free |
+| Spoilers, marked text, sub/superscript | 💎 Premium | ✅ Free |
+| Checklists, collapsibles, formulas | 💎 Premium | ✅ Free |
+| Monthly cost | 💸 | **0** |
 
----
-
-## What is this?
-
-Telegram introduced a rich text editor in June 2026 (Bot API 10.1), but locked it behind Premium. Meanwhile, the same API gives bots the exact same capabilities for free.
-
-This is a **desktop app** that lets anyone -- not just Premium subscribers -- create and send professionally formatted messages through Telegram's Bot API.
-
-No coding required. No Telegram Premium required. No server required.
+No coding, no server, no subscription. Point the app at a bot token and a chat, and write.
 
 ---
 
-## Interface
+## 🚀 Quick start
 
-![TelegramFreeRich](screenshot.jpg)
+**1 — Get a bot.** Message [@BotFather](https://t.me/BotFather), send `/newbot`, copy the token.
+Add the bot to your channel or group as an administrator.
 
-The window is a faithful rebuild of Telegram Desktop's rich-text composer — a frameless dark
-window, hairline-outlined pill buttons and a single salmon send button. Each menu button opens a
-vertical list; table, link and formula act in one click:
+**2 — Install.** Grab the installer from the
+[releases page](https://github.com/Aporis3674/TelegramFreeRich/releases/latest), or run from source:
 
-```
-┌ ─────────────────────────────────────────────────────────  ─  □  ✕ ┐
-│  ( ↶ )( ↷ )   ( Aa )( B )( ☰ )( ▦ )( 🔗 )( 🖼 )( Σ )               │
-│                                                                    │
-│  Message                                        │  Live preview    │
-│                                                 │                  │
-│  ( ✦A )                        341 / 32,768   ( 🗑 )        ( ➤ )  │
-└────────────────────────────────────────────────────────────────────┘
+```bash
+git clone https://github.com/Aporis3674/TelegramFreeRich.git
+cd TelegramFreeRich
+npm install
+npm run dev
 ```
 
-| Control | What it does |
-|---------|--------------|
-| ↶ ↷ | Undo / redo (full ProseMirror history) |
-| **Aa** | *Formatting* menu — Heading (opens H1–H6), Text, Quote, Pull quote, Code block, Footer, Divider |
-| **B** | *Text style* menu — Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript, Marked |
-| ☰ | *Insert list* — Ordered list, Bullet list, Check list (routed to `sendChecklist`), Details |
-| ▦ | *Insert table* — drops in an editable 3×3 table; floating controls add or remove rows and columns, and column widths drag on the borders |
-| 🔗 | *Insert link* — opens a **Create link** panel with Text and URL fields |
-| 🖼 | *Insert media* — Photo or video (two or more become a slideshow), Audio file, Location |
-| Σ | *Insert formula* — asks for the formula and drops in a math block |
-| ✦A | Insert palette — searchable list of every block and format, including the extras the menus leave out (monospace, inline formula, collage, clear formatting) |
-| 🗑 | Clear the message (with confirmation) |
-| ➤ | Send. Right-click for send mode: rich message, draft or edit |
+**3 — Configure.** Click the ⚙ gear in the title bar, paste the token and the chat ID
+(`@channel` or a numeric ID), press **Test connection**, then **Save**.
 
-There is no emoji button: custom emoji are a Premium-only entity that a bot cannot send through
-the rich-message API. Unicode emoji typed straight from the keyboard travel as ordinary text.
-
-The title bar carries the settings gear (with a connection dot), the preview toggle and the
-right-to-left switch for the message being composed.
+Write your message and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. That's it.
 
 ---
 
-## Features
+## 🪟 The window
 
-### Inline Formatting
-- Bold, Italic, Underline, Strikethrough
-- Spoiler, Marked (highlight), Subscript, Superscript
-- Monospace and inline formulas (from the insert palette)
-
-### Block Elements
-- Headings (H1 through H6)
-- Blockquotes, Pull Quotes
-- Code Blocks with language selector
-- Dividers
-- Collapsible Details/Summary
-- Footer (footnotes)
-
-### Lists & Tables
-- Bullet Lists, Numbered Lists
-- Checklists (sent via separate `sendChecklist` API)
-- Editable table cells
-
-### Media
-- Photo or video from a URL — two or more become a slideshow
-- Audio files
-- Collage (from the insert palette)
-- Location (latitude / longitude)
-
-### Math
-- Math blocks and inline formulas (LaTeX-style)
-
-### API Integration
-- Send via `sendRichMessage` with **structured JSON blocks** (not markdown)
-- Edit messages with `editMessageText` + `rich_message`
-- Send drafts with `sendRichMessageDraft` (30s, private chats)
-- Checklists sent via separate `sendChecklist` API call
-- Test Connection button (`getMe`)
-
-### Editor UX
-- **Telegram Desktop composer UI** — frameless window with its own title bar, pill toolbar,
-  vertical dropdown menus and a salmon send button
-- **TipTap-based rich text editor** — ProseMirror document model, real undo/redo
-- Markdown input rules — `## `, `> `, `- `, `1. `, ` ``` `, `**bold**`, `` `code` ``
-- **Live preview** — collapsible Telegram bubble rendered from the same Block State that is sent
-- Insert palette — search every block and format by name
-- Dark theme (default) + Light theme
-- Keyboard shortcuts, including Ctrl+Enter to send
-- Character counter (32,768 max)
-- Custom in-app dialogs instead of browser `prompt()` / `confirm()`
-- Full RTL: Persian UI mirrors the whole window, plus a per-message RTL flag
-
----
-
-## Architecture
-
-### v4.0 — Telegram-native UI + Block State with inline entities (Current)
-
-The editor uses **TipTap** (ProseMirror-based) for rich text editing. User content flows through a **Block State** architecture that maps directly to Telegram Bot API 10.1 structured JSON types:
+A faithful rebuild of Telegram Desktop's composer: frameless, dark, hairline-outlined pill
+buttons and one salmon send button.
 
 ```
-TipTap Editor (ProseMirror DOM)
+┌ ⚙ ▣ ¶ ────────────────────────────────────────────  ─  □  ✕ ┐
+│  ( ↶ )( ↷ )   ( Aa )( B )( ☰ )( ▦ )( 🔗 )( 🖼 )( Σ )         │
+│                                                              │
+│  Message                                    │  Live preview  │
+│                                             │                │
+│  ( ✦ )                       342 / 32,768  ( 🗑 )      ( ➤ ) │
+└──────────────────────────────────────────────────────────────┘
+```
+
+| Button | Click it and you get |
+|:--:|---|
+| ↶ ↷ | Undo / redo — the full ProseMirror history |
+| **Aa** | **Formatting** → Heading (opens H1–H6), Text, Quote, Pull quote, Code block, Footer, Divider |
+| **B** | **Text style** → Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript, Marked |
+| ☰ | **Insert list** → Ordered list, Bullet list, Checklist, Details |
+| ▦ | **Insert table** → an editable 3×3 table; a floating bar adds and removes rows and columns, and column widths drag on the borders |
+| 🔗 | **Insert link** → a *Create link* panel with **Text** and **URL** fields |
+| 🖼 | **Insert media** → Photo or video (two or more become a slideshow), Audio file, Location |
+| Σ | **Insert formula** → asks for the formula, drops in a math block |
+| ✦ | The insert palette — search every block and format by name |
+| 🗑 ➤ | Clear the message · Send it (right-click to pick rich message, draft or edit) |
+
+The title bar holds the settings gear with a connection dot, the live-preview toggle and the
+right-to-left switch for the message you are writing.
+
+> **No emoji button.** Custom emoji are a Premium-only entity that bots cannot send through the
+> rich-message API. Plain Unicode emoji typed from your keyboard travel as ordinary text.
+
+---
+
+## ✍️ What you can send
+
+| | |
+|---|---|
+| **Text** | Bold · Italic · Underline · Strikethrough · Spoiler · Marked · Subscript · Superscript · Monospace · Inline formula · Links |
+| **Blocks** | Heading H1–H6 · Paragraph · Quote · Pull quote · Code block with language · Divider · Collapsible · Footer · Formula block |
+| **Lists** | Ordered · Bulleted · Checklist *(sent through the separate `sendChecklist` API)* |
+| **Tables** | Header row, editable cells, drag-to-resize columns |
+| **Media** | Photo · Video · Audio · Slideshow · Collage · Location |
+
+And while you write:
+
+- **Live preview** — a real Telegram bubble, rendered from the exact blocks that will be sent
+- **Markdown shortcuts** — `## `, `> `, `- `, `1. `, ` ``` `, `**bold**`, `` `code` ``
+- **Insert palette** — one search box over every block and format
+- **Dark and light themes**, English and Persian UI, full right-to-left support
+- **Character counter** against Telegram's 32,768 limit
+
+### Send modes
+
+Right-click the send button:
+
+| Mode | What it does |
+|---|---|
+| **Rich message** | `sendRichMessage` — the normal path |
+| **Draft** | `sendRichMessageDraft` — a 30-second preview, private chats only |
+| **Edit** | `editMessageText` — rewrites an existing message (ID comes from Settings) |
+
+### Keyboard shortcuts
+
+| | | | |
+|---|---|---|---|
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Send | <kbd>Ctrl</kbd>+<kbd>K</kbd> Link | <kbd>Ctrl</kbd>+<kbd>P</kbd> Preview | <kbd>Ctrl</kbd>+<kbd>,</kbd> Settings |
+| <kbd>Ctrl</kbd>+<kbd>B</kbd> Bold | <kbd>Ctrl</kbd>+<kbd>I</kbd> Italic | <kbd>Ctrl</kbd>+<kbd>U</kbd> Underline | <kbd>Ctrl</kbd>+<kbd>E</kbd> Monospace |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> Strikethrough | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> Spoiler | <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo |
+
+---
+
+## 🧩 How it works
+
+Telegram's rich messages are **not** Markdown. The API expects an array of structured
+`InputRichBlock*` objects, so that is what the app builds — blocks *and* the styled runs inside
+them:
+
+```
+TipTap (ProseMirror) document
         │
         ▼
-Block Parser (DOM → Block State JSON[])
-   ├─ block level  → paragraph, heading, table, checklist, media, …
-   └─ inline level → styled segments (bold, spoiler, link, math, …)
+Block parser ─────────────────────────────► Block State (JSON[])
+   ├─ block level   paragraph, heading, table, checklist, media, …
+   └─ inline level  { text, marks[], href? } segments
         │
         ▼
-Block Serializer (Block State → Telegram API JSON)
+Block serializer
    ├─ blocks     → InputRichBlock*
-   └─ rich_text  → nested RichText* objects
+   └─ rich_text  → nested RichText*   (bold inside italic inside link)
         │
-        ├──→ sendRichMessage(blocks[])     [rich messages]
-        ├──→ sendRichMessageDraft(blocks[]) [30s drafts]
-        └──→ sendChecklist(items[])        [checklists only]
+        ├──► sendRichMessage        rich messages
+        ├──► sendRichMessageDraft   30-second drafts
+        └──► sendChecklist          checklists, always a separate call
 ```
 
-Inline runs are no longer flattened to plain text: `inline-parser.js` walks the inline DOM of
-every block into `{ text, marks[], href? }` segments, and the serializer nests them into
-`RichText*` objects (`bold` inside `italic` inside `link`, and so on) alongside the plain
-`text` field.
+<details>
+<summary><strong>Block types → Telegram API</strong></summary>
 
-**Why JSON blocks instead of Markdown?**
-Telegram Bot API 10.1 supports structured `InputRichBlock*` types that cover ALL formatting features (spoiler, details, tables, math, etc.). Markdown can only express a subset. JSON blocks give 100% feature parity.
-
-### Block Types
-
-| Block Type | Telegram API Type |
-|------------|-------------------|
+| Block | API type |
+|---|---|
 | paragraph | `InputRichBlockParagraph` |
 | heading | `InputRichBlockHeading` |
 | blockquote | `InputRichBlockBlockquote` |
-| pullquote | `InputRichBlockPullquote` |
-| code_block | `InputRichBlockCodeBlock` |
+| pullquote | `InputRichBlockAside` |
+| code_block | `InputRichBlockPreformatted` |
 | divider | `InputRichBlockDivider` |
 | list | `InputRichBlockList` |
 | table | `InputRichBlockTable` |
 | details | `InputRichBlockDetails` |
 | footer | `InputRichBlockFooter` |
-| photo / video / audio | `InputRichBlockPhoto` etc. |
+| photo / video / audio | `InputRichBlockPhoto` / `…Video` / `…Audio` |
 | slideshow / collage | `InputRichBlockSlideshow` / `InputRichBlockCollage` |
 | map | `InputRichBlockMap` |
 | math_block | `InputRichBlockMath` |
 | checklist | sent separately via `sendChecklist` |
 
-### Inline Types
+</details>
 
-| Segment mark | Telegram API type |
-|--------------|-------------------|
-| bold / italic / underline / strikethrough | `RichTextBold`, `RichTextItalic`, … |
+<details>
+<summary><strong>Inline marks → RichText objects</strong></summary>
+
+| Mark | API type |
+|---|---|
+| bold / italic / underline / strikethrough | `RichTextBold`, `RichTextItalic`, `RichTextUnderline`, `RichTextStrikethrough` |
 | spoiler | `RichTextSpoiler` |
-| marked (highlight) | `RichTextMarked` |
+| marked | `RichTextMarked` |
 | code | `RichTextCode` |
 | subscript / superscript | `RichTextSubscript` / `RichTextSuperscript` |
 | link | `RichTextLink` (carries `url`) |
 | math | `RichTextMath` |
 
-### Security Model
+A run wearing several marks nests from the inside out, so `**_word_**` becomes
+`italic( bold( text ) )`.
+
+</details>
+
+---
+
+## 🔒 Security
+
+The bot token is the one secret in this app, and it never reaches the window you type in.
 
 ```
-┌─────────────────────────────────────────────────┐
-│  Renderer Process (React)                       │
-│                                                 │
-│  ❌ Bot token is NEVER stored here              │
-│  ❌ No direct fetch() to Telegram API           │
-│  ✅ Calls window.app.api(method, body)          │
-└──────────────────────┬──────────────────────────┘
-                       │ IPC (contextBridge)
-┌──────────────────────▼──────────────────────────┐
-│  Main Process (Electron)                        │
-│                                                 │
-│  ✅ Token stored via safeStorage (encrypted)    │
-│  ✅ All API calls go through here               │
-│  ✅ Input validation on every IPC channel       │
-│  ✅ HTTP timeout (30s) + response size limit    │
-│  ✅ Method whitelist (only allowed TG methods)  │
-└─────────────────────────────────────────────────┘
+Renderer (React)                     Main process (Electron)
+─────────────────                    ───────────────────────
+✗ never holds the token              ✓ token encrypted with safeStorage
+✗ never calls the network   ──IPC──► ✓ every Telegram request starts here
+✓ knows only "a token exists"        ✓ validates method, chat ID, language
+                                     ✓ 30 s timeout · 1 MB response cap
 ```
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Desktop shell | Electron 35 |
-| UI Framework | React 19 |
-| Rich Text Editor | TipTap 2.11+ (ProseMirror) |
-| Build Tool | Vite 6 |
-| Test Runner | Vitest 2.1 + jsdom |
-| Data Model | Block State (JSON array → Telegram API JSON) |
-| Security | IPC bridge, safeStorage, input validation |
-| Theming | CSS variables (Telegram Night palette, dark + light) |
-| i18n | English, Persian (فارسی) |
-| Packaging | electron-builder (NSIS, AppImage) |
-| CI/CD | GitHub Actions (lint, test, build) |
-
----
-
-## Project Structure
-
-```
-TelegramFreeRich/
-├── src/
-│   ├── main/                    # Electron main process
-│   │   ├── main.js              # App entry, IPC handlers, TG API calls
-│   │   ├── preload.js           # Secure IPC bridge (contextBridge)
-│   │   └── security/
-│   │       └── validation.js    # Input validation, method whitelist
-│   │
-│   ├── renderer/                # React UI (Vite dev server)
-│   │   ├── main.jsx             # React entry point
-│   │   ├── App.jsx              # Shell: state, send logic, shortcuts
-│   │   ├── components/
-│   │   │   ├── TitleBar.jsx     # Frameless window chrome
-│   │   │   ├── Toolbar.jsx      # Telegram pill toolbar + menus
-│   │   │   ├── ActionMenu.jsx   # Dropdown menu renderer
-│   │   │   ├── Popover.jsx      # Anchored floating panel
-│   │   │   ├── InsertPalette.jsx# Searchable insert palette
-│   │   │   ├── TableBubble.jsx  # Floating table row/column controls
-│   │   │   ├── BottomBar.jsx    # Palette, char count, clear, send
-│   │   │   ├── Preview.jsx      # Live Telegram bubble (React nodes)
-│   │   │   ├── Settings.jsx     # Settings sheet (token, chat, lang)
-│   │   │   ├── Dialog.jsx       # Promise-based prompt / confirm
-│   │   │   ├── Toast.jsx        # Toast notification system
-│   │   │   ├── Icons.jsx        # SVG icon set
-│   │   │   ├── useTfrEditor.js  # TipTap editor setup
-│   │   │   └── extensions.js    # Custom TipTap nodes and marks
-│   │   ├── lib/
-│   │   │   └── editor-actions.js# Action registry (menus + palette)
-│   │   ├── i18n/                # Translations (en, fa) + provider
-│   │   ├── styles/              # theme, app, toolbar, menu, editor, preview
-│   │   └── index.html           # Entry HTML (CSP meta tag)
-│   │
-│   └── shared/                  # Shared between main & renderer
-│       ├── block-types.js       # BlockType / InlineType enums
-│       ├── block-parser.js      # DOM → Block State conversion
-│       ├── inline-parser.js     # Inline DOM → styled segments
-│       ├── block-serializer.js  # Block State → Telegram API JSON
-│       ├── block-manager.js     # State management + undo/redo
-│       ├── constants.js         # App-wide constants
-│       └── utils.js             # Utilities (sanitizeUrl, etc.)
-│
-├── tests/
-│   └── unit/                    # Vitest unit tests (147 tests)
-│       ├── block-manager.test.js
-│       ├── block-parser.test.js
-│       ├── block-serializer.test.js
-│       ├── inline-parser.test.js
-│       ├── editor-actions.test.js
-│       ├── i18n.test.js
-│       ├── utils.test.js
-│       └── validation.test.js
-│
-├── vite.config.js               # Vite config (React plugin)
-├── vitest.config.js             # Vitest config (jsdom, coverage)
-├── package.json                 # Dependencies + scripts
-├── .eslintrc.json               # ESLint config
-├── .prettierrc                  # Prettier config
-└── .github/workflows/
-    ├── ci.yml                   # Lint + test + build (CI)
-    └── build.yml                # Windows build + release
-```
-
----
-
-## Installation
-
-### Prerequisites
-- Node.js 18 or higher (only for building from source)
-- A Telegram bot (get one from [@BotFather](https://t.me/BotFather))
-- A Chat ID (channel or group)
-
-### Quick Start (Download)
-
-1. Download the latest release from the [Releases page](https://github.com/Aporis3674/TelegramFreeRich/releases/latest)
-2. Run `TelegramFreeRich-Setup.exe`
-3. Open the app
-4. Click Settings (gear icon)
-5. Enter your Bot Token (from @BotFather)
-6. Enter Chat ID (`@channel` or numeric ID)
-7. Click "Test Connection"
-8. Start writing and click Send
-
----
-
-## Usage
-
-1. Write in the editor — the toolbar menus insert blocks, the palette (✦A) searches them all
-2. Toggle the live preview from the title bar (or Ctrl+P) to see the Telegram bubble
-3. Press **Ctrl+Enter**, or click the send button, to post to your channel/group
-
-### Send Modes
-
-Right-click (or long-press) the send button to pick a mode:
-
-| Mode | When to use |
-|------|-------------|
-| **Rich message** | Send as a rich formatted message (default) |
-| **Draft** | Send a 30-second temporary preview (private chats only) |
-| **Edit** | Edit an existing message (message ID comes from Settings) |
-
-### Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+Enter | Send |
-| Ctrl+K | Add / remove link |
-| Ctrl+P | Toggle live preview |
-| Ctrl+, | Open settings |
-| Ctrl+B | Bold |
-| Ctrl+I | Italic |
-| Ctrl+U | Underline |
-| Ctrl+E | Monospace |
-| Ctrl+Shift+X | Strikethrough |
-| Ctrl+Shift+P | Spoiler |
-| Ctrl+Shift+7 / Ctrl+Shift+8 | Ordered / bullet list |
-| Ctrl+Z / Ctrl+Shift+Z | Undo / redo |
-
----
-
-## Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run in watch mode
-npm run test:watch
-
-# Run with coverage
-npx vitest --coverage
-```
-
-**147 tests** covering:
-- Block manager (CRUD, undo/redo, listeners)
-- Block parser (DOM → Block State, including checklists, media, galleries, maps)
-- Inline parser (styled segments, entity detection, segment merging)
-- Block serializer (Block State → Telegram API JSON, nested `RichText*`)
-- Editor action registry (every menu command, URL sanitization, palette search)
-- i18n (locale key parity, placeholders, fallbacks) and the emoji dataset
-- Utilities (URL sanitization, ID generation, validation)
-- Security validation (token, chat ID, method whitelist)
-
----
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev mode (Vite + Electron)
-npm run dev
-
-# Lint
-npm run lint
-
-# Build for production
-npm run build
-```
-
-### Custom TipTap Extensions
-
-| Extension | Type | Description |
-|-----------|------|-------------|
-| Spoiler | Mark | `<span data-spoiler>` — text hidden until tapped |
-| InlineMath | Mark | `<span data-inline-math>` — inline LaTeX run |
-| PullQuote | Node | `<blockquote data-pullquote>` — aside / pull quote |
-| Details | Node | `<details>` — collapsible content with summary |
-| Footer | Node | `<footer>` — footnote/footer text |
-| MathBlock | Node | Math formula block (LaTeX) |
-| MediaBlock | Node | `<video>` / `<audio>` block |
-| GalleryBlock | Node | `div.tg-gallery` — slideshow or collage |
-| MapBlock | Node | `div.tg-map` — latitude / longitude |
-
-Adding a command means adding one entry to `src/renderer/lib/editor-actions.js`: the toolbar
-menus, the insert palette and the tests all read from that registry.
-
----
-
-## Build
-
-### Windows
-
-```bash
-npm run build
-# Output: dist/TelegramFreeRich-Setup-4.1.0.exe
-```
-
-### CI/CD
-
-GitHub Actions automatically:
-- Lints and runs tests on every push
-- Builds Windows installer on tag push
-- Creates GitHub Release with installer
-
----
-
-## Security
 
 | Layer | Protection |
-|-------|-----------|
-| Token storage | `safeStorage` (OS keychain encryption) |
-| IPC bridge | `contextBridge` — renderer cannot access Node APIs |
-| Input validation | Whitelist for API methods, chat IDs, languages |
-| HTTP | 30s timeout, 1MB response size limit |
-| URL sanitization | Blocks `javascript:`, `data:`, `vbscript:` schemes |
-| CSP | Content Security Policy meta tag in index.html |
+|---|---|
+| Token storage | `safeStorage` — OS keychain encryption, on disk as `settings.enc` |
+| IPC bridge | `contextBridge` with `contextIsolation` — no Node APIs in the renderer |
+| Input validation | Allowlists for API methods, chat IDs and languages |
+| HTTP | 30-second timeout, 1 MB response limit |
+| URLs | `javascript:`, `data:` and `vbscript:` schemes are refused |
+| Rendering | The preview builds React elements — never `innerHTML` |
+| CSP | Content-Security-Policy meta tag in `index.html` |
 
 ---
 
-## Changelog
+## 🛠 Development
 
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
+```bash
+npm run dev           # Vite + Electron with hot reload
+npm test              # 151 unit tests (Vitest)
+npm run lint          # ESLint, zero warnings
+npm run format        # Prettier
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-4.1.1.exe
+npm run build:linux   # AppImage
+```
+
+<details>
+<summary><strong>Project layout</strong></summary>
+
+```
+src/
+├── main/                       Electron main process
+│   ├── main.js                 window, IPC handlers, Telegram requests
+│   ├── preload.js              contextBridge — the only renderer surface
+│   └── security/validation.js  method / chat ID / language allowlists
+│
+├── renderer/                   React UI
+│   ├── App.jsx                 shell: state, send logic, shortcuts
+│   ├── components/
+│   │   ├── TitleBar.jsx        frameless window chrome
+│   │   ├── Toolbar.jsx         the seven-button strip + menus
+│   │   ├── ActionMenu.jsx      menu renderer, two levels deep
+│   │   ├── Popover.jsx         anchored floating panel
+│   │   ├── TableBubble.jsx     floating table row/column controls
+│   │   ├── InsertPalette.jsx   searchable palette
+│   │   ├── BottomBar.jsx       palette · counter · clear · send
+│   │   ├── Preview.jsx         live Telegram bubble
+│   │   ├── Settings.jsx        token, chat, language, theme
+│   │   ├── Dialog.jsx          promise-based prompt / confirm / link panel
+│   │   ├── Toast.jsx           notifications
+│   │   ├── Icons.jsx           the SVG set
+│   │   ├── useTfrEditor.js     TipTap setup
+│   │   └── extensions.js       custom nodes and marks
+│   ├── lib/editor-actions.js   one registry behind every menu
+│   ├── i18n/                   en · fa · provider
+│   └── styles/                 theme · app · toolbar · menu · editor · preview
+│
+└── shared/                     used by both processes
+    ├── block-types.js          BlockType / InlineType enums
+    ├── block-parser.js         DOM → Block State
+    ├── inline-parser.js        inline DOM → styled segments
+    ├── block-serializer.js     Block State → Telegram JSON
+    ├── block-manager.js        CRUD + undo/redo
+    ├── constants.js            limits and defaults
+    └── utils.js                sanitizeUrl, validation, helpers
+
+tests/unit/                     151 tests — parsers, serializer, registry,
+                                i18n parity, stylesheets, validation
+```
+
+Adding a command means adding **one entry** to `src/renderer/lib/editor-actions.js`; the menus,
+the palette and the tests all read from that registry.
+
+</details>
+
+<details>
+<summary><strong>Custom TipTap extensions</strong></summary>
+
+| Extension | Kind | Renders as |
+|---|---|---|
+| Spoiler | mark | `<span data-spoiler>` |
+| InlineMath | mark | `<span data-inline-math>` |
+| PullQuote | node | `<blockquote data-pullquote>` |
+| Details | node | `<details>` with an editable body |
+| Footer | node | `<footer>` |
+| MathBlock | node | `div.tg-math` |
+| MediaBlock | node | `<video>` / `<audio>` |
+| GalleryBlock | node | `div.tg-gallery` — slideshow or collage |
+| MapBlock | node | `div.tg-map` |
+
+</details>
 
 ---
 
-## License
+## 📦 Tech stack
 
-MIT
+| Layer | Choice |
+|---|---|
+| Desktop shell | Electron 35 — frameless window, `safeStorage`, `contextBridge` |
+| UI | React 19 + Vite 6 |
+| Editor | TipTap 2 (ProseMirror) |
+| Data model | Block State → `InputRichBlock*` / `RichText*` |
+| Tests | Vitest 2 + jsdom |
+| Packaging | electron-builder — NSIS installer, AppImage |
+| CI | GitHub Actions — lint, test, build |
 
 ---
 
-> The best things in life are free. The second-best things are also free, if you use a bot.
+<p align="center">
+  <a href="CHANGELOG.md">Changelog</a> •
+  <a href="Documentation.html">Design spec</a> •
+  <a href="https://core.telegram.org/bots/api">Bot API docs</a>
+</p>
+
+<p align="center">MIT © Aporis3674</p>
+
+<p align="center"><sub>The best things in life are free. The second-best are also free, if you use a bot.</sub></p>

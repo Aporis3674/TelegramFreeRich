@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.1.1] - 2026-07-26
+
+### Fixed
+- **Live preview rendered one character per line.** The table bubble menu and the preview bubble
+  both used a `.bubble` class; the menu's `display: flex` leaked into the preview and squeezed
+  every block into a column. The menu is now `.table-bubble`.
+
+### Tooling
+- New `tests/unit/styles.test.js`: fails when two stylesheets own the same class, when braces are
+  unbalanced, or when a rule survives with no component using it — it caught two dead rules
+  (`.menu-sep`, `.palette-foot`) on its first run
+- 151 unit tests
+
+### Docs
+- README and README_fa rewritten: hero screenshot, Premium-vs-bot comparison, three-step quick
+  start, toolbar map, folded reference tables, security diagram and project layout
+
 ## [4.1.0] - 2026-07-26
 
 ### UI — toolbar rebuilt to the Telegram menu spec
