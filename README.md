@@ -8,24 +8,25 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.5-2ca5e0" alt="Version 5.1.5">
+  <img src="https://img.shields.io/badge/version-5.1.6-2ca5e0" alt="Version 5.1.6">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-240%20passing-4fc3a1" alt="240 tests">
+  <img src="https://img.shields.io/badge/tests-253%20passing-4fc3a1" alt="253 tests">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
 <p align="center">
   <a href="README_fa.md">🇮🇷 فارسی</a> &nbsp;•&nbsp;
-  <a href="#-quick-start">Quick start</a> &nbsp;•&nbsp;
-  <a href="#-checklists">Checklists</a> &nbsp;•&nbsp;
-  <a href="#-the-window">The window</a> &nbsp;•&nbsp;
-  <a href="#️-what-you-can-send">Features</a> &nbsp;•&nbsp;
-  <a href="#-how-it-works">Architecture</a> &nbsp;•&nbsp;
-  <a href="#-security">Security</a> &nbsp;•&nbsp;
-  <a href="#-development">Development</a>
+  <a href="#quick-start">Quick start</a> &nbsp;•&nbsp;
+  <a href="#checklists">Checklists</a> &nbsp;•&nbsp;
+  <a href="#window">The window</a> &nbsp;•&nbsp;
+  <a href="#features">Features</a> &nbsp;•&nbsp;
+  <a href="#architecture">Architecture</a> &nbsp;•&nbsp;
+  <a href="#security">Security</a> &nbsp;•&nbsp;
+  <a href="#troubleshooting">Troubleshooting</a> &nbsp;•&nbsp;
+  <a href="#development">Development</a>
 </p>
 
 <p align="center">
@@ -49,6 +50,8 @@ formatting is available to **every bot, for free**, through Bot API 10.1.
 No coding, no server, no subscription. Point the app at a bot token and a chat, and write.
 
 ---
+
+<a id="quick-start"></a>
 
 ## 🚀 Quick start
 
@@ -105,6 +108,8 @@ never reaches the window you type in.
 
 ---
 
+<a id="checklists"></a>
+
 ## ☑ Checklists
 
 A checklist travels **inside the message**. Rich HTML has its own task-list form —
@@ -128,6 +133,8 @@ The app picks between them for you:
 
 ---
 
+<a id="window"></a>
+
 ## 🪟 The window
 
 A faithful rebuild of Telegram Desktop's composer: frameless, dark, hairline-outlined pill
@@ -148,7 +155,7 @@ buttons and one salmon send button.
 | ↶ ↷ | Undo / redo — the full ProseMirror history |
 | **Aa** | **Formatting** → Heading (opens H1–H6), Text, Quote, Pull quote, Code block, Footer, Divider |
 | **B** | **Text style** → Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript, Marked |
-| ☰ | **Insert list** → Ordered list, Bullet list, Checklist *(see [Checklists](#-checklists))*, Details |
+| ☰ | **Insert list** → Ordered list, Bullet list, Checklist *(see [Checklists](#checklists))*, Details |
 | ▦ | **Insert table** → an editable 3×3 table; a floating bar adds and removes rows and columns, and column widths drag on the borders |
 | 🔗 | **Insert link** → a *Create link* panel with **Text** and **URL** fields |
 | 🖼 | **Insert media** → Photo or video (two or more become a slideshow), Audio file, Location |
@@ -164,19 +171,21 @@ right-to-left switch for the message you are writing.
 
 ---
 
+<a id="features"></a>
+
 ## ✍️ What you can send
 
 | | |
 |---|---|
 | **Text** | Bold · Italic · Underline · Strikethrough · Spoiler · Marked · Subscript · Superscript · Monospace · Inline formula · Links |
 | **Blocks** | Heading H1–H6 · Paragraph · Quote · Pull quote · Code block with language · Divider · Collapsible · Footer · Formula block |
-| **Lists** | Ordered · Bulleted · Checklist *(see [Checklists](#-checklists))* |
+| **Lists** | Ordered · Bulleted · Checklist *(see [Checklists](#checklists))* |
 | **Tables** | Header row, editable cells, drag-to-resize columns |
 | **Media** | Photo · Video · Audio · Slideshow · Collage · Location |
 
 And while you write:
 
-- **Live preview** — a real Telegram bubble, rendered from the exact blocks that will be sent
+- **Live preview** — a real Telegram bubble, rendered from the same document you are editing
 - **Markdown shortcuts** — `## `, `> `, `- `, `1. `, ` ``` `, `**bold**`, `` `code` ``
 - **Insert palette** — one search box over every block and format
 - **Dark and light themes**, English and Persian UI, full right-to-left support
@@ -201,6 +210,8 @@ Right-click the send button:
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> Strikethrough | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> Spoiler | <kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> Redo |
 
 ---
+
+<a id="architecture"></a>
 
 ## 🧩 How it works
 
@@ -280,6 +291,8 @@ accepts `http(s)` only, exactly as the API requires.
 
 ---
 
+<a id="security"></a>
+
 ## 🔒 Security
 
 The bot token is the one secret in this app, and it never reaches the window you type in.
@@ -297,7 +310,7 @@ Renderer (React)                     Main process (Electron)
 |---|---|
 | Token storage | `safeStorage` — OS keychain encryption, on disk as `settings.enc`; the proxy password sits beside it |
 | IPC bridge | `contextBridge` with `contextIsolation` — no Node APIs in the renderer |
-| Input validation | Allowlists for API methods, chat IDs and languages |
+| Input validation | Allowlists for API methods, chat IDs, languages and the business connection ID |
 | HTTP | 30-second timeout, 1 MB response limit |
 | URLs | `javascript:`, `data:` and `vbscript:` schemes are refused |
 | Rendering | The preview builds React elements — never `innerHTML` |
@@ -305,28 +318,48 @@ Renderer (React)                     Main process (Electron)
 
 ---
 
+<a id="troubleshooting"></a>
+
+## 🧯 When something goes wrong
+
+| What you see | What it means |
+|---|---|
+| `Network error: net::ERR_TUNNEL_CONNECTION_FAILED` | The proxy is set but not answering. Start your VPN client, or check the host and port in Settings ▸ Connection |
+| `Network error: net::ERR_CERT_AUTHORITY_INVALID` | A proxy is terminating TLS. Install its certificate, or pick a different proxy |
+| **Check connection** works but sending fails | Read the message after `Network error:`. Anything beginning `Bad Request` came from Telegram and is about the message itself, not the network |
+| `Bad Request: chat not found` | The bot is not in that chat, or the chat ID is wrong. A channel needs `@username` or its `-100…` ID, and the bot must be an administrator |
+| `Bad Request: not enough rights` | Give the bot permission to post in the channel or group |
+| Windows: *Failed to uninstall old application files* | A leftover `TelegramFreeRich.exe` is holding the files. Since 5.1.1 the installer closes it itself; on an older version, end the process in Task Manager first, or use the portable build |
+| The window is blank | Delete `settings.enc` from `%APPDATA%/TelegramFreeRich` (or `~/.config/TelegramFreeRich`) and start again — you will have to re-enter the token |
+
+---
+
+<a id="development"></a>
+
 ## 🛠 Development
 
 ```bash
 npm run dev           # Vite + Electron with hot reload
-npm test              # 240 unit tests (Vitest)
+npm test              # 253 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.5.exe
-npm run build:linux   # AppImage
+npm run build         # Windows: dist/TelegramFreeRich-Setup-5.1.6.exe + …-portable.exe
+npm run build:linux   # Linux: dist/TelegramFreeRich-5.1.6.AppImage
 ```
 
 <details>
 <summary><strong>Project layout</strong></summary>
 
 ```
+installer/installer.nsh          NSIS customisation — closes the app before upgrading
+
 src/
 ├── main/                       Electron main process
 │   ├── main.js                 window, IPC handlers, encrypted settings
 │   ├── preload.js              contextBridge — the only renderer surface
 │   ├── net/proxy.js            system / manual / direct proxy resolution
 │   ├── net/request.js          requests over Chromium's stack, proxy-aware errors
-│   └── security/validation.js  method / chat ID / language allowlists
+│   └── security/validation.js  method / chat ID / language / business ID allowlists
 │
 ├── renderer/                   React UI
 │   ├── App.jsx                 shell: state, send logic, shortcuts
@@ -339,7 +372,7 @@ src/
 │   │   ├── InsertPalette.jsx   searchable palette
 │   │   ├── BottomBar.jsx       palette · counter · clear · send
 │   │   ├── Preview.jsx         live Telegram bubble
-│   │   ├── Settings.jsx        token, chat, language, theme
+│   │   ├── Settings.jsx        token, chat, business connection, proxy, theme
 │   │   ├── Dialog.jsx          promise-based prompt / confirm / link panel
 │   │   ├── Toast.jsx           notifications
 │   │   ├── Icons.jsx           the SVG set
@@ -358,7 +391,7 @@ src/
     ├── constants.js            limits and defaults
     └── utils.js                sanitizeUrl, validation, helpers
 
-tests/unit/                     240 tests — HTML serializer, proxy, packaging, parsers,
+tests/unit/                     253 tests — HTML serializer, proxy, packaging, docs, parsers,
                                 i18n parity, stylesheets, validation
 ```
 
@@ -395,7 +428,7 @@ the palette and the tests all read from that registry.
 | Editor | TipTap 2 (ProseMirror) |
 | Data model | Editor DOM → Telegram Rich HTML (`rich_message.html`) |
 | Tests | Vitest 2 + jsdom |
-| Packaging | electron-builder — NSIS installer, AppImage |
+| Packaging | electron-builder — NSIS installer, Windows portable, AppImage |
 | CI | GitHub Actions — lint, test, build |
 
 ---

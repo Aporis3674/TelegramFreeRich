@@ -8,24 +8,25 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.5-2ca5e0" alt="نسخه ۵٫۱٫۵">
+  <img src="https://img.shields.io/badge/version-5.1.6-2ca5e0" alt="نسخه ۵٫۱٫۶">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-240%20passing-4fc3a1" alt="۲۴۰ تست">
+  <img src="https://img.shields.io/badge/tests-253%20passing-4fc3a1" alt="۲۵۳ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
 <p align="center">
   <a href="README.md">🇬🇧 English</a> &nbsp;•&nbsp;
-  <a href="#-شروع-سریع">شروع سریع</a> &nbsp;•&nbsp;
-  <a href="#-چکلیستها">چک‌لیست‌ها</a> &nbsp;•&nbsp;
-  <a href="#-پنجرهٔ-برنامه">پنجرهٔ برنامه</a> &nbsp;•&nbsp;
-  <a href="#️-چه-چیزهایی-می‌توانی-بفرستی">قابلیت‌ها</a> &nbsp;•&nbsp;
-  <a href="#-چطور-کار-می‌کند">معماری</a> &nbsp;•&nbsp;
-  <a href="#-امنیت">امنیت</a> &nbsp;•&nbsp;
-  <a href="#-توسعه">توسعه</a>
+  <a href="#quick-start">شروع سریع</a> &nbsp;•&nbsp;
+  <a href="#checklists">چک‌لیست‌ها</a> &nbsp;•&nbsp;
+  <a href="#window">پنجرهٔ برنامه</a> &nbsp;•&nbsp;
+  <a href="#features">قابلیت‌ها</a> &nbsp;•&nbsp;
+  <a href="#architecture">معماری</a> &nbsp;•&nbsp;
+  <a href="#security">امنیت</a> &nbsp;•&nbsp;
+  <a href="#troubleshooting">رفع اشکال</a> &nbsp;•&nbsp;
+  <a href="#development">توسعه</a>
 </p>
 
 <p align="center">
@@ -49,6 +50,8 @@
 بدون کدنویسی، بدون سرور، بدون اشتراک. فقط توکن بات و شناسهٔ چت را بده و بنویس.
 
 ---
+
+<a id="quick-start"></a>
 
 ## 🚀 شروع سریع
 
@@ -104,6 +107,8 @@ npm run dev
 
 ---
 
+<a id="checklists"></a>
+
 ## ☑ چک‌لیست‌ها
 
 چک‌لیست **داخل خود پیام** می‌رود. Rich HTML شکل مخصوص خودش برای فهرست کارها دارد —
@@ -126,6 +131,8 @@ npm run dev
 
 ---
 
+<a id="window"></a>
+
 ## 🪟 پنجرهٔ برنامه
 
 بازسازی دقیق ویرایشگر تلگرام دسکتاپ: بدون قاب، تیره، دکمه‌های قرص‌مانند با حاشیهٔ مویی و یک دکمهٔ
@@ -146,7 +153,7 @@ npm run dev
 | ↶ ↷ | بازگردانی / انجام دوباره — تاریخچهٔ کامل ProseMirror |
 | **Aa** | **قالب‌بندی** ← عنوان (H1 تا H6 را باز می‌کند)، متن، نقل‌قول، نقل‌قول برجسته، بلوک کد، پاورقی، جداکننده |
 | **B** | **سبک متن** ← پررنگ، کج، زیرخط‌دار، خط‌خورده، اسپویلر، زیرنویس، بالانویس، هایلایت |
-| ☰ | **درج فهرست** ← شماره‌دار، نقطه‌ای، چک‌لیست *(بخش [چک‌لیست‌ها](#-چکلیستها))*، بخش تاشو |
+| ☰ | **درج فهرست** ← شماره‌دار، نقطه‌ای، چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))*، بخش تاشو |
 | ▦ | **درج جدول** ← یک جدول ۳×۳ آمادهٔ ویرایش؛ نوار شناور ردیف و ستون را کم و زیاد می‌کند و پهنای ستون‌ها با موس کشیده می‌شود |
 | 🔗 | **درج پیوند** ← پنل *ساخت پیوند* با دو فیلد **متن** و **نشانی** |
 | 🖼 | **درج رسانه** ← عکس یا ویدیو (دو مورد یا بیشتر، اسلایدشو می‌شود)، فایل صوتی، موقعیت مکانی |
@@ -162,19 +169,21 @@ npm run dev
 
 ---
 
+<a id="features"></a>
+
 ## ✍️ چه چیزهایی می‌توانی بفرستی
 
 | | |
 |---|---|
 | **متن** | پررنگ · کج · زیرخط‌دار · خط‌خورده · اسپویلر · هایلایت · زیرنویس · بالانویس · تک‌فاصله · فرمول درون‌خطی · پیوند |
 | **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول · نقل‌قول برجسته · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
-| **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(بخش [چک‌لیست‌ها](#-چکلیستها))* |
+| **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))* |
 | **جدول** | ردیف سرصفحه، سلول‌های قابل ویرایش، تغییر پهنای ستون با موس |
 | **رسانه** | عکس · ویدیو · صدا · اسلایدشو · کلاژ · موقعیت مکانی |
 
 و هنگام نوشتن:
 
-- **پیش‌نمایش زنده** — حباب واقعی تلگرام، ساخته‌شده از همان بلوک‌هایی که ارسال می‌شوند
+- **پیش‌نمایش زنده** — حباب واقعی تلگرام، ساخته‌شده از همان سندی که داری ویرایش می‌کنی
 - **میان‌برهای مارک‌داون** — `## `، `> `، `- `، `1. `، ` ``` `، `**پررنگ**`، `` `کد` ``
 - **پالت درج** — یک کادر جست‌وجو روی تمام بلوک‌ها و قالب‌ها
 - **تم تیره و روشن**، رابط انگلیسی و فارسی، پشتیبانی کامل راست‌به‌چپ
@@ -199,6 +208,8 @@ npm run dev
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd> خط‌خورده | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> اسپویلر | <kbd>Ctrl</kbd>+<kbd>Z</kbd> بازگردانی | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> انجام دوباره |
 
 ---
+
+<a id="architecture"></a>
 
 ## 🧩 چطور کار می‌کند
 
@@ -278,6 +289,8 @@ npm run dev
 
 ---
 
+<a id="security"></a>
+
 ## 🔒 امنیت
 
 توکن بات تنها رازِ این برنامه است و هرگز به پنجره‌ای که در آن تایپ می‌کنی نمی‌رسد.
@@ -295,7 +308,7 @@ Renderer (React)                     پردازشگر Main (Electron)
 |---|---|
 | ذخیرهٔ توکن | `safeStorage` — رمزنگاری با کلیدخانهٔ سیستم‌عامل در `settings.enc`؛ گذرواژهٔ پروکسی هم کنارش |
 | پل IPC | `contextBridge` با `contextIsolation` — هیچ API نودی در رندرر نیست |
-| اعتبارسنجی ورودی | فهرست سفید برای متدهای API، شناسهٔ چت و زبان |
+| اعتبارسنجی ورودی | فهرست سفید برای متدهای API، شناسهٔ چت، زبان و شناسهٔ اتصال بیزینس |
 | HTTP | تایم‌اوت ۳۰ ثانیه، سقف پاسخ ۱ مگابایت |
 | نشانی‌ها | طرح‌های `javascript:`، `data:` و `vbscript:` رد می‌شوند |
 | رندر | پیش‌نمایش المان‌های React می‌سازد — هرگز `innerHTML` |
@@ -303,28 +316,48 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ---
 
+<a id="troubleshooting"></a>
+
+## 🧯 وقتی چیزی درست کار نمی‌کند
+
+| چه می‌بینی | معنی‌اش چیست |
+|---|---|
+| `Network error: net::ERR_TUNNEL_CONNECTION_FAILED` | پروکسی تنظیم شده ولی جواب نمی‌دهد. کلاینت VPN را روشن کن، یا هاست و پورت را در تنظیمات ▸ اتصال بررسی کن |
+| `Network error: net::ERR_CERT_AUTHORITY_INVALID` | یک پروکسی دارد TLS را باز می‌کند. گواهی‌اش را نصب کن یا پروکسی دیگری بگذار |
+| **بررسی اتصال** سبز است ولی ارسال نمی‌شود | متن بعد از `Network error:` را بخوان. هر چیزی که با `Bad Request` شروع شود از خود تلگرام آمده و مربوط به محتوای پیام است، نه شبکه |
+| `Bad Request: chat not found` | بات در آن چت نیست یا شناسهٔ چت غلط است. کانال به `@یوزرنیم` یا شناسهٔ `-100…` نیاز دارد و بات باید ادمین باشد |
+| `Bad Request: not enough rights` | به بات اجازهٔ ارسال پیام در کانال یا گروه بده |
+| ویندوز: *Failed to uninstall old application files* | یک `TelegramFreeRich.exe` باقی‌مانده فایل‌ها را قفل کرده. از ۵٫۱٫۱ به بعد نصب‌کننده خودش می‌بندد؛ روی نسخهٔ قدیمی‌تر اول پروسه را در Task Manager ببند یا نسخهٔ portable را بگیر |
+| پنجره خالی است | فایل `settings.enc` را از `%APPDATA%/TelegramFreeRich` (یا `~/.config/TelegramFreeRich`) پاک کن و دوباره اجرا کن — توکن را باید دوباره وارد کنی |
+
+---
+
+<a id="development"></a>
+
 ## 🛠 توسعه
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۲۴۰ تست واحد (Vitest)
+npm test              # ۲۵۳ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.5.exe
-npm run build:linux   # AppImage
+npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.1.6.exe و …-portable.exe
+npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.1.6.AppImage
 ```
 
 <details>
 <summary><strong>ساختار پروژه</strong></summary>
 
 ```
+installer/installer.nsh          سفارشی‌سازی NSIS — بستن برنامه پیش از بروزرسانی
+
 src/
 ├── main/                       پردازشگر اصلی Electron
 │   ├── main.js                 پنجره، هندلرهای IPC، تنظیمات رمزنگاری‌شده
 │   ├── preload.js              contextBridge — تنها سطح تماس رندرر
 │   ├── net/proxy.js            تشخیص پروکسی سیستم / دستی / مستقیم
 │   ├── net/request.js          درخواست از مسیر کرومیوم با خطاهای پروکسی‌آگاه
-│   └── security/validation.js  فهرست سفید متد / شناسهٔ چت / زبان
+│   └── security/validation.js  فهرست سفید متد / شناسهٔ چت / زبان / شناسهٔ بیزینس
 │
 ├── renderer/                   رابط کاربری React
 │   ├── App.jsx                 پوسته: state، منطق ارسال، میان‌برها
@@ -337,7 +370,7 @@ src/
 │   │   ├── InsertPalette.jsx   پالت جست‌وجوپذیر
 │   │   ├── BottomBar.jsx       پالت · شمارشگر · پاک‌کردن · ارسال
 │   │   ├── Preview.jsx         حباب زندهٔ تلگرام
-│   │   ├── Settings.jsx        توکن، چت، زبان، پوسته
+│   │   ├── Settings.jsx        توکن، چت، اتصال بیزینس، پروکسی، پوسته
 │   │   ├── Dialog.jsx          prompt / confirm / پنل پیوند مبتنی بر Promise
 │   │   ├── Toast.jsx           اعلان‌ها
 │   │   ├── Icons.jsx           مجموعهٔ SVG
@@ -356,7 +389,7 @@ src/
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۲۴۰ تست — سریالایزر HTML، پروکسی، بسته‌بندی، پارسرها،
+tests/unit/                     ۲۵۳ تست — سریالایزر HTML، پروکسی، بسته‌بندی، مستندات، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 
@@ -393,7 +426,7 @@ tests/unit/                     ۲۴۰ تست — سریالایزر HTML، پر
 | ویرایشگر | TipTap 2 (ProseMirror) |
 | مدل داده | DOM ویرایشگر ← Rich HTML تلگرام (`rich_message.html`) |
 | تست | Vitest 2 + jsdom |
-| بسته‌بندی | electron-builder — نصب‌کنندهٔ NSIS، AppImage |
+| بسته‌بندی | electron-builder — نصب‌کنندهٔ NSIS، نسخهٔ portable ویندوز، AppImage |
 | CI | GitHub Actions — لینت، تست، بیلد |
 
 ---

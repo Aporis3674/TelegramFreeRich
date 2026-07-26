@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.1.6] - 2026-07-26
+
+### Docs
+- **Several table-of-contents links in both READMEs went nowhere.** GitHub's heading slugs are
+  unpredictable once emoji, Persian text and zero-width joiners are in the heading — `#-پنجرهٔ-برنامه`,
+  `#-چطور-کار-می‌کند`, `#️-what-you-can-send` and two more never resolved. Both files now carry
+  explicit `<a id="…">` anchors with the same ASCII ids in either language
+- New **When something goes wrong** section in both languages: what each proxy error means, how to
+  tell a Telegram `Bad Request` apart from a network failure, `chat not found`, `not enough rights`,
+  the Windows uninstall dialog, and how to reset the encrypted settings
+- Corrected details that had gone stale: the packaging row now names the Windows portable build,
+  `npm run build` shows both artifacts it produces, `Settings.jsx` is described with the business
+  connection and proxy it now holds, the validation allowlists include the business connection ID,
+  `installer/installer.nsh` appears in the project layout, and the live-preview bullet no longer
+  claims to render "the exact blocks that will be sent" — the send path is HTML
+- New `tests/unit/docs.test.js`: fails on a dead in-document link, a duplicate anchor, a README
+  version that disagrees with `package.json`, a link to a file that does not exist, an unbalanced
+  `<details>` block, or the two READMEs drifting apart in sections or badges
+- 253 unit tests
+
 ## [5.1.5] - 2026-07-26
 
 ### Fixed — a checklist can be sent to a channel after all
