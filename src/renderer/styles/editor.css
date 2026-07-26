@@ -326,29 +326,162 @@
   margin: 6px 0;
 }
 
+/* Gallery — a slideshow steps through one frame at a time, a collage is a grid */
 .tfr-editor .tg-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 4px;
+  position: relative;
   max-width: 340px;
   margin: 8px 0;
 }
 
-.tfr-editor .tg-gallery img {
+.tfr-editor .tg-gallery-stage {
+  display: grid;
+  gap: 4px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tfr-editor .tg-gallery[data-kind='collage'] .tg-gallery-stage {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+
+.tfr-editor .tg-gallery-stage > * {
   width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  background: var(--surface2);
+}
+
+.tfr-editor .tg-gallery[data-kind='collage'] .tg-gallery-stage > * {
   height: 96px;
   object-fit: cover;
-  border-radius: 6px;
 }
 
-.tfr-editor .tg-gallery[data-kind='slideshow'] {
-  grid-auto-flow: column;
-  grid-template-columns: none;
-  overflow-x: auto;
+.tfr-editor .tg-gallery[data-kind='slideshow'] .tg-gallery-stage > * {
+  height: 190px;
+  object-fit: contain;
 }
 
-.tfr-editor .tg-gallery[data-kind='slideshow'] img {
-  width: 120px;
+.tfr-editor .tg-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  /* Visible enough to be found, quiet enough not to fight the picture. */
+  opacity: 0.65;
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease;
+}
+
+.tfr-editor .tg-gallery:hover .tg-gallery-nav,
+.tfr-editor .tg-gallery-nav:focus-visible {
+  opacity: 1;
+}
+
+.tfr-editor .tg-gallery-nav:hover {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.tfr-editor .tg-gallery-nav.prev {
+  left: 6px;
+}
+
+.tfr-editor .tg-gallery-nav.next {
+  right: 6px;
+}
+
+.tfr-editor .tg-gallery-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.tfr-editor .tg-gallery-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.tfr-editor .tg-gallery-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.tfr-editor .tg-gallery-dot.active {
+  background: #fff;
+  transform: scale(1.25);
+}
+
+/* A media file the app cannot load — Telegram still renders it once sent */
+.tfr-editor .tg-gallery-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+  /* Wide side padding so the text never runs under the ‹ › buttons. */
+  padding: 12px 42px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* A collage cell has no buttons to dodge and far less room — glyph and name
+   only, tight against the edges. */
+.tfr-editor .tg-gallery[data-kind='collage'] .tg-gallery-fallback {
+  padding: 6px;
+  gap: 2px;
+}
+
+.tfr-editor .tg-gallery[data-kind='collage'] .tg-gallery-note {
+  display: none;
+}
+
+.tfr-editor .tg-gallery[data-kind='collage'] .tg-gallery-name {
+  font-size: 10.5px;
+}
+
+.tfr-editor .tg-gallery-glyph {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.tfr-editor .tg-gallery-name {
+  font-size: 11.5px;
+  word-break: break-all;
+  color: var(--text);
+}
+
+.tfr-editor .tg-gallery-note {
+  font-size: 10.5px;
+  opacity: 0.75;
 }
 
 .tfr-editor .tg-map {

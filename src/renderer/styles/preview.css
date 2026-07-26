@@ -248,31 +248,140 @@
   text-decoration: none;
 }
 
-.pv-slideshow,
 .pv-collage {
   display: grid;
-  gap: 3px;
-}
-
-.pv-collage {
   grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.pv-slideshow {
-  grid-auto-flow: column;
-  overflow-x: auto;
-}
-
-.pv-slideshow img {
-  width: 120px;
-  height: 90px;
-  object-fit: cover;
-}
-
-.pv-collage img {
+.pv-collage > * {
   width: 100%;
   height: 90px;
   object-fit: cover;
+  background: var(--surface2);
+}
+
+.pv-slideshow {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pv-gallery-stage > * {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  background: var(--surface2);
+}
+
+.pv-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pv-gallery-nav:hover {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.pv-gallery-nav.prev {
+  left: 5px;
+}
+
+.pv-gallery-nav.next {
+  right: 5px;
+}
+
+.pv-gallery-count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-gallery-dots {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.pv-gallery-dot {
+  width: 5px;
+  height: 5px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+
+.pv-gallery-dot.active {
+  background: #fff;
+}
+
+.pv-gallery-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+  overflow: hidden;
+  /* Wide side padding so the text never runs under the ‹ › buttons. */
+  padding: 12px 34px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* A collage cell has no buttons to dodge and far less room — glyph and name
+   only, tight against the edges. */
+.pv-collage .pv-gallery-fallback {
+  padding: 6px;
+  gap: 2px;
+}
+
+.pv-collage .pv-gallery-note {
+  display: none;
+}
+
+.pv-gallery-name {
+  font-size: 11px;
+  word-break: break-all;
+  color: var(--text);
+}
+
+.pv-gallery-glyph {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.pv-gallery-note {
+  font-size: 10px;
+  opacity: 0.8;
 }
 
 .pv-map {

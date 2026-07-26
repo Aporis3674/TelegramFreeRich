@@ -80,6 +80,8 @@ function Shell({ lang, onLangChange }) {
   const editor = useTfrEditor({
     placeholder: () => tRef.current('editor.placeholder'),
     onUpdate: handleUpdate,
+    // Read through the ref so the gallery labels follow a language change.
+    t: (key) => tRef.current(key),
   });
 
   /* ── persisted preferences ── */

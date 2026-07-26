@@ -8,7 +8,7 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.6-2ca5e0" alt="Version 5.1.6">
+  <img src="https://img.shields.io/badge/version-5.2.0-2ca5e0" alt="Version 5.2.0">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
@@ -181,7 +181,7 @@ right-to-left switch for the message you are writing.
 | **Blocks** | Heading H1–H6 · Paragraph · Quote · Pull quote · Code block with language · Divider · Collapsible · Footer · Formula block |
 | **Lists** | Ordered · Bulleted · Checklist *(see [Checklists](#checklists))* |
 | **Tables** | Header row, editable cells, drag-to-resize columns |
-| **Media** | Photo · Video · Audio · Slideshow · Collage · Location |
+| **Media** | Photo · Video · Audio · Slideshow *(‹ › carousel)* · Collage · Location |
 
 And while you write:
 
@@ -343,8 +343,8 @@ npm run dev           # Vite + Electron with hot reload
 npm test              # 253 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows: dist/TelegramFreeRich-Setup-5.1.6.exe + …-portable.exe
-npm run build:linux   # Linux: dist/TelegramFreeRich-5.1.6.AppImage
+npm run build         # Windows: dist/TelegramFreeRich-Setup-5.2.0.exe + …-portable.exe
+npm run build:linux   # Linux: dist/TelegramFreeRich-5.2.0.AppImage
 ```
 
 <details>

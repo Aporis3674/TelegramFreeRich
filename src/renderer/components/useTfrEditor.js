@@ -40,10 +40,14 @@ import {
 } from './extensions.js';
 
 /**
- * @param {{ placeholder: string, onUpdate: (html: string, text: string) => void }} options
+ * @param {{
+ *   placeholder: string,
+ *   onUpdate: (html: string, text: string) => void,
+ *   t: (key: string) => string,
+ * }} options
  * @returns {import('@tiptap/react').Editor|null}
  */
-export default function useTfrEditor({ placeholder, onUpdate }) {
+export default function useTfrEditor({ placeholder, onUpdate, t }) {
   return useEditor({
     extensions: [
       StarterKit.configure({
@@ -73,7 +77,7 @@ export default function useTfrEditor({ placeholder, onUpdate }) {
       Footer,
       MathBlock,
       MediaBlock,
-      GalleryBlock,
+      GalleryBlock.configure({ t }),
       MapBlock,
     ],
     content: '',

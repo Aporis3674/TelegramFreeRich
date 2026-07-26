@@ -8,7 +8,7 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.6-2ca5e0" alt="نسخه ۵٫۱٫۶">
+  <img src="https://img.shields.io/badge/version-5.2.0-2ca5e0" alt="نسخه ۵٫۲٫۰">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
@@ -179,7 +179,7 @@ npm run dev
 | **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول · نقل‌قول برجسته · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
 | **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))* |
 | **جدول** | ردیف سرصفحه، سلول‌های قابل ویرایش، تغییر پهنای ستون با موس |
-| **رسانه** | عکس · ویدیو · صدا · اسلایدشو · کلاژ · موقعیت مکانی |
+| **رسانه** | عکس · ویدیو · صدا · اسلایدشو *(کروسل ‹ ›)* · کلاژ · موقعیت مکانی |
 
 و هنگام نوشتن:
 
@@ -341,8 +341,8 @@ npm run dev           # Vite + Electron با هات‌ریلود
 npm test              # ۲۵۳ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.1.6.exe و …-portable.exe
-npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.1.6.AppImage
+npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.2.0.exe و …-portable.exe
+npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.2.0.AppImage
 ```
 
 <details>

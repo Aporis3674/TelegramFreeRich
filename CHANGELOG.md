@@ -1,5 +1,34 @@
 # Changelog
 
+## [5.2.0] - 2026-07-26
+
+### Slideshows are a carousel now, in the editor and in the preview
+- A slideshow used to be a row of thumbnails scrolling sideways in both panes. It is now a proper
+  carousel: **one frame at a time**, with `‹` / `›` buttons, a `2 / 3` counter and clickable dots.
+  Wrapping around at either end
+- The editor's gallery is drawn by a TipTap **node view**, so only what you *see* changed —
+  `renderHTML` still emits `div.tg-gallery[data-kind][data-images]`, which is what `getHTML()` and
+  the serializer read. The wire format is untouched
+- The preview carousel keeps its position while you keep typing, instead of resetting on every
+  keystroke
+- **A collage stays a grid**, because that is what a collage is — no arrows there, just tiles
+
+### Fixed — a video in a gallery showed a broken image
+- Every gallery entry was rendered as `<img>`, so a video or audio URL always drew the browser's
+  broken-image icon even though Telegram renders it perfectly once sent. Entries are now
+  `<img>` / `<video controls>` / `<audio controls>` by file extension
+- When the media genuinely will not load in the app window — a Telegram CDN link often refuses —
+  the tile says what the file is: a ▶ / ♪ / 🖼 glyph, the file name, and
+  *"Not previewable here — Telegram will show it"*. No more broken-image icon standing in for a
+  file that is perfectly fine
+
+### Verified
+- Driven in a real Electron window with a three-item slideshow (two images and a video URL):
+  editor and preview both report `1 / 3`, two nav buttons and three dots; stepping forward moves
+  both to `2 / 3` and shows the labelled tile for the video. The collage renders three tiles with
+  no nav buttons. The editor HTML is unchanged throughout
+- Screenshots in `docs/`
+
 ## [5.1.6] - 2026-07-26
 
 ### Docs

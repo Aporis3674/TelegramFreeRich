@@ -9,6 +9,100 @@
  */
 
 import { Mark, Node, mergeAttributes } from '@tiptap/core';
+import { mediaKindForUrl } from '../lib/editor-actions.js';
+
+/* ─────────────────────── Gallery node view helpers ─────────────────────── */
+
+/** Glyph standing in for a media file that the app cannot preview. */
+export const KIND_GLYPH = { video: '▶', audio: '♪', photo: '🖼' };
+
+/**
+ * The last path segment of a URL, short enough to sit under a glyph.
+ * @param {string} url
+ * @returns {string}
+ */
+export function fileNameOf(url) {
+  const clean = String(url).split(/[?#]/)[0];
+  const name = clean.slice(clean.lastIndexOf('/') + 1) || clean;
+  return name.length > 30 ? `${name.slice(0, 29)}…` : name;
+}
+
+/**
+ * A tile shown when the media itself will not load in the app window.
+ *
+ * A Telegram CDN link often refuses to play here while Telegram renders it
+ * perfectly once sent — so this says what the file is instead of showing a
+ * broken-image icon.
+ *
+ * @param {string} url
+ * @param {(key: string) => string} t
+ * @returns {HTMLElement}
+ */
+function fallbackTile(url, t) {
+  const kind = mediaKindForUrl(url);
+  const box = document.createElement('div');
+  box.className = 'tg-gallery-fallback';
+  box.title = url;
+
+  const glyph = document.createElement('span');
+  glyph.className = 'tg-gallery-glyph';
+  glyph.textContent = KIND_GLYPH[kind] || KIND_GLYPH.photo;
+
+  const name = document.createElement('span');
+  name.className = 'tg-gallery-name';
+  name.textContent = fileNameOf(url);
+
+  const note = document.createElement('span');
+  note.className = 'tg-gallery-note';
+  note.textContent = t('gallery.noPreview');
+
+  box.append(glyph, name, note);
+  return box;
+}
+
+/**
+ * The media element for one gallery entry, falling back to a labelled tile if
+ * the browser cannot load it.
+ * @param {string} url
+ * @param {(key: string) => string} t
+ * @returns {HTMLElement}
+ */
+function mediaTile(url, t) {
+  const kind = mediaKindForUrl(url);
+  const el = document.createElement(kind === 'photo' ? 'img' : kind);
+  el.src = url;
+  if (kind !== 'photo') {
+    el.controls = true;
+    el.preload = 'metadata';
+  } else {
+    el.alt = '';
+  }
+  el.addEventListener('error', () => {
+    if (el.parentNode) el.replaceWith(fallbackTile(url, t));
+  });
+  return el;
+}
+
+/**
+ * @param {string} className
+ * @param {string} label
+ * @param {string} glyph
+ * @param {() => void} onClick
+ * @returns {HTMLButtonElement}
+ */
+function navButton(className, label, glyph, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.setAttribute('aria-label', label);
+  button.textContent = glyph;
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick();
+  });
+  return button;
+}
 
 /* ───────────────────────────── Marks ───────────────────────────── */
 
@@ -295,6 +389,12 @@ export const GalleryBlock = Node.create({
   atom: true,
   selectable: true,
 
+  addOptions() {
+    // The node view is plain DOM, so it cannot use the React i18n hook; the
+    // editor is configured with a getter that reads the current language.
+    return { t: (key) => key };
+  },
+
   addAttributes() {
     return {
       kind: {
@@ -321,6 +421,97 @@ export const GalleryBlock = Node.create({
       mergeAttributes(HTMLAttributes, { class: 'tg-gallery' }),
       ...images.map((src) => ['img', { src, alt: '' }]),
     ];
+  },
+
+  /**
+   * A slideshow is one frame at a time with ‹ › controls; a collage keeps its
+   * grid, because that is what a collage is. Either way the node view only
+   * changes what is *shown* — `renderHTML` above is what `getHTML()` and the
+   * serializer read, so the wire format is untouched.
+   */
+  addNodeView() {
+    const t = this.options.t;
+
+    return ({ node: initialNode }) => {
+      let current = initialNode;
+      let index = 0;
+
+      const dom = document.createElement('div');
+      const stage = document.createElement('div');
+      stage.className = 'tg-gallery-stage';
+
+      const render = () => {
+        const images = current.attrs.images || [];
+        const kind = current.attrs.kind === 'collage' ? 'collage' : 'slideshow';
+        const single = images.length < 2;
+
+        dom.className = 'tg-gallery';
+        dom.setAttribute('data-kind', kind);
+        dom.setAttribute('data-images', images.join(','));
+        dom.replaceChildren(stage);
+
+        if (index > images.length - 1) index = Math.max(0, images.length - 1);
+
+        if (kind === 'collage') {
+          stage.replaceChildren(...images.map((url) => mediaTile(url, t)));
+          return;
+        }
+
+        stage.replaceChildren(...(images.length ? [mediaTile(images[index], t)] : []));
+        if (single) return;
+
+        const step = (delta) => {
+          index = (index + delta + images.length) % images.length;
+          render();
+        };
+
+        const count = document.createElement('span');
+        count.className = 'tg-gallery-count';
+        count.textContent = `${index + 1} / ${images.length}`;
+
+        const dots = document.createElement('div');
+        dots.className = 'tg-gallery-dots';
+        images.forEach((_, i) => {
+          const dot = navButton(
+            `tg-gallery-dot${i === index ? ' active' : ''}`,
+            String(i + 1),
+            '',
+            () => {
+              index = i;
+              render();
+            },
+          );
+          dots.append(dot);
+        });
+
+        dom.append(
+          navButton('tg-gallery-nav prev', t('gallery.prev'), '‹', () => step(-1)),
+          navButton('tg-gallery-nav next', t('gallery.next'), '›', () => step(1)),
+          count,
+          dots,
+        );
+      };
+
+      render();
+
+      return {
+        dom,
+        update: (updated) => {
+          if (updated.type.name !== current.type.name) return false;
+          current = updated;
+          render();
+          return true;
+        },
+        // The node view redraws itself; ProseMirror must not read its DOM back.
+        ignoreMutation: () => true,
+        // Let the controls take their own clicks, but leave every other event
+        // to ProseMirror so the block can still be selected and deleted.
+        stopEvent: (event) => {
+          const target = event.target;
+          return !!(target && target.closest && target.closest('button'));
+        },
+      };
+    };
   },
 
   addCommands() {

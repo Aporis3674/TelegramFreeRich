@@ -7,11 +7,117 @@
  * @module components/Preview
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BlockType, InlineType } from '../../shared/block-types.js';
 import { parseAllBlocks } from '../../shared/block-parser.js';
 import { CloseIcon } from './Icons.jsx';
 import { useI18n } from '../i18n/index.js';
+import { mediaKindForUrl } from '../lib/editor-actions.js';
+import { KIND_GLYPH, fileNameOf } from './extensions.js';
+
+/**
+ * One gallery entry: the real media, or a labelled tile if it will not load.
+ *
+ * A Telegram CDN link often refuses to play inside the app while Telegram
+ * renders it perfectly once sent, so a failure is reported as "not previewable"
+ * rather than as a broken image.
+ *
+ * @param {{ url: string }} props
+ */
+function GalleryMedia({ url }) {
+  const { t } = useI18n();
+  const [failed, setFailed] = useState(false);
+  const kind = mediaKindForUrl(url);
+
+  if (failed) {
+    return (
+      <div className="pv-gallery-fallback" title={url}>
+        <span className="pv-gallery-glyph">{KIND_GLYPH[kind] || KIND_GLYPH.photo}</span>
+        <span className="pv-gallery-name">{fileNameOf(url)}</span>
+        <span className="pv-gallery-note">{t('gallery.noPreview')}</span>
+      </div>
+    );
+  }
+
+  if (kind === 'video') {
+    return <video src={url} controls preload="metadata" onError={() => setFailed(true)} />;
+  }
+  if (kind === 'audio') {
+    return <audio src={url} controls onError={() => setFailed(true)} />;
+  }
+  return <img src={url} alt="" onError={() => setFailed(true)} />;
+}
+
+/**
+ * A slideshow shows one frame at a time with ‹ › controls; a collage keeps its
+ * grid, because that is what a collage is.
+ *
+ * @param {{ images: string[], collage: boolean }} props
+ */
+function PreviewGallery({ images, collage }) {
+  const { t } = useI18n();
+  const [cursor, setCursor] = useState(0);
+
+  if (images.length === 0) return null;
+
+  if (collage) {
+    return (
+      <div className="pv-collage">
+        {images.map((url, i) => (
+          <GalleryMedia key={`${i}-${url}`} url={url} />
+        ))}
+      </div>
+    );
+  }
+
+  // Clamped rather than reset in an effect: the list changes on every keystroke
+  // while the same component instance stays mounted.
+  const index = Math.min(cursor, images.length - 1);
+  const step = (delta) => setCursor((index + delta + images.length) % images.length);
+
+  return (
+    <div className="pv-slideshow">
+      <div className="pv-gallery-stage">
+        <GalleryMedia key={images[index]} url={images[index]} />
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="pv-gallery-nav prev"
+            aria-label={t('gallery.prev')}
+            onClick={() => step(-1)}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="pv-gallery-nav next"
+            aria-label={t('gallery.next')}
+            onClick={() => step(1)}
+          >
+            ›
+          </button>
+          <span className="pv-gallery-count">
+            {index + 1} / {images.length}
+          </span>
+          <div className="pv-gallery-dots">
+            {images.map((url, i) => (
+              <button
+                key={`${i}-${url}`}
+                type="button"
+                className={`pv-gallery-dot${i === index ? ' active' : ''}`}
+                aria-label={String(i + 1)}
+                onClick={() => setCursor(i)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Marks that map straight onto an HTML wrapper element. */
 const MARK_TAGS = {
@@ -185,14 +291,11 @@ function renderBlock(block, index) {
     case BlockType.SLIDESHOW:
     case BlockType.COLLAGE:
       return (
-        <div
+        <PreviewGallery
           key={key}
-          className={block.type === BlockType.COLLAGE ? 'pv-collage' : 'pv-slideshow'}
-        >
-          {(block.images || []).map((src, i) => (
-            <img key={i} src={src} alt="" />
-          ))}
-        </div>
+          images={block.images || []}
+          collage={block.type === BlockType.COLLAGE}
+        />
       );
 
     case BlockType.MAP:
