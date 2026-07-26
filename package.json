@@ -1,6 +1,6 @@
 {
   "name": "telegramfreerich",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Free Rich Text Editor for Telegram — Desktop Edition",
   "author": "Aporis3674",
   "license": "MIT",
@@ -25,7 +25,8 @@
     "appId": "com.aporis.telegramfreerich",
     "productName": "TelegramFreeRich",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "installer"
     },
     "files": [
       "src/main/**/*",
@@ -34,11 +35,25 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TelegramFreeRich",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "include": "installer/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
     },
     "linux": {
       "target": "AppImage",

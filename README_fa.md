@@ -8,7 +8,7 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.0-2ca5e0" alt="نسخه ۵٫۱٫۰">
+  <img src="https://img.shields.io/badge/version-5.1.1-2ca5e0" alt="نسخه ۵٫۱٫۱">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
@@ -55,9 +55,15 @@
 کپی کن. بات را به‌عنوان ادمین به کانال یا گروهت اضافه کن.
 
 **۲ — نصب کن.** بسته را از
-[آخرین انتشار](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) بگیر —
-`TelegramFreeRich-Setup-*.exe` برای ویندوز و `TelegramFreeRich-*.AppImage` برای لینوکس
-(اجازهٔ اجرا بده و اجرا کن) — یا از سورس شروع کن:
+[آخرین انتشار](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) بگیر:
+
+| سیستم | فایل | توضیح |
+|---|---|---|
+| ویندوز ۱۰/۱۱ | `TelegramFreeRich-Setup-*.exe` | برای کاربر جاری نصب می‌شود — نیازی به دسترسی ادمین نیست |
+| ویندوز ۱۰/۱۱ | `TelegramFreeRich-*-portable.exe` | همان‌طور اجرا می‌شود؛ نصب و حذف ندارد |
+| لینوکس | `TelegramFreeRich-*.AppImage` | اجازهٔ اجرا بده و اجرا کن |
+
+یا از سورس شروع کن:
 
 ```bash
 git clone https://github.com/Aporis3674/TelegramFreeRich.git
@@ -281,7 +287,7 @@ npm run dev           # Vite + Electron با هات‌ریلود
 npm test              # ۲۱۴ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.0.exe
+npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.1.exe
 npm run build:linux   # AppImage
 ```
 

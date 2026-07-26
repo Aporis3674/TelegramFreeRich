@@ -1,5 +1,38 @@
 # Changelog
 
+## [5.1.1] - 2026-07-26
+
+### Fixed — the Windows installer refused to upgrade an existing install
+- Installing over an older version failed with **"Failed to uninstall old application files.
+  Please try running the installer again.: 2"** and **"TelegramFreeRich cannot be closed"**.
+  Before copying files, the new installer runs the *old* version's uninstaller; that uninstaller
+  exits with code 2 when it believes `TelegramFreeRich.exe` is still running, and electron-builder
+  turns any non-zero code into a hard abort. One leftover process — a crashed copy, a Chromium
+  helper, or a second window the app used to allow — made the app permanently un-upgradable
+- New `installer/installer.nsh`: the installer now closes the app itself (a polite `taskkill`
+  first, so settings are flushed, then `/F /T` for the helper processes) *before* the old
+  uninstaller looks for it, and a failed uninstall is written to the details log instead of
+  aborting the installation — the new files overwrite the old ones either way
+- The app now takes a **single-instance lock**. Launching it again focuses the open window
+  instead of starting a second process that holds the same installed files open
+
+### Added
+- **Portable Windows build** (`TelegramFreeRich-*-portable.exe`) — no installer, no uninstaller,
+  nothing in the registry. The escape hatch when a machine will not cooperate with NSIS
+
+### Packaging
+- NSIS options made explicit: per-user install (no admin rights), elevation allowed, settings
+  kept on uninstall, desktop and Start-menu shortcuts, and installer filenames without spaces
+  (`TelegramFreeRich-Setup-5.1.1.exe`)
+- `directories.buildResources` moved to `installer/`, which is committed — the previous default
+  was the git-ignored `build/`, where the renderer bundle is written
+- 225 unit tests; the new `packaging.test.js` pins each of these settings, because a broken
+  installer cannot be caught by any test that runs on Linux
+
+### CI
+- The release job now runs only for `v*` tags, so a manual `workflow_dispatch` is a safe dry
+  build of both platforms
+
 ## [5.1.0] - 2026-07-26
 
 ### Added — proxy support for blocked countries

@@ -155,11 +155,28 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(async () => {
-  loadSecureSettings();
-  await applyProxy();
-  createWindow();
-});
+/** Bring the existing window forward instead of opening a second copy. */
+function focusMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+// One process only. Two copies of the app hold the same installed files open,
+// which is how a Windows upgrade ends up with "TelegramFreeRich cannot be
+// closed" — the installer closes one and the other keeps the lock.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', focusMainWindow);
+
+  app.whenReady().then(async () => {
+    loadSecureSettings();
+    await applyProxy();
+    createWindow();
+  });
+}
 
 // Answer proxy authentication challenges with the stored credentials.
 app.on('login', (event, _webContents, _details, authInfo, callback) => {

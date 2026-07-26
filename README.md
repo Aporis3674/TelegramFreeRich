@@ -8,7 +8,7 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.0-2ca5e0" alt="Version 5.1.0">
+  <img src="https://img.shields.io/badge/version-5.1.1-2ca5e0" alt="Version 5.1.1">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
@@ -55,9 +55,15 @@ No coding, no server, no subscription. Point the app at a bot token and a chat, 
 Add the bot to your channel or group as an administrator.
 
 **2 — Install.** Grab a package from the
-[latest release](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) —
-`TelegramFreeRich-Setup-*.exe` for Windows, `TelegramFreeRich-*.AppImage` for Linux
-(`chmod +x` it and run) — or start from source:
+[latest release](https://github.com/Aporis3674/TelegramFreeRich/releases/latest):
+
+| Platform | File | Notes |
+|---|---|---|
+| Windows 10/11 | `TelegramFreeRich-Setup-*.exe` | Installs for the current user — no admin rights |
+| Windows 10/11 | `TelegramFreeRich-*-portable.exe` | Runs as-is, nothing to install |
+| Linux | `TelegramFreeRich-*.AppImage` | `chmod +x` it and run |
+
+Or start from source:
 
 ```bash
 git clone https://github.com/Aporis3674/TelegramFreeRich.git
@@ -282,7 +288,7 @@ npm run dev           # Vite + Electron with hot reload
 npm test              # 214 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.0.exe
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.1.exe
 npm run build:linux   # AppImage
 ```
 
