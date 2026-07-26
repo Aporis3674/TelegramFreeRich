@@ -190,7 +190,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <p>With header row</p>
 
 <h3>Media</h3>
-<p>Photo, Video, Audio, Slideshow, Collage, Map</p>
+<p>Photo, Video, Audio, Slideshow (two or more files), Collage, Location</p>
 
 <h3>Math</h3>
 <p>Inline math, Block math</p>
@@ -205,7 +205,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <p>The window mirrors Telegram Desktop's own rich-text composer: a frameless dark window, hairline-outlined pill buttons, violet Premium stars, and one salmon send button.</p>
 
 <pre><code>+------------------------------------------------------------  _  []  X -+
-| (undo)(redo)   (Aa)(B)(list)(table)(link)(img)(S)              (emoji) |
+| (undo)(redo)   (Aa)(B)(list)(table)(link)(img)(S)                      |
 +----------------------------------------------+-------------------------+
 |                                              |                         |
 | Message                                      |  LIVE PREVIEW (Ctrl+P)  |
@@ -221,16 +221,17 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <h3>Toolbar</h3>
 
 <ol>
-<li><strong>History:</strong> undo, redo</li>
-<li><strong>Aa (text style):</strong> regular text, H1-H6, quote, pull quote, code block, footer, collapsible, divider, right-to-left message</li>
-<li><strong>B (formatting):</strong> bold, italic, underline, strikethrough, spoiler, highlight, monospace, subscript, superscript, clear formatting</li>
-<li><strong>Lists:</strong> bulleted, numbered, checklist (labelled "sent as sendChecklist" - see Section 4)</li>
-<li><strong>Table:</strong> insert 3x3, add/delete row and column, delete table</li>
-<li><strong>Link, Media, Formula:</strong> link toggle; image from URL or file, video, audio, slideshow, collage, location; block and inline math</li>
-<li><strong>Emoji:</strong> searchable picker with a category strip</li>
+<li><strong>History:</strong> undo, redo (their own group)</li>
+<li><strong>Aa - "Formatting":</strong> Heading (opens a second level with H1-H6), Text, Quote, Pull quote, Code block, Footer, Divider</li>
+<li><strong>B - "Text style":</strong> Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript, Marked</li>
+<li><strong>Insert list:</strong> Ordered list, Bullet list, Check list (labelled "sent as sendChecklist" - see Section 4), Details</li>
+<li><strong>Insert table:</strong> one click drops in an editable 3x3 table; a floating bar adds or removes rows and columns while the caret is inside it, and column widths drag on the borders</li>
+<li><strong>Insert link:</strong> a "Create link" panel with Text and URL fields, then Create / Cancel</li>
+<li><strong>Insert media:</strong> Photo or video (two or more URLs become a slideshow), Audio file, Location</li>
+<li><strong>Insert formula:</strong> asks for the formula and inserts a math block</li>
 </ol>
 
-<p>The toolbar itself carries no badges. Inside the menus a violet star marks the individual features Telegram gates behind Premium. Every menu and the insert palette are generated from a single action registry, so a new command is declared once.</p>
+<p>There is no emoji button: custom emoji are a Premium-only entity that bots cannot send through the rich-message API. Every menu and the insert palette are generated from a single action registry, so a new command is declared once.</p>
 
 <h3>Bottom Bar</h3>
 <ul>
@@ -254,6 +255,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <li>Chat ID (channel or group) and the message ID used by Edit mode</li>
 <li><strong>"Test Connection" button</strong> - calls <code>getMe</code> before any real send</li>
 <li>Language (English / Persian) and theme (dark / light)</li>
+<li>The title bar also holds the preview toggle and the right-to-left switch for the message</li>
 </ul>
 
 <hr>
@@ -269,7 +271,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <tr><td>Checklist</td><td>Separate sendChecklist call (not part of Rich Message)</td></tr>
 <tr><td>Themes</td><td>Dark (default) + Light toggle</td></tr>
 <tr><td>Shortcuts</td><td>Ctrl+Enter send, Ctrl+K link, Ctrl+P preview, Ctrl+, settings, Ctrl+B/I/U/E, Ctrl+Shift+P spoiler</td></tr>
-<tr><td>Tests</td><td>Vitest - 141 unit tests (parsers, serializer, action registry, i18n)</td></tr>
+<tr><td>Tests</td><td>Vitest - 147 unit tests (parsers, serializer, action registry, i18n)</td></tr>
 <tr><td>Packaging</td><td>Windows, macOS, Linux</td></tr>
 </table>
 
@@ -288,7 +290,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <h3>Still open</h3>
 <ul>
 <li>Size and quantity limits for slideshow and collage media are undocumented by Telegram.</li>
-<li>Custom emoji (<code>RichTextCustomEmoji</code>) requires an uploaded emoji set, which bots cannot provide.</li>
+<li>Custom emoji (<code>RichTextCustomEmoji</code>) requires an uploaded emoji set, which bots cannot provide - which is why the composer ships without an emoji button at all.</li>
 <li>Footnote auto-numbering with anchor links is not implemented; footers are plain blocks for now.</li>
 </ul>
 

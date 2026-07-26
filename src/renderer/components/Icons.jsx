@@ -147,11 +147,11 @@ export const ParagraphIcon = (p) => (
   </Svg>
 );
 
-/** Heading icon with a level digit. */
-export const HeadingIcon = ({ size = 20, level = 1 }) => (
+/** Heading icon; `level` renders as a small digit, omit it for a plain "H". */
+export const HeadingIcon = ({ size = 20, level = '' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <text
-      x="1"
+      x={level === '' ? '4' : '1'}
       y="18"
       fill="currentColor"
       fontSize="15"
@@ -160,9 +160,11 @@ export const HeadingIcon = ({ size = 20, level = 1 }) => (
     >
       H
     </text>
-    <text x="14" y="18" fill="currentColor" fontSize="11" fontFamily="system-ui, sans-serif">
-      {level}
-    </text>
+    {level !== '' && (
+      <text x="14" y="18" fill="currentColor" fontSize="11" fontFamily="system-ui, sans-serif">
+        {level}
+      </text>
+    )}
   </svg>
 );
 
@@ -241,8 +243,8 @@ export const FooterIcon = (p) => (
 
 export const LinkIcon = (p) => (
   <Svg {...p}>
-    <path d="M10 13.8a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.3 1.3" />
-    <path d="M14 10.2a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.3-1.3" />
+    <path d="M9.5 14.5a3.6 3.6 0 0 0 5.1 0l3.1-3.1a3.6 3.6 0 0 0-5.1-5.1L11.4 7.5" />
+    <path d="M14.5 9.5a3.6 3.6 0 0 0-5.1 0l-3.1 3.1a3.6 3.6 0 0 0 5.1 5.1l1.2-1.2" />
   </Svg>
 );
 
@@ -329,14 +331,6 @@ export const MathInlineIcon = (p) => (
 
 /* ─────────────────────────── Actions ─────────────────────────── */
 
-export const EmojiIcon = (p) => (
-  <Svg {...p}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M8.5 14.5a4.4 4.4 0 0 0 7 0" />
-    <path d="M9 9.5h.01M15 9.5h.01" strokeWidth="2.4" />
-  </Svg>
-);
-
 /** Magic wand with a sparkle — insert palette. */
 export const WandIcon = (p) => (
   <Svg {...p}>
@@ -400,6 +394,12 @@ export const CheckIcon = (p) => (
   </Svg>
 );
 
+export const ChevronLeftIcon = (p) => (
+  <Svg {...p}>
+    <path d="M14.5 5.5 8 12l6.5 6.5" />
+  </Svg>
+);
+
 export const ChevronRightIcon = (p) => (
   <Svg {...p}>
     <path d="M9.5 5.5 16 12l-6.5 6.5" />
@@ -455,15 +455,5 @@ export const RestoreIcon = () => (
 export const CloseIcon = () => (
   <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true" focusable="false">
     <path d="M1.3 1.3l8.4 8.4M9.7 1.3 1.3 9.7" stroke="currentColor" strokeWidth="1.1" fill="none" />
-  </svg>
-);
-
-/** Four-point violet star used as the Telegram Premium badge. */
-export const PremiumStar = ({ size = 11 }) => (
-  <svg width={size} height={size} viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-    <path
-      d="M6 0.4c.35 2.3 1.3 4 3.1 4.9C7.3 6.2 6.35 7.9 6 10.2 5.65 7.9 4.7 6.2 2.9 5.3 4.7 4.4 5.65 2.7 6 .4Z"
-      fill="currentColor"
-    />
   </svg>
 );

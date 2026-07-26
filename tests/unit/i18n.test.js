@@ -1,5 +1,5 @@
 /**
- * Unit tests for the i18n layer and the emoji dataset.
+ * Unit tests for the i18n layer.
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -11,7 +11,6 @@ import {
   t,
   translate,
 } from '../../src/renderer/i18n/index.js';
-import { EMOJI_CATEGORIES, searchEmoji } from '../../src/renderer/lib/emoji-data.js';
 
 describe('locales', () => {
   it('ships English and Persian', () => {
@@ -40,12 +39,6 @@ describe('locales', () => {
     }
   });
 
-  it('translates emoji category labels', () => {
-    for (const category of EMOJI_CATEGORIES) {
-      expect(locales.en[category.id], `en:${category.id}`).toBeTruthy();
-      expect(locales.fa[category.id], `fa:${category.id}`).toBeTruthy();
-    }
-  });
 });
 
 describe('translate', () => {
@@ -92,30 +85,3 @@ describe('module-level language', () => {
   });
 });
 
-describe('emoji data', () => {
-  it('parses every entry into a char and keywords', () => {
-    for (const category of EMOJI_CATEGORIES) {
-      expect(category.emojis.length).toBeGreaterThan(0);
-      for (const emoji of category.emojis) {
-        expect(emoji.char.length).toBeGreaterThan(0);
-        expect(emoji.char).not.toContain(' ');
-        expect(typeof emoji.keywords).toBe('string');
-      }
-    }
-  });
-
-  it('searches by keyword and de-duplicates', () => {
-    const hits = searchEmoji('heart');
-    expect(hits.length).toBeGreaterThan(1);
-    expect(new Set(hits.map((e) => e.char)).size).toBe(hits.length);
-  });
-
-  it('returns nothing for an empty query', () => {
-    expect(searchEmoji('')).toEqual([]);
-    expect(searchEmoji('   ')).toEqual([]);
-  });
-
-  it('returns nothing for a miss', () => {
-    expect(searchEmoji('zzzzz')).toEqual([]);
-  });
-});

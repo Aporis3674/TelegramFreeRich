@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.1.0] - 2026-07-26
+
+### UI — toolbar rebuilt to the Telegram menu spec
+- Seven formatting buttons after the history group: **Aa**, **B**, list, table, link, media, Σ
+- **Aa → Formatting**: Heading (second level with H1–H6), Text, Quote, Pull quote, Code block,
+  Footer, Divider
+- **B → Text style**: Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript,
+  Marked
+- **List**: Ordered list, Bullet list, Check list, Details (Details moved here from the Aa menu)
+- **Table** inserts an editable 3×3 table in one click; a floating bar adds/removes rows and
+  columns while the caret is inside the table
+- **Link** opens a proper "Create link" panel with Text and URL fields plus Create / Cancel
+- **Media** narrowed to Photo or video (two or more URLs become a slideshow), Audio file,
+  Location
+- **Σ** asks for a formula and inserts a math block
+- Menus support a second level, with a back row at the top
+- Removed the emoji button and the whole emoji picker: custom emoji are a Premium-only entity
+  bots cannot send through the rich-message API
+- Removed every violet Premium star badge — from the toolbar, the menus and the palette
+- The right-to-left switch moved from the Aa menu to the title bar, next to settings and preview
+- Monospace, inline formula, collage and clear-formatting stay reachable from the insert palette
+
+### Tooling
+- 147 unit tests; the action-registry suite now covers each menu's exact contents and order
+
 ## [4.0.0] - 2026-07-26
 
 ### UI — Telegram Desktop composer

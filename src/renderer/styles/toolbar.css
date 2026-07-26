@@ -1,6 +1,6 @@
 /**
  * Toolbar — outlined pill buttons grouped exactly like Telegram Desktop's
- * rich-text composer: history group, formatting group, trailing emoji circle.
+ * rich-text composer: a history group followed by the seven formatting buttons.
  */
 
 .tfr-toolbar {
@@ -25,10 +25,6 @@
   flex-shrink: 0;
 }
 
-.tb-group-trailing {
-  margin-inline-start: auto;
-}
-
 .tb-btn {
   position: relative;
   width: var(--pill-w);
@@ -47,11 +43,6 @@
 
 .tb-btn.wide {
   width: 46px;
-}
-
-.tb-btn.round {
-  width: var(--pill-h);
-  border-radius: 50%;
 }
 
 .tb-btn:hover:not(:disabled) {
@@ -73,22 +64,4 @@
 .tb-btn:disabled {
   opacity: 0.38;
   cursor: default;
-}
-
-/* Violet Premium star badge — used by the bottom-bar palette button.
-   The top toolbar deliberately carries no badges; the stars appear next to the
-   individual features inside the dropdown menus instead. */
-.tb-star {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  color: var(--premium);
-  display: flex;
-  filter: drop-shadow(0 0 3px var(--premium-glow));
-  pointer-events: none;
-}
-
-[dir='rtl'] .tb-star {
-  right: auto;
-  left: 5px;
 }

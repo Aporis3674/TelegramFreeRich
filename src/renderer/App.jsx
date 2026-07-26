@@ -2,7 +2,7 @@
  * App — application shell.
  *
  *   ┌ titlebar ──────────────────────────────────── ─ □ ✕ ┐
- *   │ [undo][redo]  [Aa][B][list][table][link][img][Σ]  (☺) │
+ *   │ [Aa][B][list][table][link][media][Σ]                  │
  *   │                                                       │
  *   │  editor                              │  preview       │
  *   │                                                       │
@@ -21,6 +21,7 @@ import Preview from './components/Preview.jsx';
 import Settings from './components/Settings.jsx';
 import TitleBar from './components/TitleBar.jsx';
 import { ToastProvider, useToast } from './components/Toast.jsx';
+import TableBubble from './components/TableBubble.jsx';
 import Toolbar from './components/Toolbar.jsx';
 import useTfrEditor from './components/useTfrEditor.js';
 import { I18nProvider, useI18n } from './i18n/index.js';
@@ -31,7 +32,7 @@ import {
   separateChecklists,
 } from '../shared/block-serializer.js';
 import { DEFAULT_LANG, DEFAULT_THEME } from '../shared/constants.js';
-import { toggleLink } from './lib/editor-actions.js';
+import { insertLink } from './lib/editor-actions.js';
 
 const THEME_KEY = 'tfr-theme';
 const LANG_KEY = 'tfr-lang';
@@ -44,7 +45,7 @@ const RTL_KEY = 'tfr-rtl';
 function Shell({ lang, onLangChange }) {
   const { t, dir } = useI18n();
   const toast = useToast();
-  const { askText, confirm } = useDialogs();
+  const { askText, askLink, confirm } = useDialogs();
 
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
   const [settings, setSettings] = useState(() => ({
@@ -119,19 +120,7 @@ function Shell({ lang, onLangChange }) {
     });
   }, [notify]);
 
-  const pickFile = useCallback(async (kind) => {
-    if (!window.app || !window.app.openFile) return null;
-    const filters =
-      kind === 'image'
-        ? [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }]
-        : undefined;
-    return window.app.openFile(filters);
-  }, []);
-
-  const ctx = useMemo(
-    () => ({ askText, pickFile, toggleRtl, isRtl, notify }),
-    [askText, pickFile, toggleRtl, isRtl, notify],
-  );
+  const ctx = useMemo(() => ({ askText, askLink, notify }), [askText, askLink, notify]);
 
   /* ── send ── */
 
@@ -239,7 +228,7 @@ function Shell({ lang, onLangChange }) {
         setPreviewOpen((v) => !v);
       } else if (event.key.toLowerCase() === 'k' && editor) {
         event.preventDefault();
-        toggleLink(editor, ctx);
+        insertLink(editor, ctx);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -251,6 +240,8 @@ function Shell({ lang, onLangChange }) {
       <TitleBar
         tokenSet={settings.tokenSet}
         previewOpen={previewOpen}
+        isRtl={isRtl}
+        onToggleRtl={toggleRtl}
         onTogglePreview={() => setPreviewOpen((v) => !v)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
@@ -260,6 +251,7 @@ function Shell({ lang, onLangChange }) {
       <main className={`workspace${previewOpen ? ' with-preview' : ''}`}>
         <div className="editor-pane" dir={isRtl ? 'rtl' : 'ltr'}>
           <EditorContent editor={editor} />
+          <TableBubble editor={editor} />
         </div>
         {previewOpen && <Preview html={html} isRtl={isRtl} onClose={() => setPreviewOpen(false)} />}
       </main>

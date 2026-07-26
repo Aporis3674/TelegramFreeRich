@@ -203,7 +203,7 @@
 .pv-math,
 .pv-math-inline {
   font-family: 'Cambria Math', Georgia, serif;
-  color: var(--premium);
+  color: var(--math);
 }
 
 .pv-math {

@@ -15,7 +15,7 @@ import { useCallback, useRef, useState } from 'react';
 import Popover from './Popover.jsx';
 import InsertPalette from './InsertPalette.jsx';
 import { MAX_CHARS } from '../../shared/constants.js';
-import { CheckIcon, PremiumStar, SendIcon, TrashIcon, WandIcon } from './Icons.jsx';
+import { CheckIcon, SendIcon, TrashIcon, WandIcon } from './Icons.jsx';
 import { useI18n } from '../i18n/index.js';
 
 const MODES = [
@@ -77,9 +77,6 @@ export default function BottomBar({
         onClick={() => setPaletteOpen((v) => !v)}
       >
         <WandIcon size={20} />
-        <span className="tb-star">
-          <PremiumStar size={11} />
-        </span>
       </button>
 
       <div className="bb-spacer">

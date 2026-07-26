@@ -73,7 +73,7 @@
 .tfr-editor .tg-math-inline {
   font-family: 'Cambria Math', Georgia, serif;
   font-style: italic;
-  color: var(--premium);
+  color: var(--math);
 }
 
 /* ─────────────────────────── Blocks ─────────────────────────── */
@@ -296,7 +296,7 @@
 .tfr-editor .tg-math {
   font-family: 'Cambria Math', Georgia, serif;
   text-align: center;
-  color: var(--premium);
+  color: var(--math);
   background: var(--surface2);
   border-radius: 10px;
   padding: 10px;

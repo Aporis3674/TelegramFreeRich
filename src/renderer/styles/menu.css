@@ -1,5 +1,5 @@
 /**
- * Popovers: dropdown menus, the emoji panel and the insert palette.
+ * Popovers: dropdown menus, the table bubble menu and the insert palette.
  */
 
 .popover {
@@ -105,10 +105,26 @@
   color: var(--text-muted);
 }
 
-.menu-premium {
-  color: var(--premium);
+.menu-chevron {
+  color: var(--text-muted);
   display: flex;
   flex-shrink: 0;
+}
+
+[dir='rtl'] .menu-chevron {
+  transform: scaleX(-1);
+}
+
+.menu-back {
+  color: var(--text-dim);
+  font-weight: 600;
+  border-bottom: 1px solid var(--outline);
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 4px;
+}
+
+[dir='rtl'] .menu-back .menu-icon {
+  transform: scaleX(-1);
 }
 
 .menu-hint {
@@ -130,15 +146,14 @@
   margin: 4px 6px;
 }
 
-/* ─────────────────────────── Emoji panel ─────────────────────────── */
+/* ─────────────────────────── Palette panel ─────────────────────────── */
 
-.popover-emoji,
 .popover-palette {
   padding: 8px;
   width: 322px;
 }
 
-.emoji-search {
+.palette-search {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -150,7 +165,7 @@
   margin-bottom: 8px;
 }
 
-.emoji-search input {
+.palette-search input {
   flex: 1;
   min-width: 0;
   border: none;
@@ -161,66 +176,7 @@
   user-select: text;
 }
 
-.emoji-tabs {
-  display: flex;
-  gap: 2px;
-  margin-bottom: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.emoji-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.emoji-tab {
-  width: 32px;
-  height: 30px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 17px;
-  cursor: pointer;
-  opacity: 0.6;
-  flex-shrink: 0;
-}
-
-.emoji-tab:hover {
-  background: var(--hover);
-  opacity: 1;
-}
-
-.emoji-tab.active {
-  background: var(--active);
-  opacity: 1;
-}
-
-.emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
-  max-height: 232px;
-  overflow-y: auto;
-}
-
-.emoji-cell {
-  height: 36px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 21px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.1s, transform 0.1s;
-}
-
-.emoji-cell:hover {
-  background: var(--hover);
-  transform: scale(1.12);
-}
-
-.emoji-empty {
-  grid-column: 1 / -1;
+.palette-empty {
   padding: 22px 8px;
   text-align: center;
   font-size: 12.5px;
@@ -245,4 +201,47 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ─────────────────────── Table bubble menu ─────────────────────── */
+
+.bubble {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--menu);
+  border: 1px solid var(--outline);
+  border-radius: 11px;
+  box-shadow: var(--shadow);
+}
+
+.bubble-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bubble-btn:hover {
+  background: var(--hover);
+}
+
+.bubble-btn.danger {
+  color: var(--danger);
+}
+
+.bubble-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--outline);
+  margin: 0 2px;
 }

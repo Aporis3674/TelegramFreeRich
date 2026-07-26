@@ -5,8 +5,10 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import {
+  EXTRA_ACTIONS,
   FORMAT_ACTIONS,
-  FORMULA_ACTIONS,
+  FORMULA_ACTION,
+  HEADING_ACTIONS,
   LINK_ACTION,
   LIST_ACTIONS,
   MEDIA_ACTIONS,
@@ -14,15 +16,19 @@ import {
   TEXT_STYLE_ACTIONS,
   allActions,
   filterActions,
+  insertFormula,
+  insertLink,
+  insertTable,
   isActionActive,
   isActionEnabled,
-  toggleLink,
+  mediaKindForUrl,
+  parseUrlList,
 } from '../../src/renderer/lib/editor-actions.js';
 import en from '../../src/renderer/i18n/en.json';
 import fa from '../../src/renderer/i18n/fa.json';
 
 /**
- * @param {{ active?: string[], attrs?: object }} [state]
+ * @param {{ active?: string[], attrs?: object, selection?: object, text?: string }} [state]
  */
 function mockEditor(state = {}) {
   const calls = [];
@@ -46,38 +52,49 @@ function mockEditor(state = {}) {
     isActive: (name) => (state.active || []).includes(name),
     getAttributes: () => state.attrs || {},
     can: () => ({ undo: () => true, redo: () => true }),
+    state: {
+      selection: state.selection || { from: 0, to: 0, empty: true },
+      doc: { textBetween: () => state.text || '' },
+    },
   };
 }
 
 function mockCtx(overrides = {}) {
   return {
     askText: vi.fn(async () => 'https://example.com/a.png'),
-    pickFile: vi.fn(async () => '/tmp/a.png'),
-    toggleRtl: vi.fn(),
-    isRtl: false,
+    askLink: vi.fn(async () => ({ text: 'Telegram', url: 'https://t.me/x' })),
     notify: vi.fn(),
     ...overrides,
   };
 }
 
+/* ═══════════════════ registry shape ═══════════════════ */
+
 const GROUPS = {
-  format: FORMAT_ACTIONS,
-  textStyle: TEXT_STYLE_ACTIONS,
+  formatting: TEXT_STYLE_ACTIONS,
+  style: FORMAT_ACTIONS,
   list: LIST_ACTIONS,
-  table: TABLE_ACTIONS,
   media: MEDIA_ACTIONS,
-  formula: FORMULA_ACTIONS,
+  table: TABLE_ACTIONS,
+  extra: EXTRA_ACTIONS,
 };
 
 describe('registry shape', () => {
-  it('every action has an id, label key, icon and run function', () => {
+  it('every action has an id, label key, icon and a run function or children', () => {
     for (const [group, actions] of Object.entries(GROUPS)) {
       for (const action of actions) {
         expect(typeof action.id, `${group}.id`).toBe('string');
-        expect(typeof action.i18nKey, `${group}:${action.id}.i18nKey`).toBe('string');
+        expect(typeof action.i18nKey, `${group}:${action.id}`).toBe('string');
         expect(typeof action.icon, `${group}:${action.id}.icon`).toBe('function');
-        expect(typeof action.run, `${group}:${action.id}.run`).toBe('function');
+        const runnable = typeof action.run === 'function' || Array.isArray(action.children);
+        expect(runnable, `${group}:${action.id} runnable`).toBe(true);
       }
+    }
+  });
+
+  it('carries no Premium badges any more', () => {
+    for (const action of [...allActions(), ...TABLE_ACTIONS, LINK_ACTION, FORMULA_ACTION]) {
+      expect(action.premium, action.id).toBeUndefined();
     }
   });
 
@@ -87,81 +104,53 @@ describe('registry shape', () => {
   });
 
   it('every label key is translated in both locales', () => {
-    for (const action of [...allActions(), LINK_ACTION]) {
+    const everything = [...allActions(), ...TABLE_ACTIONS, LINK_ACTION, FORMULA_ACTION];
+    for (const action of everything) {
       expect(en[action.i18nKey], `en:${action.i18nKey}`).toBeTruthy();
       expect(fa[action.i18nKey], `fa:${action.i18nKey}`).toBeTruthy();
       if (action.note) {
-        expect(en[action.note]).toBeTruthy();
-        expect(fa[action.note]).toBeTruthy();
+        expect(en[action.note], `en:${action.note}`).toBeTruthy();
+        expect(fa[action.note], `fa:${action.note}`).toBeTruthy();
       }
     }
   });
-
-  it('excludes the RTL toggle from the palette but keeps it in the text menu', () => {
-    expect(allActions().some((a) => a.id === 'rtl')).toBe(false);
-    expect(TEXT_STYLE_ACTIONS.some((a) => a.id === 'rtl')).toBe(true);
-  });
 });
 
-describe('inline formatting actions', () => {
-  it('runs the matching toggle command', () => {
-    const expected = {
-      bold: 'toggleBold',
-      italic: 'toggleItalic',
-      underline: 'toggleUnderline',
-      strike: 'toggleStrike',
-      spoiler: 'toggleSpoiler',
-      highlight: 'toggleHighlight',
-      code: 'toggleCode',
-      subscript: 'toggleSubscript',
-      superscript: 'toggleSuperscript',
-      clearFormat: 'unsetAllMarks',
-    };
-    for (const action of FORMAT_ACTIONS) {
-      const editor = mockEditor();
-      action.run(editor, mockCtx());
-      expect(editor.names(), action.id).toEqual([expected[action.id]]);
-    }
+/* ═══════════════════ 1. Formatting (Aa) ═══════════════════ */
+
+describe('the Aa menu', () => {
+  it('lists heading, text, quote, pull quote, code block, footer and divider', () => {
+    expect(TEXT_STYLE_ACTIONS.map((a) => a.id)).toEqual([
+      'heading',
+      'paragraph',
+      'blockquote',
+      'pullquote',
+      'codeBlock',
+      'footer',
+      'divider',
+    ]);
   });
 
-  it('reports active marks', () => {
-    const bold = FORMAT_ACTIONS.find((a) => a.id === 'bold');
-    expect(isActionActive(bold, mockEditor({ active: ['bold'] }))).toBe(true);
-    expect(isActionActive(bold, mockEditor())).toBe(false);
+  it('nests all six heading levels under Heading', () => {
+    const heading = TEXT_STYLE_ACTIONS[0];
+    expect(heading.children).toHaveLength(6);
+    expect(heading.children.map((a) => a.id)).toEqual(HEADING_ACTIONS.map((a) => a.id));
+    expect(heading.run).toBeUndefined();
   });
-});
 
-describe('text style actions', () => {
-  it('toggles headings with the right level', () => {
-    const h3 = TEXT_STYLE_ACTIONS.find((a) => a.id === 'heading3');
+  it('toggles the requested heading level', () => {
     const editor = mockEditor();
-    h3.run(editor, mockCtx());
+    HEADING_ACTIONS[2].run(editor, mockCtx());
     expect(editor.calls).toEqual([{ name: 'toggleHeading', args: [{ level: 3 }] }]);
   });
 
-  it('covers all six heading levels', () => {
-    const levels = TEXT_STYLE_ACTIONS.filter((a) => a.id.startsWith('heading')).map((a) => a.id);
-    expect(levels).toEqual(['heading1', 'heading2', 'heading3', 'heading4', 'heading5', 'heading6']);
-  });
-
-  it('routes the RTL entry through the context, not the editor', () => {
-    const rtl = TEXT_STYLE_ACTIONS.find((a) => a.id === 'rtl');
-    const editor = mockEditor();
-    const ctx = mockCtx();
-    rtl.run(editor, ctx);
-    expect(ctx.toggleRtl).toHaveBeenCalledOnce();
-    expect(editor.calls).toEqual([]);
-    expect(isActionActive(rtl, editor, { isRtl: true })).toBe(true);
-  });
-
-  it('inserts dividers, footers, details and pull quotes', () => {
+  it('maps the remaining entries to their commands', () => {
     const expected = {
       paragraph: 'setParagraph',
       blockquote: 'toggleBlockquote',
       pullquote: 'togglePullQuote',
       codeBlock: 'toggleCodeBlock',
       footer: 'setFooter',
-      details: 'setDetails',
       divider: 'setHorizontalRule',
     };
     for (const [id, command] of Object.entries(expected)) {
@@ -172,12 +161,65 @@ describe('text style actions', () => {
   });
 });
 
-describe('list actions', () => {
-  it('maps each list style to its command', () => {
+/* ═══════════════════ 2. Text style (B) ═══════════════════ */
+
+describe('the B menu', () => {
+  it('lists exactly the eight inline styles, in order', () => {
+    expect(FORMAT_ACTIONS.map((a) => a.id)).toEqual([
+      'bold',
+      'italic',
+      'underline',
+      'strike',
+      'spoiler',
+      'subscript',
+      'superscript',
+      'marked',
+    ]);
+  });
+
+  it('runs the matching toggle command', () => {
     const expected = {
-      bulletList: 'toggleBulletList',
+      bold: 'toggleBold',
+      italic: 'toggleItalic',
+      underline: 'toggleUnderline',
+      strike: 'toggleStrike',
+      spoiler: 'toggleSpoiler',
+      subscript: 'toggleSubscript',
+      superscript: 'toggleSuperscript',
+      marked: 'toggleHighlight',
+    };
+    for (const action of FORMAT_ACTIONS) {
+      const editor = mockEditor();
+      action.run(editor, mockCtx());
+      expect(editor.names(), action.id).toEqual([expected[action.id]]);
+    }
+  });
+
+  it('reports active marks', () => {
+    const bold = FORMAT_ACTIONS[0];
+    expect(isActionActive(bold, mockEditor({ active: ['bold'] }))).toBe(true);
+    expect(isActionActive(bold, mockEditor())).toBe(false);
+  });
+});
+
+/* ═══════════════════ 3. Lists ═══════════════════ */
+
+describe('the list menu', () => {
+  it('lists ordered, bulleted, checklist and details', () => {
+    expect(LIST_ACTIONS.map((a) => a.id)).toEqual([
+      'orderedList',
+      'bulletList',
+      'checklist',
+      'details',
+    ]);
+  });
+
+  it('maps each entry to its command', () => {
+    const expected = {
       orderedList: 'toggleOrderedList',
+      bulletList: 'toggleBulletList',
       checklist: 'toggleTaskList',
+      details: 'setDetails',
     };
     for (const action of LIST_ACTIONS) {
       const editor = mockEditor();
@@ -187,135 +229,223 @@ describe('list actions', () => {
   });
 });
 
-describe('table actions', () => {
-  it('inserts a 3×3 table with a header row', () => {
+/* ═══════════════════ 4. Table ═══════════════════ */
+
+describe('table', () => {
+  it('inserts a 3×3 table with a header row in one click', () => {
     const editor = mockEditor();
-    TABLE_ACTIONS.find((a) => a.id === 'insertTable').run(editor, mockCtx());
+    insertTable(editor);
     expect(editor.calls).toEqual([
       { name: 'insertTable', args: [{ rows: 3, cols: 3, withHeaderRow: true }] },
     ]);
   });
 
-  it('enables row/column edits only inside a table', () => {
-    const inside = mockEditor({ active: ['table'] });
-    const outside = mockEditor();
-    const addRow = TABLE_ACTIONS.find((a) => a.id === 'addRow');
-    expect(isActionEnabled(addRow, inside)).toBe(true);
-    expect(isActionEnabled(addRow, outside)).toBe(false);
-    expect(isActionEnabled(addRow, null)).toBe(false);
-  });
-
-  it('treats insertTable as always available', () => {
-    expect(isActionEnabled(TABLE_ACTIONS[0], mockEditor())).toBe(true);
+  it('offers row/column edits in the bubble menu', () => {
+    const expected = {
+      addRow: 'addRowAfter',
+      addColumn: 'addColumnAfter',
+      deleteRow: 'deleteRow',
+      deleteColumn: 'deleteColumn',
+      deleteTable: 'deleteTable',
+    };
+    for (const action of TABLE_ACTIONS) {
+      const editor = mockEditor();
+      action.run(editor, mockCtx());
+      expect(editor.names(), action.id).toEqual([expected[action.id]]);
+    }
   });
 });
 
-describe('media actions', () => {
-  it('inserts an image from a sanitized URL', async () => {
-    const editor = mockEditor();
+/* ═══════════════════ 5. Link ═══════════════════ */
+
+describe('insertLink', () => {
+  it('prefills the panel with the selected text and the current href', async () => {
+    const editor = mockEditor({
+      selection: { from: 1, to: 5, empty: false },
+      text: 'chat',
+      attrs: { href: 'https://old' },
+    });
     const ctx = mockCtx();
-    await MEDIA_ACTIONS.find((a) => a.id === 'imageUrl').run(editor, ctx);
+    await insertLink(editor, ctx);
+    expect(ctx.askLink).toHaveBeenCalledWith({ text: 'chat', url: 'https://old' });
+  });
+
+  it('inserts the text carrying a link mark', async () => {
+    const editor = mockEditor();
+    await insertLink(editor, mockCtx());
+    expect(editor.calls).toEqual([
+      {
+        name: 'insertContent',
+        args: [
+          {
+            type: 'text',
+            text: 'Telegram',
+            marks: [{ type: 'link', attrs: { href: 'https://t.me/x' } }],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('falls back to the URL when no text is given', async () => {
+    const editor = mockEditor();
+    await insertLink(editor, mockCtx({ askLink: vi.fn(async () => ({ text: '  ', url: 'https://a' })) }));
+    expect(editor.calls[0].args[0].text).toBe('https://a');
+  });
+
+  it('refuses unsafe schemes', async () => {
+    const editor = mockEditor();
+    const ctx = mockCtx({ askLink: vi.fn(async () => ({ text: 'x', url: ' JavaScript:alert(1)' })) });
+    await insertLink(editor, ctx);
+    expect(editor.calls).toEqual([]);
+    expect(ctx.notify).toHaveBeenCalledWith('toast.unsafeUrl', 'error');
+  });
+
+  it('does nothing when the panel is cancelled', async () => {
+    const editor = mockEditor();
+    await insertLink(editor, mockCtx({ askLink: vi.fn(async () => null) }));
+    expect(editor.calls).toEqual([]);
+  });
+});
+
+/* ═══════════════════ 6. Media ═══════════════════ */
+
+describe('media helpers', () => {
+  it('detects the block type from the file extension', () => {
+    expect(mediaKindForUrl('https://a/b.MP4')).toBe('video');
+    expect(mediaKindForUrl('https://a/b.mov?x=1')).toBe('video');
+    expect(mediaKindForUrl('https://a/song.mp3')).toBe('audio');
+    expect(mediaKindForUrl('https://a/song.ogg#t=1')).toBe('audio');
+    expect(mediaKindForUrl('https://a/pic.jpg')).toBe('photo');
+    expect(mediaKindForUrl('https://a/no-extension')).toBe('photo');
+  });
+
+  it('splits and sanitizes URL lists', () => {
+    expect(parseUrlList(' https://a.jpg , https://b.jpg ')).toEqual([
+      'https://a.jpg',
+      'https://b.jpg',
+    ]);
+    expect(parseUrlList('javascript:alert(1)')).toEqual([]);
+    expect(parseUrlList('')).toEqual([]);
+  });
+});
+
+describe('the media menu', () => {
+  it('offers exactly photo-or-video, audio file and location', () => {
+    expect(MEDIA_ACTIONS.map((a) => a.id)).toEqual(['photoOrVideo', 'audioFile', 'location']);
+  });
+
+  const photoOrVideo = () => MEDIA_ACTIONS.find((a) => a.id === 'photoOrVideo');
+
+  it('inserts a single image', async () => {
+    const editor = mockEditor();
+    await photoOrVideo().run(editor, mockCtx());
     expect(editor.calls).toEqual([
       { name: 'setImage', args: [{ src: 'https://example.com/a.png' }] },
     ]);
   });
 
-  it('rejects javascript: URLs and reports it', async () => {
+  it('inserts a single video as a media block', async () => {
     const editor = mockEditor();
-    const ctx = mockCtx({ askText: vi.fn(async () => 'javascript:alert(1)') });
-    await MEDIA_ACTIONS.find((a) => a.id === 'imageUrl').run(editor, ctx);
-    expect(editor.calls).toEqual([]);
-    expect(ctx.notify).toHaveBeenCalledWith('toast.unsafeUrl', 'error');
+    await photoOrVideo().run(editor, mockCtx({ askText: vi.fn(async () => 'https://a/clip.mp4') }));
+    expect(editor.calls).toEqual([
+      { name: 'setMediaBlock', args: [{ kind: 'video', src: 'https://a/clip.mp4' }] },
+    ]);
   });
 
-  it('does nothing when the prompt is dismissed', async () => {
+  it('turns two or more files into a slideshow', async () => {
     const editor = mockEditor();
-    const ctx = mockCtx({ askText: vi.fn(async () => null) });
-    await MEDIA_ACTIONS.find((a) => a.id === 'video').run(editor, ctx);
-    expect(editor.calls).toEqual([]);
-    expect(ctx.notify).not.toHaveBeenCalled();
-  });
-
-  it('inserts a file-picked image as a file:// source', async () => {
-    const editor = mockEditor();
-    await MEDIA_ACTIONS.find((a) => a.id === 'imageFile').run(editor, mockCtx());
-    expect(editor.calls).toEqual([{ name: 'setImage', args: [{ src: 'file:///tmp/a.png' }] }]);
-  });
-
-  it('splits gallery URLs on commas', async () => {
-    const editor = mockEditor();
-    const ctx = mockCtx({ askText: vi.fn(async () => 'https://a.jpg, https://b.jpg') });
-    await MEDIA_ACTIONS.find((a) => a.id === 'collage').run(editor, ctx);
+    await photoOrVideo().run(
+      editor,
+      mockCtx({ askText: vi.fn(async () => 'https://a.jpg, https://b.jpg') }),
+    );
     expect(editor.calls).toEqual([
       {
         name: 'setGalleryBlock',
-        args: [{ kind: 'collage', images: ['https://a.jpg', 'https://b.jpg'] }],
+        args: [{ kind: 'slideshow', images: ['https://a.jpg', 'https://b.jpg'] }],
       },
     ]);
   });
 
-  it('parses map coordinates and rejects malformed input', async () => {
-    const map = MEDIA_ACTIONS.find((a) => a.id === 'map');
+  it('rejects unsafe media URLs', async () => {
+    const editor = mockEditor();
+    const ctx = mockCtx({ askText: vi.fn(async () => 'javascript:alert(1)') });
+    await photoOrVideo().run(editor, ctx);
+    expect(editor.calls).toEqual([]);
+    expect(ctx.notify).toHaveBeenCalledWith('toast.unsafeUrl', 'error');
+  });
+
+  it('inserts an audio file', async () => {
+    const editor = mockEditor();
+    await MEDIA_ACTIONS.find((a) => a.id === 'audioFile').run(
+      editor,
+      mockCtx({ askText: vi.fn(async () => 'https://a/song.mp3') }),
+    );
+    expect(editor.calls).toEqual([
+      { name: 'setMediaBlock', args: [{ kind: 'audio', src: 'https://a/song.mp3' }] },
+    ]);
+  });
+
+  it('parses a location and rejects malformed coordinates', async () => {
+    const location = MEDIA_ACTIONS.find((a) => a.id === 'location');
 
     const good = mockEditor();
-    await map.run(good, mockCtx({ askText: vi.fn(async () => '35.6892, 51.389') }));
+    await location.run(good, mockCtx({ askText: vi.fn(async () => '35.6892, 51.389') }));
     expect(good.calls).toEqual([
       { name: 'setMapBlock', args: [{ latitude: 35.6892, longitude: 51.389 }] },
     ]);
 
     const bad = mockEditor();
     const ctx = mockCtx({ askText: vi.fn(async () => 'somewhere nice') });
-    await map.run(bad, ctx);
+    await location.run(bad, ctx);
     expect(bad.calls).toEqual([]);
     expect(ctx.notify).toHaveBeenCalledWith('toast.invalidCoords', 'error');
   });
-});
 
-describe('formula actions', () => {
-  it('inserts block and inline formulas', async () => {
-    const block = mockEditor();
-    await FORMULA_ACTIONS.find((a) => a.id === 'mathBlock').run(
-      block,
-      mockCtx({ askText: vi.fn(async () => 'a^2+b^2') }),
-    );
-    expect(block.calls).toEqual([{ name: 'setMathBlock', args: ['a^2+b^2'] }]);
-
-    const inline = mockEditor();
-    await FORMULA_ACTIONS.find((a) => a.id === 'mathInline').run(
-      inline,
-      mockCtx({ askText: vi.fn(async () => 'x_1') }),
-    );
-    expect(inline.calls).toEqual([{ name: 'insertInlineMath', args: ['x_1'] }]);
-  });
-});
-
-describe('toggleLink', () => {
-  it('removes an existing link', async () => {
-    const editor = mockEditor({ active: ['link'] });
-    await toggleLink(editor, mockCtx());
-    expect(editor.names()).toEqual(['unsetLink']);
-  });
-
-  it('asks for a URL and prefills the current href', async () => {
-    const editor = mockEditor({ attrs: { href: 'https://old' } });
-    const ctx = mockCtx({ askText: vi.fn(async () => 'https://new') });
-    await toggleLink(editor, ctx);
-    expect(ctx.askText.mock.calls[0][0].value).toBe('https://old');
-    expect(editor.calls).toEqual([{ name: 'setLink', args: [{ href: 'https://new' }] }]);
-  });
-
-  it('refuses unsafe schemes', async () => {
+  it('does nothing when a prompt is dismissed', async () => {
     const editor = mockEditor();
-    const ctx = mockCtx({ askText: vi.fn(async () => ' JavaScript:alert(1)') });
-    await toggleLink(editor, ctx);
+    const ctx = mockCtx({ askText: vi.fn(async () => null) });
+    await photoOrVideo().run(editor, ctx);
     expect(editor.calls).toEqual([]);
-    expect(ctx.notify).toHaveBeenCalledWith('toast.unsafeUrl', 'error');
+    expect(ctx.notify).not.toHaveBeenCalled();
+  });
+});
+
+/* ═══════════════════ 7. Formula ═══════════════════ */
+
+describe('insertFormula', () => {
+  it('inserts a math block from the entered formula', async () => {
+    const editor = mockEditor();
+    await insertFormula(editor, mockCtx({ askText: vi.fn(async () => 'a^2+b^2') }));
+    expect(editor.calls).toEqual([{ name: 'setMathBlock', args: ['a^2+b^2'] }]);
   });
 
   it('does nothing when cancelled', async () => {
     const editor = mockEditor();
-    await toggleLink(editor, mockCtx({ askText: vi.fn(async () => null) }));
+    await insertFormula(editor, mockCtx({ askText: vi.fn(async () => null) }));
     expect(editor.calls).toEqual([]);
+  });
+});
+
+/* ═══════════════════ palette ═══════════════════ */
+
+describe('allActions', () => {
+  it('flattens heading levels and drops the parent entry', () => {
+    const ids = allActions().map((a) => a.id);
+    expect(ids).toContain('heading3');
+    expect(ids).not.toContain('heading');
+  });
+
+  it('includes the palette-only extras', () => {
+    const ids = allActions().map((a) => a.id);
+    expect(ids).toEqual(
+      expect.arrayContaining(['code', 'clearFormat', 'mathInline', 'collage', 'insertTable']),
+    );
+  });
+
+  it('includes link and formula', () => {
+    const ids = allActions().map((a) => a.id);
+    expect(ids).toEqual(expect.arrayContaining(['link', 'formula']));
   });
 });
 
@@ -341,7 +471,12 @@ describe('filterActions', () => {
   });
 });
 
-describe('isActionActive', () => {
+describe('state helpers', () => {
+  it('treats actions without an `enabled` predicate as enabled', () => {
+    expect(isActionEnabled(FORMAT_ACTIONS[0], mockEditor())).toBe(true);
+    expect(isActionEnabled(FORMAT_ACTIONS[0], null)).toBe(false);
+  });
+
   it('is false without an isActive predicate', () => {
     expect(isActionActive({ id: 'x' }, mockEditor())).toBe(false);
   });

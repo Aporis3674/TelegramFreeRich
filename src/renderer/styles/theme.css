@@ -1,8 +1,8 @@
 /**
  * Design tokens — Telegram Desktop "Night" palette.
  * The rich-text composer window in Telegram Desktop is the visual reference:
- * flat dark surface, hairline-outlined pill buttons, muted icon grey,
- * violet premium stars and a single salmon send button.
+ * flat dark surface, hairline-outlined pill buttons, muted icon grey and a
+ * single salmon send button.
  */
 
 *,
@@ -58,10 +58,9 @@ textarea {
   /* Accents */
   --accent: #4ea4f6;
   --accent-hover: #6bb4f8;
-  --premium: #7f6cf0;
-  --premium-glow: rgba(127, 108, 240, 0.35);
   --send: #c9756b;
   --send-hover: #d6857b;
+  --math: #8f80f2;
   --danger: #ec5f5f;
   --success: #64bf7a;
   --warning: #f5a623;
@@ -95,9 +94,9 @@ body.light {
 
   --accent: #3390ec;
   --accent-hover: #4c9ef0;
-  --premium: #7f6cf0;
   --send: #c9756b;
   --send-hover: #b9655b;
+  --math: #6f5ce6;
   --danger: #e0483d;
   --success: #4dbf6a;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.16);

@@ -1,10 +1,11 @@
 /**
- * Dialog — promise-based text prompt and confirmation, replacing the browser
- * `prompt()` / `confirm()` calls (blocked in Electron and visually foreign).
+ * Dialog — promise-based panels replacing the browser `prompt()` / `confirm()`
+ * (blocked in Electron and visually foreign).
  *
- * Usage:
- *   const { askText, confirm } = useDialogs();
- *   const url = await askText({ titleKey: 'toolbar.link', placeholder: 'https://' });
+ * Three kinds:
+ *   askText({ titleKey, placeholder, value })  → Promise<string|null>
+ *   askLink({ text, url })                     → Promise<{text, url}|null>
+ *   confirm({ titleKey, bodyKey, confirmKey }) → Promise<boolean>
  *
  * @module components/Dialog
  */
@@ -16,7 +17,11 @@ const DialogContext = createContext(null);
 
 /**
  * Access the dialog helpers.
- * @returns {{ askText: (opts: object) => Promise<string|null>, confirm: (opts: object) => Promise<boolean> }}
+ * @returns {{
+ *   askText: (opts?: object) => Promise<string|null>,
+ *   askLink: (opts?: object) => Promise<{text: string, url: string}|null>,
+ *   confirm: (opts?: object) => Promise<boolean>,
+ * }}
  */
 export function useDialogs() {
   const ctx = useContext(DialogContext);
@@ -32,13 +37,25 @@ export function DialogProvider({ children }) {
   const { t } = useI18n();
   const [dialog, setDialog] = useState(null);
   const [value, setValue] = useState('');
-  const inputRef = useRef(null);
+  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const firstFieldRef = useRef(null);
 
   const askText = useCallback(
     (options = {}) =>
       new Promise((resolve) => {
         setValue(options.value || '');
         setDialog({ kind: 'text', options, resolve });
+      }),
+    [],
+  );
+
+  const askLink = useCallback(
+    (options = {}) =>
+      new Promise((resolve) => {
+        setLinkText(options.text || '');
+        setLinkUrl(options.url || '');
+        setDialog({ kind: 'link', options, resolve });
       }),
     [],
   );
@@ -56,12 +73,27 @@ export function DialogProvider({ children }) {
       if (dialog) dialog.resolve(result);
       setDialog(null);
       setValue('');
+      setLinkText('');
+      setLinkUrl('');
     },
     [dialog],
   );
 
+  /** The value a cancel/dismiss resolves to, per dialog kind. */
+  const cancelled = dialog && dialog.kind === 'confirm' ? false : null;
+
+  /** The value the confirm button resolves to, per dialog kind. */
+  const accept = () => {
+    if (!dialog) return;
+    if (dialog.kind === 'confirm') finish(true);
+    else if (dialog.kind === 'link') {
+      if (!linkUrl.trim()) return;
+      finish({ text: linkText, url: linkUrl });
+    } else finish(value.trim() ? value : null);
+  };
+
   useEffect(() => {
-    if (dialog && dialog.kind === 'text' && inputRef.current) inputRef.current.focus();
+    if (dialog && firstFieldRef.current) firstFieldRef.current.focus();
   }, [dialog]);
 
   useEffect(() => {
@@ -69,57 +101,91 @@ export function DialogProvider({ children }) {
     const onKey = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        finish(dialog.kind === 'confirm' ? false : null);
+        event.stopPropagation();
+        finish(cancelled);
       }
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [dialog, finish]);
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [dialog, finish, cancelled]);
 
   return (
-    <DialogContext.Provider value={{ askText, confirm }}>
+    <DialogContext.Provider value={{ askText, askLink, confirm }}>
       {children}
 
       {dialog && (
         <div
           className="overlay"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              finish(dialog.kind === 'confirm' ? false : null);
-            }
+            if (event.target === event.currentTarget) finish(cancelled);
           }}
         >
           <div className={`dialog${dialog.kind === 'confirm' ? ' dialog-confirm' : ''}`}>
             <div className="dialog-title">
-              {t(dialog.options.titleKey || 'dialog.ok')}
+              {t(
+                dialog.kind === 'link'
+                  ? 'link.create'
+                  : dialog.options.titleKey || 'dialog.ok',
+              )}
             </div>
 
-            {dialog.kind === 'text' ? (
+            {dialog.kind === 'text' && (
               <input
-                ref={inputRef}
+                ref={firstFieldRef}
                 className="dialog-input"
                 type="text"
                 value={value}
                 placeholder={dialog.options.placeholder || ''}
                 onChange={(event) => setValue(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') finish(value.trim() ? value : null);
-                }}
+                onKeyDown={(event) => event.key === 'Enter' && accept()}
               />
-            ) : (
+            )}
+
+            {dialog.kind === 'link' && (
+              <div className="dialog-fields">
+                <label htmlFor="link-text">{t('link.text')}</label>
+                <input
+                  ref={firstFieldRef}
+                  id="link-text"
+                  className="dialog-input"
+                  type="text"
+                  value={linkText}
+                  placeholder={t('link.textPlaceholder')}
+                  onChange={(event) => setLinkText(event.target.value)}
+                  onKeyDown={(event) => event.key === 'Enter' && accept()}
+                />
+                <label htmlFor="link-url">{t('link.url')}</label>
+                <input
+                  id="link-url"
+                  className="dialog-input"
+                  type="text"
+                  value={linkUrl}
+                  placeholder="https://t.me/…"
+                  onChange={(event) => setLinkUrl(event.target.value)}
+                  onKeyDown={(event) => event.key === 'Enter' && accept()}
+                />
+              </div>
+            )}
+
+            {dialog.kind === 'confirm' && (
               <div className="dialog-body">{t(dialog.options.bodyKey || '')}</div>
             )}
 
             <div className="dialog-actions">
-              <button type="button" className="dialog-btn" onClick={() => finish(dialog.kind === 'confirm' ? false : null)}>
+              <button type="button" className="dialog-btn" onClick={() => finish(cancelled)}>
                 {t('dialog.cancel')}
               </button>
               <button
                 type="button"
                 className={`dialog-btn primary${dialog.options.danger ? ' danger' : ''}`}
-                onClick={() => finish(dialog.kind === 'confirm' ? true : value.trim() ? value : null)}
+                disabled={dialog.kind === 'link' && !linkUrl.trim()}
+                onClick={accept}
               >
-                {t(dialog.options.confirmKey || 'dialog.ok')}
+                {t(
+                  dialog.kind === 'link'
+                    ? 'link.createBtn'
+                    : dialog.options.confirmKey || 'dialog.ok',
+                )}
               </button>
             </div>
           </div>

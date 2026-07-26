@@ -7,7 +7,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { PremiumStar, SearchIcon } from './Icons.jsx';
+import { SearchIcon } from './Icons.jsx';
 import { allActions, filterActions, isActionEnabled } from '../lib/editor-actions.js';
 import { useI18n } from '../i18n/index.js';
 
@@ -22,7 +22,7 @@ export default function InsertPalette({ editor, onRun }) {
 
   return (
     <div className="palette">
-      <div className="emoji-search">
+      <div className="palette-search">
         <SearchIcon size={16} />
         <input
           type="text"
@@ -34,7 +34,7 @@ export default function InsertPalette({ editor, onRun }) {
       </div>
 
       <div className="palette-list">
-        {shown.length === 0 && <div className="emoji-empty">{t('palette.empty')}</div>}
+        {shown.length === 0 && <div className="palette-empty">{t('palette.empty')}</div>}
         {shown.map((action) => {
           const Icon = action.icon;
           return (
@@ -49,17 +49,11 @@ export default function InsertPalette({ editor, onRun }) {
                 <Icon size={18} />
               </span>
               <span className="menu-label">{t(action.i18nKey)}</span>
-              {action.premium && (
-                <span className="menu-premium" title={t('premium.free')}>
-                  <PremiumStar size={11} />
-                </span>
-              )}
+              {action.hint && <span className="menu-hint">{action.hint}</span>}
             </button>
           );
         })}
       </div>
-
-      <div className="palette-foot">{t('premium.free')}</div>
     </div>
   );
 }

@@ -458,3 +458,20 @@
     transform: none;
   }
 }
+
+/* Two-field "Create link" panel */
+
+.dialog-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dialog-fields label {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.dialog-fields label + .dialog-input {
+  margin-bottom: 4px;
+}

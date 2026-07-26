@@ -13,6 +13,7 @@ import {
   MinimizeIcon,
   PreviewIcon,
   RestoreIcon,
+  RtlIcon,
   SettingsIcon,
 } from './Icons.jsx';
 import { useI18n } from '../i18n/index.js';
@@ -21,11 +22,20 @@ import { useI18n } from '../i18n/index.js';
  * @param {{
  *   tokenSet: boolean,
  *   previewOpen: boolean,
+ *   isRtl: boolean,
+ *   onToggleRtl: () => void,
  *   onTogglePreview: () => void,
  *   onOpenSettings: () => void,
  * }} props
  */
-export default function TitleBar({ tokenSet, previewOpen, onTogglePreview, onOpenSettings }) {
+export default function TitleBar({
+  tokenSet,
+  previewOpen,
+  isRtl,
+  onToggleRtl,
+  onTogglePreview,
+  onOpenSettings,
+}) {
   const { t } = useI18n();
   const [maximized, setMaximized] = useState(false);
   const platform = (window.app && window.app.platform) || 'linux';
@@ -61,7 +71,9 @@ export default function TitleBar({ tokenSet, previewOpen, onTogglePreview, onOpe
         <button
           type="button"
           className="tl-btn"
-          title={t('titlebar.settings')}
+          title={`${t('titlebar.settings')} — ${
+            tokenSet ? t('titlebar.connected') : t('titlebar.notConfigured')
+          }`}
           aria-label={t('titlebar.settings')}
           onClick={onOpenSettings}
         >
@@ -76,6 +88,15 @@ export default function TitleBar({ tokenSet, previewOpen, onTogglePreview, onOpe
           onClick={onTogglePreview}
         >
           <PreviewIcon size={15} />
+        </button>
+        <button
+          type="button"
+          className={`tl-btn${isRtl ? ' active' : ''}`}
+          title={t('block.rtl')}
+          aria-label={t('block.rtl')}
+          onClick={onToggleRtl}
+        >
+          <RtlIcon size={15} />
         </button>
       </div>
 
