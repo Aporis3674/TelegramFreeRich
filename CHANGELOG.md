@@ -2,6 +2,14 @@
 
 ## [5.2.0] - 2026-07-26
 
+| A slideshow, frame 1 of 3 | The same slideshow on the video frame |
+|---|---|
+| ![Slideshow carousel](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.0/docs/slideshow.png) | ![Video that cannot be previewed](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.0/docs/slideshow-video.png) |
+
+A collage stays a grid — tiles, no arrows:
+
+![Collage](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.0/docs/collage.png)
+
 ### Slideshows are a carousel now, in the editor and in the preview
 - A slideshow used to be a row of thumbnails scrolling sideways in both panes. It is now a proper
   carousel: **one frame at a time**, with `‹` / `›` buttons, a `2 / 3` counter and clickable dots.

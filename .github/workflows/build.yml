@@ -80,6 +80,33 @@ jobs:
       - name: List what will be released
         run: ls -lh dist
 
+      # The notes are the tag's own CHANGELOG entry — screenshots and all —
+      # rather than a fixed blurb that says nothing about this release.
+      - name: Compose release notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          {
+            awk -v heading="## [$version]" '
+              index($0, heading) == 1 { inside = 1; next }
+              inside && /^## \[/       { exit }
+              inside                   { print }
+            ' CHANGELOG.md
+            cat <<'FOOT'
+
+          ### Downloads
+
+          | Platform | File | Notes |
+          |---|---|---|
+          | Windows 10/11 | `TelegramFreeRich-Setup-*.exe` | Installer, per user — no admin rights needed |
+          | Windows 10/11 | `TelegramFreeRich-*-portable.exe` | Runs as-is, nothing to install or uninstall |
+          | Linux | `TelegramFreeRich-*.AppImage` | `chmod +x` and run |
+
+          Both packages are unsigned; Windows SmartScreen warns on first run.
+          FOOT
+          } > notes.md
+          echo "── release notes ──"
+          cat notes.md
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -87,17 +114,4 @@ jobs:
             dist/*.exe
             dist/*.AppImage
           generate_release_notes: true
-          body: |
-            **Downloads**
-
-            | Platform | File | Notes |
-            |---|---|---|
-            | Windows 10/11 | `TelegramFreeRich-Setup-*.exe` | Installer, per user — no admin rights needed |
-            | Windows 10/11 | `TelegramFreeRich-*-portable.exe` | Runs as-is, nothing to install or uninstall |
-            | Linux | `TelegramFreeRich-*.AppImage` | `chmod +x` and run |
-
-            Both packages are unsigned; Windows SmartScreen and macOS Gatekeeper
-            will warn on first run.
-
-            See [CHANGELOG.md](https://github.com/Aporis3674/TelegramFreeRich/blob/master/CHANGELOG.md)
-            for what changed.
+          body_path: notes.md
