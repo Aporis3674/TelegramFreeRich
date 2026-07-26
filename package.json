@@ -2,6 +2,13 @@
   "name": "telegramfreerich",
   "version": "4.1.1",
   "description": "Free Rich Text Editor for Telegram — Desktop Edition",
+  "author": "Aporis3674",
+  "license": "MIT",
+  "homepage": "https://github.com/Aporis3674/TelegramFreeRich",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aporis3674/TelegramFreeRich.git"
+  },
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
@@ -34,8 +41,12 @@
       "allowToChangeInstallationDirectory": true
     },
     "linux": {
-      "target": "AppImage"
-    }
+      "target": "AppImage",
+      "category": "Office",
+      "maintainer": "Aporis3674"
+    },
+    "publish": null,
+    "icon": "logo.png"
   },
   "dependencies": {
     "@tiptap/extension-color": "^2.11.0",
