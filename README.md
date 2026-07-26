@@ -8,12 +8,12 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.1.1-2ca5e0" alt="Version 4.1.1">
+  <img src="https://img.shields.io/badge/version-5.0.0-2ca5e0" alt="Version 5.0.0">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-151%20passing-4fc3a1" alt="151 tests">
+  <img src="https://img.shields.io/badge/tests-179%20passing-4fc3a1" alt="179 tests">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -149,66 +149,77 @@ Right-click the send button:
 
 ## 🧩 How it works
 
-Telegram's rich messages are **not** Markdown. The API expects an array of structured
-`InputRichBlock*` objects, so that is what the app builds — blocks *and* the styled runs inside
-them:
+`sendRichMessage` takes `rich_message: { html | markdown }` — exactly one of the two. The
+`RichBlock` array is the *receiving* shape: what a bot reads back from `Message.rich_message`,
+not what it sends. So the app serializes the editor into Telegram's **Rich HTML** dialect:
 
 ```
 TipTap (ProseMirror) document
         │
         ▼
-Block parser ─────────────────────────────► Block State (JSON[])
-   ├─ block level   paragraph, heading, table, checklist, media, …
-   └─ inline level  { text, marks[], href? } segments
+HTML serializer  src/shared/html-serializer.js
+   ├─ keeps    <b> <i> <u> <s> <code> <mark> <sub> <sup> <a>
+   │           <p> <h1>…<h6> <ul> <ol> <li> <pre> <blockquote> <footer> <hr/>
+   │           <table> <details> <img> <video> <audio>
+   ├─ maps     spoiler → <tg-spoiler>      pull quote → <aside>
+   │           math → <tg-math> / <tg-math-block>
+   │           gallery → <tg-collage> / <tg-slideshow>
+   │           location → <tg-map lat long zoom/>
+   └─ drops    every tag and URL scheme the API does not document
         │
         ▼
-Block serializer
-   ├─ blocks     → InputRichBlock*
-   └─ rich_text  → nested RichText*   (bold inside italic inside link)
+   rich_message: { html, is_rtl?, skip_entity_detection? }
         │
         ├──► sendRichMessage        rich messages
-        ├──► sendRichMessageDraft   30-second drafts
-        └──► sendChecklist          checklists, always a separate call
+        ├──► sendRichMessageDraft   30-second drafts (private chats, needs draft_id)
+        ├──► editMessageText        rewrite an existing message
+        └──► sendChecklist          task lists, always a separate call
 ```
 
-<details>
-<summary><strong>Block types → Telegram API</strong></summary>
+Before sending, the serializer counts what it produced and checks the documented limits:
+32,768 characters, 500 blocks, 50 media files, 20 table columns.
 
-| Block | API type |
+The live preview keeps its own path — `block-parser.js` and `inline-parser.js` build the
+`RichBlock` / `RichText` shapes Telegram sends *back*, which is what the bubble renders.
+
+<details>
+<summary><strong>Editor → Rich HTML</strong></summary>
+
+| In the editor | On the wire |
 |---|---|
-| paragraph | `InputRichBlockParagraph` |
-| heading | `InputRichBlockHeading` |
-| blockquote | `InputRichBlockBlockquote` |
-| pullquote | `InputRichBlockAside` |
-| code_block | `InputRichBlockPreformatted` |
-| divider | `InputRichBlockDivider` |
-| list | `InputRichBlockList` |
-| table | `InputRichBlockTable` |
-| details | `InputRichBlockDetails` |
-| footer | `InputRichBlockFooter` |
-| photo / video / audio | `InputRichBlockPhoto` / `…Video` / `…Audio` |
-| slideshow / collage | `InputRichBlockSlideshow` / `InputRichBlockCollage` |
-| map | `InputRichBlockMap` |
-| math_block | `InputRichBlockMath` |
-| checklist | sent separately via `sendChecklist` |
+| heading H1–H6 | `<h1>`…`<h6>` |
+| paragraph | `<p>` |
+| quote | `<blockquote>` (plus `<cite>` for a credit) |
+| pull quote | `<aside>` |
+| code block | `<pre><code class="language-…">` |
+| divider | `<hr/>` |
+| bullet / ordered list | `<ul>` / `<ol start="…">` |
+| table | `<table bordered>` with `<th>` / `<td>` |
+| collapsible | `<details open><summary>` |
+| footer | `<footer>` |
+| photo / video / audio | `<img src>` / `<video src>` / `<audio src>` |
+| slideshow / collage | `<tg-slideshow>` / `<tg-collage>` |
+| location | `<tg-map lat long zoom/>` |
+| formula block / inline | `<tg-math-block>` / `<tg-math>` |
+| checklist | lifted out, sent via `sendChecklist` |
 
 </details>
 
 <details>
-<summary><strong>Inline marks → RichText objects</strong></summary>
+<summary><strong>Inline marks</strong></summary>
 
-| Mark | API type |
-|---|---|
-| bold / italic / underline / strikethrough | `RichTextBold`, `RichTextItalic`, `RichTextUnderline`, `RichTextStrikethrough` |
-| spoiler | `RichTextSpoiler` |
-| marked | `RichTextMarked` |
-| code | `RichTextCode` |
-| subscript / superscript | `RichTextSubscript` / `RichTextSuperscript` |
-| link | `RichTextLink` (carries `url`) |
-| math | `RichTextMath` |
+| Mark | On the wire | Telegram entity |
+|---|---|---|
+| bold / italic / underline / strikethrough | `<b>` `<i>` `<u>` `<s>` | `RichTextBold`, `RichTextItalic`, `RichTextUnderline`, `RichTextStrikethrough` |
+| spoiler | `<tg-spoiler>` | `RichTextSpoiler` |
+| marked | `<mark>` | `RichTextMarked` |
+| monospace | `<code>` | `RichTextCode` |
+| subscript / superscript | `<sub>` / `<sup>` | `RichTextSubscript` / `RichTextSuperscript` |
+| link | `<a href>` | `RichTextUrl` |
+| inline formula | `<tg-math>` | `RichTextMathematicalExpression` |
 
-A run wearing several marks nests from the inside out, so `**_word_**` becomes
-`italic( bold( text ) )`.
+Links keep only `http`, `https`, `mailto`, `tel`, `tg` and in-document `#anchor` targets; media
+accepts `http(s)` only, exactly as the API requires.
 
 </details>
 
@@ -243,10 +254,10 @@ Renderer (React)                     Main process (Electron)
 
 ```bash
 npm run dev           # Vite + Electron with hot reload
-npm test              # 151 unit tests (Vitest)
+npm test              # 179 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-4.1.1.exe
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.0.0.exe
 npm run build:linux   # AppImage
 ```
 
@@ -285,12 +296,12 @@ src/
     ├── block-types.js          BlockType / InlineType enums
     ├── block-parser.js         DOM → Block State
     ├── inline-parser.js        inline DOM → styled segments
-    ├── block-serializer.js     Block State → Telegram JSON
+    ├── html-serializer.js      editor DOM → Rich HTML + request bodies
     ├── block-manager.js        CRUD + undo/redo
     ├── constants.js            limits and defaults
     └── utils.js                sanitizeUrl, validation, helpers
 
-tests/unit/                     151 tests — parsers, serializer, registry,
+tests/unit/                     179 tests — HTML serializer, parsers,
                                 i18n parity, stylesheets, validation
 ```
 
@@ -325,7 +336,7 @@ the palette and the tests all read from that registry.
 | Desktop shell | Electron 35 — frameless window, `safeStorage`, `contextBridge` |
 | UI | React 19 + Vite 6 |
 | Editor | TipTap 2 (ProseMirror) |
-| Data model | Block State → `InputRichBlock*` / `RichText*` |
+| Data model | Editor DOM → Telegram Rich HTML (`rich_message.html`) |
 | Tests | Vitest 2 + jsdom |
 | Packaging | electron-builder — NSIS installer, AppImage |
 | CI | GitHub Actions — lint, test, build |

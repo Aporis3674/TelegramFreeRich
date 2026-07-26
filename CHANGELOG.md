@@ -1,5 +1,39 @@
 # Changelog
 
+## [5.0.0] - 2026-07-26
+
+### Fixed (Critical) — messages could not be sent at all
+- `sendRichMessage` was called with `rich_message: { blocks: [...] }`, a shape the API does not
+  accept. `InputRichMessage` carries **exactly one of `html` or `markdown`**; the `RichBlock`
+  array is the *receiving* shape, returned inside `Message.rich_message`. Every send failed,
+  which is what the "error when sending a heading" report came down to
+- New `src/shared/html-serializer.js` walks the editor DOM into Telegram's documented **Rich
+  HTML** vocabulary and builds the request bodies:
+  - marks → `<b> <i> <u> <s> <code> <mark> <sub> <sup>`, spoiler → `<tg-spoiler>`,
+    inline formula → `<tg-math>`
+  - blocks → `<p> <h1>…<h6> <ul> <ol> <li> <pre> <blockquote> <footer> <hr/> <table> <details>`,
+    pull quote → `<aside>`, formula → `<tg-math-block>`
+  - media → `<img> <video> <audio>`, gallery → `<tg-collage>` / `<tg-slideshow>`,
+    location → `<tg-map lat long zoom/>`
+  - anything undocumented is unwrapped or dropped; links keep only `http`, `https`, `mailto`,
+    `tel`, `tg` and `#anchor`, media only `http(s)`
+- `sendRichMessageDraft` now sends the required non-zero `draft_id` and refuses non-private
+  chats, as the API demands
+- `editMessageText` sends `chat_id` + `message_id` + `rich_message`
+- Documented limits are checked before sending: 32,768 characters, 500 blocks, 50 media files,
+  20 table columns — each with its own message
+- Removed `src/shared/block-serializer.js`; the block model stays only where it is correct —
+  driving the live preview, which mirrors what Telegram sends back
+
+### Tooling
+- 179 unit tests, 48 of them pinning the Rich HTML output tag by tag
+- Verified end to end in a headless build: the app now emits
+  `{"chat_id":"…","rich_message":{"html":"<h1>…"}}`
+
+### Breaking
+- The renderer no longer produces a block array for sending; anything reading
+  `block-serializer.js` must move to `html-serializer.js`
+
 ## [4.1.1] - 2026-07-26
 
 ### Fixed

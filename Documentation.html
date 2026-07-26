@@ -91,7 +91,7 @@
 <body>
 
 <h1>TelegramFreeRich</h1>
-<p class="meta">Design Specification — v4.0 (as shipped)<br>Last updated: July 2026</p>
+<p class="meta">Design Specification — v5.0 (as shipped)<br>Last updated: July 2026</p>
 
 <p><em>A desktop WYSIWYG rich text editor for Telegram Bot API 10.1.</em></p>
 <p>Send structured, formatted messages through any Telegram bot. No Premium required.</p>
@@ -110,42 +110,50 @@
 
 <h3>Rejected</h3>
 <div class="arch-box wrong">
-contenteditable DOM &rarr; Markdown string &rarr; sendRichMessage(markdown)
+editor DOM &rarr; block array &rarr; sendRichMessage(rich_message: {blocks})
 </div>
-<p>The API does <strong>not</strong> accept a Markdown string for complex blocks. It expects a structured JSON array of <code>InputRichBlock*</code> objects.</p>
+<p><code>InputRichMessage</code> — the object <code>sendRichMessage</code> takes — has no
+<code>blocks</code> field. It carries <strong>exactly one</strong> of <code>html</code> or
+<code>markdown</code>. The <code>RichBlock</code> array is the receiving shape: what a bot reads
+back from <code>Message.rich_message</code>. Sending a block tree is rejected by the API.</p>
 
 <h3>Shipped</h3>
 <div class="arch-box correct">
-TipTap (ProseMirror) DOM &rarr; Block State (JSON[]) + inline segments &rarr; sendRichMessage(blocks)
+TipTap DOM &rarr; Rich HTML &rarr; sendRichMessage(rich_message: {html, is_rtl?})
 </div>
-<p>Every message section is an independent block object in an array. Inline runs inside a block are parsed separately into <code>{ text, marks[], href? }</code> segments and serialized into nested <code>RichText*</code> objects as the block's <code>rich_text</code> field, so bold / spoiler / link formatting survives the trip to the API instead of being flattened to plain text.</p>
+<p>The editor already holds a DOM, so serialization is a tag-by-tag mapping into the documented
+Rich HTML vocabulary. Anything outside that vocabulary is unwrapped or dropped, so the payload
+can never contain markup Telegram would refuse. The serializer also counts characters, blocks and
+media and refuses to send past the documented limits (32,768 / 500 / 50).</p>
 
-<pre><code>src/renderer/components/useTfrEditor.js   TipTap instance + extensions
-src/renderer/lib/editor-actions.js        one registry for every command
-src/shared/block-parser.js                DOM        -&gt; Block State
-src/shared/inline-parser.js               inline DOM -&gt; styled segments
-src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code></pre>
+<pre><code>src/shared/html-serializer.js   editor DOM -&gt; Rich HTML + request bodies
+src/shared/block-parser.js      editor DOM -&gt; RichBlock-shaped model (live preview)
+src/shared/inline-parser.js     inline DOM -&gt; RichText-shaped segments (live preview)
+src/renderer/lib/editor-actions.js  one registry for every command</code></pre>
 
-<h3>Block Structure Example</h3>
-<pre><code>[
-  { "type": "heading", "level": 2, "text": "Title" },
-  { "type": "paragraph", "text": "Text with bold and a link",
-    "rich_text": [
-      { "type": "text", "text": "Text with " },
-      { "type": "bold", "text": { "type": "text", "text": "bold" } },
-      { "type": "text", "text": " and a " },
-      { "type": "link", "url": "https://t.me/x",
-        "text": { "type": "text", "text": "link" } }
-    ] },
-  { "type": "preformatted", "language": "js", "text": "console.log('hi')" },
-  { "type": "table", "header": ["Col A", "Col B"], "rows": [["1", "2"]] },
-  { "type": "list", "style": "bullet", "items": ["Item 1", "Item 2"] },
-  { "type": "details", "summary": "Expand", "content": "Hidden content" },
-  { "type": "photo", "url": "https://...", "caption": "" },
-  { "type": "divider" },
-  { "type": "footer", "text": "Footnote 1" }
-]</code></pre>
-<p>Each block maps to its equivalent <code>InputRichBlock*</code> class at send time.</p>
+<h3>Request shape</h3>
+<pre><code>{
+  "chat_id": "@channel",
+  "rich_message": {
+    "html": "&lt;h2&gt;Title&lt;/h2&gt;&lt;p&gt;Text with &lt;b&gt;bold&lt;/b&gt; and &lt;tg-spoiler&gt;a secret&lt;/tg-spoiler&gt;.&lt;/p&gt;",
+    "is_rtl": false
+  }
+}</code></pre>
+
+<h3>Tag mapping</h3>
+<table>
+<tr><th>Editor</th><th>Rich HTML</th></tr>
+<tr><td>heading H1-H6</td><td><code>&lt;h1&gt;</code>…<code>&lt;h6&gt;</code></td></tr>
+<tr><td>quote / pull quote</td><td><code>&lt;blockquote&gt;</code> / <code>&lt;aside&gt;</code> (+ <code>&lt;cite&gt;</code>)</td></tr>
+<tr><td>code block</td><td><code>&lt;pre&gt;&lt;code class="language-…"&gt;</code></td></tr>
+<tr><td>spoiler / marked</td><td><code>&lt;tg-spoiler&gt;</code> / <code>&lt;mark&gt;</code></td></tr>
+<tr><td>formula inline / block</td><td><code>&lt;tg-math&gt;</code> / <code>&lt;tg-math-block&gt;</code></td></tr>
+<tr><td>slideshow / collage</td><td><code>&lt;tg-slideshow&gt;</code> / <code>&lt;tg-collage&gt;</code></td></tr>
+<tr><td>location</td><td><code>&lt;tg-map lat long zoom/&gt;</code></td></tr>
+<tr><td>table</td><td><code>&lt;table bordered&gt;</code>, cells inline-only</td></tr>
+<tr><td>collapsible</td><td><code>&lt;details open&gt;&lt;summary&gt;</code></td></tr>
+<tr><td>checklist</td><td>lifted out &rarr; <code>sendChecklist</code></td></tr>
+</table>
 
 <hr>
 
@@ -266,12 +274,12 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <tr><th>Layer</th><th>Technology</th></tr>
 <tr><td>Desktop shell</td><td>Electron 35 (frameless window, safeStorage, contextBridge)</td></tr>
 <tr><td>Frontend</td><td>React 19 + TipTap 2 (ProseMirror), built with Vite 6</td></tr>
-<tr><td>Data model</td><td>Block State (JSON object array) -- not Markdown string</td></tr>
-<tr><td>Output</td><td>Block State &rarr; InputRichBlock* classes &rarr; sendRichMessage</td></tr>
+<tr><td>Data model</td><td>Editor DOM &rarr; Rich HTML string (<code>rich_message.html</code>)</td></tr>
+<tr><td>Output</td><td>sendRichMessage / sendRichMessageDraft / editMessageText</td></tr>
 <tr><td>Checklist</td><td>Separate sendChecklist call (not part of Rich Message)</td></tr>
 <tr><td>Themes</td><td>Dark (default) + Light toggle</td></tr>
 <tr><td>Shortcuts</td><td>Ctrl+Enter send, Ctrl+K link, Ctrl+P preview, Ctrl+, settings, Ctrl+B/I/U/E, Ctrl+Shift+P spoiler</td></tr>
-<tr><td>Tests</td><td>Vitest - 151 unit tests (parsers, serializer, action registry, i18n)</td></tr>
+<tr><td>Tests</td><td>Vitest - 179 unit tests (parsers, serializer, action registry, i18n)</td></tr>
 <tr><td>Packaging</td><td>Windows, macOS, Linux</td></tr>
 </table>
 
@@ -296,7 +304,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 
 <hr>
 
-<p style="text-align:center;color:var(--text-muted);font-size:0.85em">Built for TelegramFreeRich &mdash; v4.0</p>
+<p style="text-align:center;color:var(--text-muted);font-size:0.85em">Built for TelegramFreeRich &mdash; v5.0</p>
 
 </body>
 </html>

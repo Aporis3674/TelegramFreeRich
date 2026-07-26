@@ -25,12 +25,15 @@ import TableBubble from './components/TableBubble.jsx';
 import Toolbar from './components/Toolbar.jsx';
 import useTfrEditor from './components/useTfrEditor.js';
 import { I18nProvider, useI18n } from './i18n/index.js';
-import { parseAllBlocks } from '../shared/block-parser.js';
 import {
   buildChecklistBody,
+  buildDraftBody,
+  buildEditBody,
   buildRichMessageBody,
-  separateChecklists,
-} from '../shared/block-serializer.js';
+  checkLimits,
+  isPrivateChatId,
+  serializeEditorHtml,
+} from '../shared/html-serializer.js';
 import { DEFAULT_LANG, DEFAULT_THEME } from '../shared/constants.js';
 import { insertLink } from './lib/editor-actions.js';
 
@@ -38,6 +41,9 @@ const THEME_KEY = 'tfr-theme';
 const LANG_KEY = 'tfr-lang';
 const EDIT_ID_KEY = 'tfr-edit-id';
 const RTL_KEY = 'tfr-rtl';
+
+/** Draft streaming needs a stable non-zero id so updates animate in place. */
+const DRAFT_ID = 1;
 
 /**
  * @param {{ lang: string, onLangChange: (lang: string) => void }} props
@@ -145,35 +151,53 @@ function Shell({ lang, onLangChange }) {
       return;
     }
 
+    // Drafts stream into a private chat only, and need a non-zero draft_id.
+    if (mode === 'draft' && !isPrivateChatId(settings.chatId)) {
+      notify('toast.draftPrivateOnly', 'error');
+      return;
+    }
+
     setSending(true);
     try {
-      const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
-      const blocks = parseAllBlocks(doc.body.firstChild);
-      const { richBlocks, checklistItems } = separateChecklists(blocks);
+      const message = serializeEditorHtml(html);
+      const limits = checkLimits(message);
+      if (!limits.ok) {
+        notify(`toast.limit.${limits.reason}`, 'error');
+        setSending(false);
+        return;
+      }
 
-      if (checklistItems.length > 0) {
+      // Interactive checklists are their own API — never part of the rich body.
+      if (message.checklist.length > 0) {
         const result = await window.app.api(
           'sendChecklist',
-          buildChecklistBody(checklistItems, settings.chatId),
+          buildChecklistBody(message.checklist, settings.chatId),
         );
         if (!result.ok) {
           toast(`${tRef.current('toast.networkError')}: ${result.description}`, 'error');
-        } else if (richBlocks.length === 0) {
+        } else if (!message.html) {
           notify('toast.checklistSent', 'success');
         }
       }
 
-      if (richBlocks.length > 0) {
-        const body = buildRichMessageBody(richBlocks, settings.chatId, { isRtl });
-
+      if (message.html) {
+        const options = { isRtl };
         let result;
         if (mode === 'draft') {
-          result = await window.app.api('sendRichMessageDraft', body);
+          result = await window.app.api(
+            'sendRichMessageDraft',
+            buildDraftBody(message.html, settings.chatId, DRAFT_ID, options),
+          );
         } else if (mode === 'edit') {
-          body.message_id = Number(settings.editId) || settings.editId;
-          result = await window.app.api('editMessageText', body);
+          result = await window.app.api(
+            'editMessageText',
+            buildEditBody(message.html, settings.chatId, settings.editId, options),
+          );
         } else {
-          result = await window.app.api('sendRichMessage', body);
+          result = await window.app.api(
+            'sendRichMessage',
+            buildRichMessageBody(message.html, settings.chatId, options),
+          );
         }
 
         if (result.ok) {
@@ -184,7 +208,7 @@ function Shell({ lang, onLangChange }) {
         } else {
           toast(`${tRef.current('toast.networkError')}: ${result.description}`, 'error');
         }
-      } else if (checklistItems.length === 0) {
+      } else if (message.checklist.length === 0) {
         notify('toast.nothingToSend', 'error');
       }
     } catch {

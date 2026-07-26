@@ -8,12 +8,12 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-4.1.1-2ca5e0" alt="نسخه ۴٫۱٫۱">
+  <img src="https://img.shields.io/badge/version-5.0.0-2ca5e0" alt="نسخه ۵٫۰٫۰">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-151%20passing-4fc3a1" alt="۱۵۱ تست">
+  <img src="https://img.shields.io/badge/tests-179%20passing-4fc3a1" alt="۱۵۱ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -149,65 +149,77 @@ npm run dev
 
 ## 🧩 چطور کار می‌کند
 
-پیام‌های غنی تلگرام **مارک‌داون نیستند**. این API آرایه‌ای از اشیای ساختاریافتهٔ `InputRichBlock*`
-می‌خواهد، و برنامه دقیقاً همین را می‌سازد — هم بلوک‌ها و هم قطعه‌های سبک‌دار داخلشان:
+متد `sendRichMessage` فیلد `rich_message: { html | markdown }` می‌گیرد — دقیقاً یکی از این دو.
+آرایهٔ `RichBlock` شکل **دریافتی** است؛ چیزی که بات از `Message.rich_message` می‌خواند، نه چیزی که
+می‌فرستد. پس برنامه محتوای ویرایشگر را به دیالکت **Rich HTML** تلگرام تبدیل می‌کند:
 
 ```
 سند TipTap (ProseMirror)
         │
         ▼
-پارسر بلوک ────────────────────────────────► Block State (JSON[])
-   ├─ سطح بلوک     پاراگراف، عنوان، جدول، چک‌لیست، رسانه، …
-   └─ سطح درون‌خطی  قطعه‌های { text, marks[], href? }
+سریالایزر HTML  src/shared/html-serializer.js
+   ├─ نگه می‌دارد  <b> <i> <u> <s> <code> <mark> <sub> <sup> <a>
+   │              <p> <h1>…<h6> <ul> <ol> <li> <pre> <blockquote> <footer> <hr/>
+   │              <table> <details> <img> <video> <audio>
+   ├─ نگاشت       اسپویلر → <tg-spoiler>      نقل‌قول برجسته → <aside>
+   │              فرمول → <tg-math> / <tg-math-block>
+   │              گالری → <tg-collage> / <tg-slideshow>
+   │              موقعیت → <tg-map lat long zoom/>
+   └─ حذف         هر تگ و هر نوع نشانی که API مستند نکرده
         │
         ▼
-سریالایزر بلوک
-   ├─ blocks     → InputRichBlock*
-   └─ rich_text  → RichText* تودرتو   (پررنگ داخل کج داخل پیوند)
+   rich_message: { html, is_rtl?, skip_entity_detection? }
         │
         ├──► sendRichMessage        پیام غنی
-        ├──► sendRichMessageDraft   پیش‌نویس ۳۰ ثانیه‌ای
+        ├──► sendRichMessageDraft   پیش‌نویس ۳۰ ثانیه‌ای (فقط چت خصوصی، با draft_id)
+        ├──► editMessageText        بازنویسی پیام موجود
         └──► sendChecklist          چک‌لیست، همیشه فراخوانی جداگانه
 ```
 
-<details>
-<summary><strong>انواع بلوک ← API تلگرام</strong></summary>
+پیش از ارسال، سریالایزر خروجی را می‌شمارد و با محدودیت‌های مستند مقایسه می‌کند: ۳۲٬۷۶۸ کاراکتر،
+۵۰۰ بلوک، ۵۰ فایل رسانه‌ای و ۲۰ ستون در جدول.
 
-| بلوک | نوع API |
+پیش‌نمایش زنده مسیر خودش را دارد: `block-parser.js` و `inline-parser.js` همان شکل
+`RichBlock` / `RichText` را می‌سازند که تلگرام **برمی‌گرداند**، و حباب از روی آن رندر می‌شود.
+
+<details>
+<summary><strong>ویرایشگر ← Rich HTML</strong></summary>
+
+| در ویرایشگر | روی سیم |
 |---|---|
-| paragraph | `InputRichBlockParagraph` |
-| heading | `InputRichBlockHeading` |
-| blockquote | `InputRichBlockBlockquote` |
-| pullquote | `InputRichBlockAside` |
-| code_block | `InputRichBlockPreformatted` |
-| divider | `InputRichBlockDivider` |
-| list | `InputRichBlockList` |
-| table | `InputRichBlockTable` |
-| details | `InputRichBlockDetails` |
-| footer | `InputRichBlockFooter` |
-| photo / video / audio | `InputRichBlockPhoto` / `…Video` / `…Audio` |
-| slideshow / collage | `InputRichBlockSlideshow` / `InputRichBlockCollage` |
-| map | `InputRichBlockMap` |
-| math_block | `InputRichBlockMath` |
-| checklist | جداگانه با `sendChecklist` |
+| عنوان H1 تا H6 | `<h1>`…`<h6>` |
+| پاراگراف | `<p>` |
+| نقل‌قول | `<blockquote>` (و `<cite>` برای منبع) |
+| نقل‌قول برجسته | `<aside>` |
+| بلوک کد | `<pre><code class="language-…">` |
+| جداکننده | `<hr/>` |
+| فهرست نقطه‌ای / شماره‌دار | `<ul>` / `<ol start="…">` |
+| جدول | `<table bordered>` با `<th>` و `<td>` |
+| بخش تاشو | `<details open><summary>` |
+| پاورقی | `<footer>` |
+| عکس / ویدیو / صدا | `<img src>` / `<video src>` / `<audio src>` |
+| اسلایدشو / کلاژ | `<tg-slideshow>` / `<tg-collage>` |
+| موقعیت مکانی | `<tg-map lat long zoom/>` |
+| بلوک فرمول / درون‌خطی | `<tg-math-block>` / `<tg-math>` |
+| چک‌لیست | جدا می‌شود و با `sendChecklist` می‌رود |
 
 </details>
 
 <details>
-<summary><strong>نشانه‌های درون‌خطی ← اشیای RichText</strong></summary>
+<summary><strong>نشانه‌های درون‌خطی</strong></summary>
 
-| نشانه | نوع API |
-|---|---|
-| پررنگ / کج / زیرخط‌دار / خط‌خورده | `RichTextBold`، `RichTextItalic`، `RichTextUnderline`، `RichTextStrikethrough` |
-| اسپویلر | `RichTextSpoiler` |
-| هایلایت | `RichTextMarked` |
-| کد | `RichTextCode` |
-| زیرنویس / بالانویس | `RichTextSubscript` / `RichTextSuperscript` |
-| پیوند | `RichTextLink` (شامل `url`) |
-| ریاضی | `RichTextMath` |
+| نشانه | روی سیم | موجودیت تلگرام |
+|---|---|---|
+| پررنگ / کج / زیرخط‌دار / خط‌خورده | `<b>` `<i>` `<u>` `<s>` | `RichTextBold`، `RichTextItalic`، `RichTextUnderline`، `RichTextStrikethrough` |
+| اسپویلر | `<tg-spoiler>` | `RichTextSpoiler` |
+| هایلایت | `<mark>` | `RichTextMarked` |
+| تک‌فاصله | `<code>` | `RichTextCode` |
+| زیرنویس / بالانویس | `<sub>` / `<sup>` | `RichTextSubscript` / `RichTextSuperscript` |
+| پیوند | `<a href>` | `RichTextUrl` |
+| فرمول درون‌خطی | `<tg-math>` | `RichTextMathematicalExpression` |
 
-قطعه‌ای که چند نشانه دارد از درون به بیرون تودرتو می‌شود؛ یعنی `**_کلمه_**` می‌شود
-`italic( bold( text ) )`.
+روی پیوندها فقط `http`، `https`، `mailto`، `tel`، `tg` و لنگر داخلی `#anchor` باقی می‌مانند؛ رسانه
+هم فقط `http(s)` می‌پذیرد، دقیقاً همان‌طور که API می‌خواهد.
 
 </details>
 
@@ -242,10 +254,10 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۱۵۱ تست واحد (Vitest)
+npm test              # ۱۷۹ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-4.1.1.exe
+npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.0.0.exe
 npm run build:linux   # AppImage
 ```
 
@@ -284,12 +296,12 @@ src/
     ├── block-types.js          انواع BlockType / InlineType
     ├── block-parser.js         DOM → Block State
     ├── inline-parser.js        DOM درون‌خطی → قطعه‌های سبک‌دار
-    ├── block-serializer.js     Block State → JSON تلگرام
+    ├── html-serializer.js      DOM ویرایشگر → Rich HTML و بدنهٔ درخواست‌ها
     ├── block-manager.js        CRUD + undo/redo
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۱۵۱ تست — پارسرها، سریالایزر، رجیستری،
+tests/unit/                     ۱۷۹ تست — سریالایزر HTML، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 
@@ -324,7 +336,7 @@ tests/unit/                     ۱۵۱ تست — پارسرها، سریالا�
 | پوستهٔ دسکتاپ | Electron 35 — پنجرهٔ بدون قاب، `safeStorage`، `contextBridge` |
 | رابط کاربری | React 19 + Vite 6 |
 | ویرایشگر | TipTap 2 (ProseMirror) |
-| مدل داده | Block State ← `InputRichBlock*` / `RichText*` |
+| مدل داده | DOM ویرایشگر ← Rich HTML تلگرام (`rich_message.html`) |
 | تست | Vitest 2 + jsdom |
 | بسته‌بندی | electron-builder — نصب‌کنندهٔ NSIS، AppImage |
 | CI | GitHub Actions — لینت، تست، بیلد |
