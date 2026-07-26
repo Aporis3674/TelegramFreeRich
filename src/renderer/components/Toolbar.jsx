@@ -2,11 +2,11 @@
  * Toolbar — the pill toolbar from Telegram Desktop's rich-text composer.
  *
  * Layout (left → right):
- *   [ undo ][ redo ]   [ Aa ][ B ][ list★ ][ table★ ][ link ][ image★ ][ Σ★ ]   ( ☺ )
+ *   [ undo ][ redo ]   [ Aa ][ B ][ list ][ table ][ link ][ image ][ Σ ]   ( ☺ )
  *
  * Each button is an outlined pill; buttons that open a menu render their
- * options through <Popover>. The violet star marks features Telegram reserves
- * for Premium subscribers — they are all free through the Bot API.
+ * options through <Popover>. The toolbar itself stays unbadged — the violet
+ * Premium stars live next to the individual features inside the menus.
  *
  * @module components/Toolbar
  */
@@ -22,7 +22,6 @@ import {
   FormulaIcon,
   ImageIcon,
   LinkIcon,
-  PremiumStar,
   RedoIcon,
   TableIcon,
   TextStyleIcon,
@@ -45,7 +44,6 @@ import { useI18n } from '../i18n/index.js';
  *   icon: Function,
  *   label: string,
  *   onClick: (event: React.MouseEvent) => void,
- *   premium?: boolean,
  *   active?: boolean,
  *   disabled?: boolean,
  *   round?: boolean,
@@ -57,7 +55,6 @@ function TbButton({
   icon: Icon,
   label,
   onClick,
-  premium = false,
   active = false,
   disabled = false,
   round = false,
@@ -75,11 +72,6 @@ function TbButton({
       aria-label={label}
     >
       <Icon size={20} />
-      {premium && (
-        <span className="tb-star">
-          <PremiumStar size={11} />
-        </span>
-      )}
     </button>
   );
 }
@@ -168,7 +160,6 @@ export default function Toolbar({ editor, ctx }) {
           buttonRef={listsRef}
           icon={BulletListIcon}
           label={t('toolbar.lists')}
-          premium
           active={menu === 'lists'}
           onClick={() => toggle('lists')}
         />
@@ -176,7 +167,6 @@ export default function Toolbar({ editor, ctx }) {
           buttonRef={tableRef}
           icon={TableIcon}
           label={t('toolbar.table')}
-          premium
           active={menu === 'table'}
           onClick={() => toggle('table')}
         />
@@ -190,7 +180,6 @@ export default function Toolbar({ editor, ctx }) {
           buttonRef={mediaRef}
           icon={ImageIcon}
           label={t('toolbar.media')}
-          premium
           active={menu === 'media'}
           onClick={() => toggle('media')}
         />
@@ -198,7 +187,6 @@ export default function Toolbar({ editor, ctx }) {
           buttonRef={formulaRef}
           icon={FormulaIcon}
           label={t('toolbar.formula')}
-          premium
           active={menu === 'formula'}
           onClick={() => toggle('formula')}
         />

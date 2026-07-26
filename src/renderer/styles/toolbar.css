@@ -75,7 +75,9 @@
   cursor: default;
 }
 
-/* Violet Premium star badge, bottom-trailing corner of the pill */
+/* Violet Premium star badge — used by the bottom-bar palette button.
+   The top toolbar deliberately carries no badges; the stars appear next to the
+   individual features inside the dropdown menus instead. */
 .tb-star {
   position: absolute;
   right: 3px;

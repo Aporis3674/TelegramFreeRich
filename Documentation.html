@@ -205,7 +205,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <p>The window mirrors Telegram Desktop's own rich-text composer: a frameless dark window, hairline-outlined pill buttons, violet Premium stars, and one salmon send button.</p>
 
 <pre><code>+------------------------------------------------------------  _  []  X -+
-| (undo)(redo)   (Aa)(B)(list*)(table*)(link)(img*)(S*)          (emoji) |
+| (undo)(redo)   (Aa)(B)(list)(table)(link)(img)(S)              (emoji) |
 +----------------------------------------------+-------------------------+
 |                                              |                         |
 | Message                                      |  LIVE PREVIEW (Ctrl+P)  |
@@ -215,7 +215,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 | [ ] Checklist item                           |  | same Block State  |  |
 |                                              |  +-------------------+  |
 +----------------------------------------------+-------------------------+
-| (palette*)                  341 / 32,768        (trash)        (SEND)  |
+| (palette)                   341 / 32,768        (trash)        (SEND)  |
 +------------------------------------------------------------------------+</code></pre>
 
 <h3>Toolbar</h3>
@@ -230,7 +230,7 @@ src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code>
 <li><strong>Emoji:</strong> searchable picker with a category strip</li>
 </ol>
 
-<p>The violet star marks features Telegram gates behind Premium. Every menu and the insert palette are generated from a single action registry, so a new command is declared once.</p>
+<p>The toolbar itself carries no badges. Inside the menus a violet star marks the individual features Telegram gates behind Premium. Every menu and the insert palette are generated from a single action registry, so a new command is declared once.</p>
 
 <h3>Bottom Bar</h3>
 <ul>

@@ -64,7 +64,7 @@ button:
 
 ```
 ┌ ─────────────────────────────────────────────────────────  ─  □  ✕ ┐
-│  ( ↶ )( ↷ )   ( Aa )( B )( ☰★ )( ▦★ )( 🔗 )( 🖼★ )( Σ★ )      ( ☺ ) │
+│  ( ↶ )( ↷ )   ( Aa )( B )( ☰ )( ▦ )( 🔗 )( 🖼 )( Σ )         ( ☺ ) │
 │                                                                    │
 │  Message                                        │  Live preview    │
 │                                                 │                  │
@@ -87,8 +87,9 @@ button:
 | 🗑 | Clear the message (with confirmation) |
 | ➤ | Send. Right-click for send mode: rich message, draft or edit |
 
-The violet star marks features Telegram reserves for Premium subscribers. Every one of them
-is free here, because the Bot API never charged for them.
+The toolbar stays unbadged. Inside the menus a violet star marks the individual features
+Telegram reserves for Premium subscribers — every one of them is free here, because the Bot API
+never charged for them.
 
 ---
 

@@ -4,8 +4,9 @@
 
 ### UI — Telegram Desktop composer
 - Window rebuilt to match Telegram Desktop's rich-text composer: frameless window with a
-  renderer-drawn title bar, hairline-outlined pill toolbar, violet Premium star badges and a
-  single salmon send button
+  renderer-drawn title bar, hairline-outlined pill toolbar and a single salmon send button.
+  The toolbar carries no badges; violet Premium stars mark the individual features inside the
+  menus instead
 - Toolbar groups: undo/redo, then `Aa` (text style), `B` (formatting), lists, table, link,
   media, formula, with the emoji picker trailing
 - New dropdown menu system (`Popover` + `ActionMenu`) with icons, shortcut hints, active
