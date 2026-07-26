@@ -8,12 +8,12 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.2-2ca5e0" alt="نسخه ۵٫۱٫۲">
+  <img src="https://img.shields.io/badge/version-5.1.3-2ca5e0" alt="نسخه ۵٫۱٫۳">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-227%20passing-4fc3a1" alt="۲۲۷ تست">
+  <img src="https://img.shields.io/badge/tests-228%20passing-4fc3a1" alt="۲۲۸ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -284,10 +284,10 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۲۲۷ تست واحد (Vitest)
+npm test              # ۲۲۸ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.2.exe
+npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.3.exe
 npm run build:linux   # AppImage
 ```
 
@@ -333,7 +333,7 @@ src/
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۲۲۷ تست — سریالایزر HTML، پروکسی، بسته‌بندی، پارسرها،
+tests/unit/                     ۲۲۸ تست — سریالایزر HTML، پروکسی، بسته‌بندی، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 

@@ -17,7 +17,11 @@ function fakeNet(script = {}) {
     request(options) {
       calls.push(options);
       const request = new EventEmitter();
-      request.setHeader = vi.fn();
+      request.headers = {};
+      request.setHeader = vi.fn((name, value) => {
+        request.headers[name] = value;
+      });
+      calls[calls.length - 1].headers = request.headers;
       request.write = vi.fn();
       request.abort = vi.fn();
       request.end = () => {
@@ -81,6 +85,15 @@ describe('createRequester', () => {
     await request('https://api.telegram.org/botX/getMe');
     expect(calls[0].session).toEqual({ id: 'default' });
     expect(calls[0].useSessionCookies).toBe(false);
+  });
+
+  it('never sets Content-Length on a POST', async () => {
+    // Chromium derives it from the body and rejects a manual value with
+    // net::ERR_INVALID_ARGUMENT — which failed every send while the GET-only
+    // connection test kept passing.
+    const { request, calls } = make({ body: '{"ok":true}' });
+    await request('https://api.telegram.org/botX/sendRichMessage', { chat_id: '@c' });
+    expect(calls[0].headers).toEqual({ 'Content-Type': 'application/json' });
   });
 
   it('reads the session per request, not while being built', async () => {

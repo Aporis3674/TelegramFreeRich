@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.1.3] - 2026-07-26
+
+### Fixed (Critical) — every send failed with `net::ERR_INVALID_ARGUMENT`
+- The request layer set `Content-Length` by hand on POSTs. Chromium computes that header from
+  the body it is given and **rejects a manually supplied one**, so every send — rich message,
+  draft, edit, checklist — was refused locally before it ever reached the network. GET requests
+  carry no body and no such header, which is why **Check connection to Telegram kept reporting
+  success while nothing could be sent**
+- Only `Content-Type` is set now. Reproduced and then confirmed fixed in a real Electron 35
+  runtime: with the header, an identical POST fails `net::ERR_INVALID_ARGUMENT`; without it the
+  request leaves the process and fails only on the network beyond it
+- `request.test.js` now records the headers the requester sets and fails if a POST carries
+  anything besides `Content-Type`
+
 ## [5.1.2] - 2026-07-26
 
 ### Fixed (Critical) — the app crashed on launch

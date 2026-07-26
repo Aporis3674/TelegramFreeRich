@@ -101,8 +101,11 @@ function createRequester({
       const timer = setTimeout(() => fail(new Error('Request timeout')), timeoutMs);
 
       if (isPost) {
+        // Content-Type only. Chromium computes Content-Length from the body it
+        // is given and rejects a manually supplied one, so setting it here
+        // failed every POST — every send — with `net::ERR_INVALID_ARGUMENT`,
+        // while GET requests (the connection test) went through untouched.
         request.setHeader('Content-Type', 'application/json');
-        request.setHeader('Content-Length', String(Buffer.byteLength(data)));
       }
 
       request.on('response', (response) => {
