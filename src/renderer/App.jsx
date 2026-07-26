@@ -160,9 +160,11 @@ function Shell({ lang, onLangChange }) {
 
     setSending(true);
     try {
-      // An interactive checklist is its own API, and that API only works on
-      // behalf of a connected business account. Without one, the task list
-      // travels inside the message body as a ☑ / ☐ list instead of failing.
+      // A task list normally rides inside the message as Rich HTML's own
+      // `<input type="checkbox">` list, which works in any chat. Telegram's
+      // *interactive* checklist is a separate method, and it only works for a
+      // bot acting for a connected business account in a private chat — so it
+      // is used exactly when both of those hold.
       const businessId = settings.businessConnectionId || '';
       const asChecklist = !!businessId && isPrivateChatId(settings.chatId);
       const message = serializeEditorHtml(html, { inlineChecklist: !asChecklist });
@@ -173,9 +175,10 @@ function Shell({ lang, onLangChange }) {
         return;
       }
 
-      if (message.inlinedChecklist) {
-        // Say which of the two reasons applied, so it is actionable.
-        notify(businessId ? 'toast.checklistPrivateOnly' : 'toast.checklistNeedsBusiness', 'info');
+      // Only worth a word when the user configured a business connection and
+      // still did not get the interactive form: the chat is the reason.
+      if (message.inlinedChecklist && businessId) {
+        notify('toast.checklistPrivateOnly', 'info');
       }
 
       if (asChecklist && message.checklist.length > 0) {

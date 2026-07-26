@@ -256,15 +256,18 @@ describe('checklists', () => {
     expect(out.html).toBe('<ul><li>a</li></ul>');
   });
 
-  it('renders task items into the body when asked to inline them', () => {
-    // The fallback for a bot without a business connection: sendChecklist is
-    // unavailable, so the list travels inside the message instead.
+  it('renders task items as Rich HTML checkboxes inside the body', () => {
+    // `<li><input type="checkbox">` is documented Rich HTML, so Telegram draws
+    // real checkboxes — in a channel too, unlike sendChecklist.
     const out = serializeEditorHtml(
       '<p>intro</p><ul data-type="taskList"><li data-checked="true">done</li>' +
         '<li data-checked="false">todo</li></ul>',
       { inlineChecklist: true },
     );
-    expect(out.html).toBe('<p>intro</p><ul><li>☑ done</li><li>☐ todo</li></ul>');
+    expect(out.html).toBe(
+      '<p>intro</p><ul><li><input type="checkbox" checked>done</li>' +
+        '<li><input type="checkbox">todo</li></ul>',
+    );
     expect(out.inlinedChecklist).toBe(true);
     // Still reported, so the caller can say which form was sent.
     expect(out.checklist).toEqual([
@@ -295,7 +298,8 @@ describe('checklists', () => {
       { text: 'world', done: false },
     ]);
     expect(serializeEditorHtml(tiptap, { inlineChecklist: true }).html).toBe(
-      '<ul><li>☑ hello</li><li>☐ world</li></ul>',
+      '<ul><li><input type="checkbox" checked>hello</li>' +
+        '<li><input type="checkbox">world</li></ul>',
     );
   });
 
@@ -303,7 +307,7 @@ describe('checklists', () => {
     const out = serializeEditorHtml('<ul data-type="taskList"><li>a &lt; b</li></ul>', {
       inlineChecklist: true,
     });
-    expect(out.html).toBe('<ul><li>☐ a &lt; b</li></ul>');
+    expect(out.html).toBe('<ul><li><input type="checkbox">a &lt; b</li></ul>');
   });
 });
 

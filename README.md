@@ -8,7 +8,7 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.1.4-2ca5e0" alt="Version 5.1.4">
+  <img src="https://img.shields.io/badge/version-5.1.5-2ca5e0" alt="Version 5.1.5">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
@@ -43,14 +43,10 @@ formatting is available to **every bot, for free**, through Bot API 10.1.
 |---|---|---|
 | Headings, quotes, tables, code blocks | 💎 Premium | ✅ Free |
 | Spoilers, marked text, sub/superscript | 💎 Premium | ✅ Free |
-| Checklists, collapsibles, formulas | 💎 Premium | ✅ Free\* |
+| Checklists, collapsibles, formulas | 💎 Premium | ✅ Free |
 | Monthly cost | 💸 | **0** |
 
 No coding, no server, no subscription. Point the app at a bot token and a chat, and write.
-
-\* An *interactive* checklist is the one exception: Telegram only lets a bot send one on behalf of a
-connected business account, in a private chat. Without one the app sends the task list as a ☑ / ☐
-list inside the message — see [Checklists](#-checklists).
 
 ---
 
@@ -111,21 +107,24 @@ never reaches the window you type in.
 
 ## ☑ Checklists
 
-A checklist is not part of a rich message: it has its own method, `sendChecklist`, and Telegram
-restricts it to **a bot acting on behalf of a connected business account, in a private chat**. A
-plain bot token cannot send one, whatever the payload looks like.
+A checklist travels **inside the message**. Rich HTML has its own task-list form —
+`<ul><li><input type="checkbox" checked>done</li></ul>` — so Telegram draws real checkboxes, in a
+channel, a group or a private chat alike, with the ticks you set in the editor preserved. Nothing
+extra to configure; write a checklist and send it.
 
-So the app takes both paths:
+Telegram *also* has a second, different thing: an **interactive** checklist, sent with the
+`sendChecklist` method, whose boxes readers can tick themselves. That one is restricted to a bot
+acting on behalf of a connected business account, in a private chat — and it comes with its own
+limits, **30 tasks** and **100 characters** each, and no way to send a task already ticked
+(`markChecklistTasksAsDone` does that afterwards).
+
+The app picks between them for you:
 
 | Settings ▸ Business connection ID | Chat | What gets sent |
 |---|---|---|
-| set | private (numeric ID) | a real interactive checklist via `sendChecklist` — the app asks for its title |
-| set | channel or group | a ☑ / ☐ list inside the message, with a toast saying why |
-| empty | anything | a ☑ / ☐ list inside the message, with a toast saying why |
-
-Two limits come from the API: **30 tasks**, and **100 characters** per task. And a task cannot be
-sent already ticked — `markChecklistTasksAsDone` is what ticks one afterwards — so items you
-checked in the editor arrive unchecked, and the app says so before sending.
+| empty *(the normal case)* | anything, channels included | checkboxes inside the message |
+| set | private (numeric ID) | an interactive checklist — the app asks for its title |
+| set | channel or group | checkboxes inside the message, with a note saying why |
 
 ---
 
@@ -229,7 +228,7 @@ HTML serializer  src/shared/html-serializer.js
         ├──► sendRichMessage        rich messages
         ├──► sendRichMessageDraft   30-second drafts (private chats, needs draft_id)
         ├──► editMessageText        rewrite an existing message
-        └──► sendChecklist          task lists, business connection only
+        └──► sendChecklist          interactive checklist, business only
 ```
 
 Before sending, the serializer counts what it produced and checks the documented limits:
@@ -257,7 +256,7 @@ The live preview keeps its own path — `block-parser.js` and `inline-parser.js`
 | slideshow / collage | `<tg-slideshow>` / `<tg-collage>` |
 | location | `<tg-map lat long zoom/>` |
 | formula block / inline | `<tg-math-block>` / `<tg-math>` |
-| checklist | lifted out, sent via `sendChecklist` — or inlined as ☑ / ☐ |
+| checklist | `<ul><li><input type="checkbox">…` — or lifted out for `sendChecklist` |
 
 </details>
 
@@ -313,7 +312,7 @@ npm run dev           # Vite + Electron with hot reload
 npm test              # 240 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.4.exe
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.5.exe
 npm run build:linux   # AppImage
 ```
 

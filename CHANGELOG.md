@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.1.5] - 2026-07-26
+
+### Fixed — a checklist can be sent to a channel after all
+- 5.1.4 treated `sendChecklist` as the only way to send a checklist and, since that method is
+  business-account-only, fell back to a plain `☑` / `☐` text list. That was wrong: **Rich HTML has
+  its own task-list form**, `<ul><li><input type="checkbox" checked>done</li></ul>`, so a checklist
+  travels inside an ordinary rich message — in a channel, a group or a private chat — and Telegram
+  draws real checkboxes with the ticks preserved
+- That is now the normal path, with nothing to configure. Verified in a real Electron window: the
+  app emits `rich_message.html = "<ul><li><input type=\"checkbox\">buy milk</li></ul>"`
+- `sendChecklist` stays for what it actually is — Telegram's *interactive* checklist, whose boxes
+  readers tick themselves — used only when a business connection ID is configured and the chat is
+  private. The Settings help text and both READMEs now say which is which
+- The apologetic "sent as a ☑ / ☐ list" notice is gone; the only remaining note is when a business
+  connection is configured but the chat is not private
+
 ## [5.1.4] - 2026-07-26
 
 ### Fixed — checklists could not be sent

@@ -30,9 +30,6 @@ export const LIMITS = Object.freeze({
   CHECKLIST_TASK_CHARS: 100,
 });
 
-/** Prefixes for a checklist rendered as ordinary list text. */
-const CHECK_MARKS = Object.freeze({ done: '☑', open: '☐' });
-
 /** Inline tags that map straight through, editor tag → API tag. */
 const INLINE_MAP = {
   STRONG: 'b',
@@ -109,14 +106,16 @@ export function safeUrl(raw, schemes = LINK_SCHEMES) {
 /**
  * Serialize the editor's HTML into Telegram's Rich HTML.
  *
- * Task lists are pulled out of the document: interactive checklists are their
- * own API (`sendChecklist`), so they are returned separately instead of being
- * flattened into the message body.
+ * Task lists have two destinations, and `inlineChecklist` picks between them:
  *
- * `sendChecklist` only works on behalf of a connected business account, though,
- * so `inlineChecklist` renders the task list into the message body as an
- * ordinary list marked with ☑ / ☐ instead. The items are still reported, so the
- * caller can say which form was sent.
+ *  - **on** (the normal case) — the task list is written into the message body
+ *    as Rich HTML's own `<li><input type="checkbox">` list. Works in any chat,
+ *    channels included, and keeps the checked state.
+ *  - **off** — the items are lifted out of the body and returned separately for
+ *    `sendChecklist`, Telegram's *interactive* checklist. That method only works
+ *    for a bot acting for a connected business account in a private chat.
+ *
+ * Either way the items are reported, so the caller knows what it is sending.
  *
  * @param {string} editorHtml - `editor.getHTML()` output.
  * @param {object} [options]
@@ -347,10 +346,13 @@ function collectChecklist(el, state) {
 }
 
 /**
- * Render collected task items as an ordinary list marked with ☑ / ☐.
+ * Render collected task items as Rich HTML's own task list.
  *
- * The fallback for bots without a business connection: not interactive, but it
- * reads as a checklist and travels in the message body like any other list.
+ * A list item holding `<input type="checkbox">` is part of the documented Rich
+ * HTML vocabulary, so Telegram draws real checkboxes — in a channel, a group or
+ * a private chat alike, with the checked state preserved. This is the ordinary
+ * way to put a checklist in a message; `sendChecklist` is the separate,
+ * business-account-only *interactive* checklist.
  *
  * @param {Array<{ text: string, done: boolean }>} items
  * @param {object} state
@@ -362,7 +364,7 @@ function checklistToHtml(items, state) {
   const rows = items
     .map(
       (item) =>
-        `<li>${escapeText(`${item.done ? CHECK_MARKS.done : CHECK_MARKS.open} ${item.text}`)}</li>`,
+        `<li><input type="checkbox"${item.done ? ' checked' : ''}>${escapeText(item.text)}</li>`,
     )
     .join('');
   return `<ul>${rows}</ul>`;
