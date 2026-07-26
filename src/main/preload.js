@@ -7,6 +7,17 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('app', {
+  /** Host platform, so the renderer can hide its title bar controls on macOS. */
+  platform: process.platform,
+
+  /** Window controls for the renderer-drawn title bar. */
+  win: {
+    minimize: () => ipcRenderer.invoke('window-control', { action: 'minimize' }),
+    toggleMaximize: () => ipcRenderer.invoke('window-control', { action: 'toggle-maximize' }),
+    close: () => ipcRenderer.invoke('window-control', { action: 'close' }),
+    isMaximized: () => ipcRenderer.invoke('window-control', { action: 'is-maximized' }),
+  },
+
   /**
    * Call Telegram API — token is handled securely in main process.
    * @param {string} method - API method name (e.g. 'sendRichMessage').

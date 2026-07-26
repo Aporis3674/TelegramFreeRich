@@ -1,140 +1,241 @@
 /**
- * Toolbar — Formatting toolbar with grouped buttons.
- * Group 1: Inline formatting (Bold, Italic, Underline, etc.)
- * Group 2: Block elements (Lists, Table, Code, etc.)
- * Group 3: Media & Special (Image, Math, etc.)
+ * Toolbar — the pill toolbar from Telegram Desktop's rich-text composer.
+ *
+ * Layout (left → right):
+ *   [ undo ][ redo ]   [ Aa ][ B ][ list★ ][ table★ ][ link ][ image★ ][ Σ★ ]   ( ☺ )
+ *
+ * Each button is an outlined pill; buttons that open a menu render their
+ * options through <Popover>. The violet star marks features Telegram reserves
+ * for Premium subscribers — they are all free through the Bot API.
+ *
+ * @module components/Toolbar
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import ActionMenu from './ActionMenu.jsx';
+import EmojiPicker from './EmojiPicker.jsx';
+import Popover from './Popover.jsx';
+import {
+  BoldIcon,
+  BulletListIcon,
+  EmojiIcon,
+  FormulaIcon,
+  ImageIcon,
+  LinkIcon,
+  PremiumStar,
+  RedoIcon,
+  TableIcon,
+  TextStyleIcon,
+  UndoIcon,
+} from './Icons.jsx';
+import {
+  FORMAT_ACTIONS,
+  FORMULA_ACTIONS,
+  LIST_ACTIONS,
+  MEDIA_ACTIONS,
+  TABLE_ACTIONS,
+  TEXT_STYLE_ACTIONS,
+  toggleLink,
+} from '../lib/editor-actions.js';
+import { useI18n } from '../i18n/index.js';
 
 /**
- * Get the TipTap editor instance from window.
- * @returns {import('@tiptap/react').Editor|null}
+ * A single outlined toolbar pill.
+ * @param {{
+ *   icon: Function,
+ *   label: string,
+ *   onClick: (event: React.MouseEvent) => void,
+ *   premium?: boolean,
+ *   active?: boolean,
+ *   disabled?: boolean,
+ *   round?: boolean,
+ *   wide?: boolean,
+ *   buttonRef?: React.Ref<HTMLButtonElement>,
+ * }} props
  */
-function getEditor() {
-  return window.__tfrEditor || null;
-}
-
-/**
- * Toolbar button component.
- * @param {{ icon: string, label: string, onClick: () => void, active?: boolean, disabled?: boolean }} props
- */
-function TbBtn({ icon, label, onClick, active = false, disabled = false }) {
+function TbButton({
+  icon: Icon,
+  label,
+  onClick,
+  premium = false,
+  active = false,
+  disabled = false,
+  round = false,
+  wide = false,
+  buttonRef,
+}) {
   return (
     <button
-      className={`tb-btn ${active ? 'active' : ''}`}
+      ref={buttonRef}
+      type="button"
+      className={`tb-btn${round ? ' round' : ''}${wide ? ' wide' : ''}${active ? ' active' : ''}`}
       onClick={onClick}
       disabled={disabled}
       title={label}
+      aria-label={label}
     >
-      <span className="tb-icon">{icon}</span>
+      <Icon size={20} />
+      {premium && (
+        <span className="tb-star">
+          <PremiumStar size={11} />
+        </span>
+      )}
     </button>
   );
 }
 
 /**
- * Separator between button groups.
+ * @param {{ editor: object|null, ctx: object }} props
  */
-function TbSep() {
-  return <div className="tb-separator" />;
-}
+export default function Toolbar({ editor, ctx }) {
+  const { t } = useI18n();
+  const [menu, setMenu] = useState(null);
+  const textStyleRef = useRef(null);
+  const formatRef = useRef(null);
+  const listsRef = useRef(null);
+  const tableRef = useRef(null);
+  const mediaRef = useRef(null);
+  const formulaRef = useRef(null);
+  const emojiRef = useRef(null);
 
-export default function Toolbar() {
-  const cmd = useCallback((action) => {
-    const editor = getEditor();
-    if (!editor) return;
-    action(editor);
-  }, []);
+  const close = useCallback(() => setMenu(null), []);
+  const toggle = useCallback((id) => setMenu((prev) => (prev === id ? null : id)), []);
 
-  const setBlock = useCallback((tag) => {
-    cmd((e) => e.chain().focus().setNode(tag).run());
-  }, [cmd]);
+  const run = useCallback(
+    (action) => {
+      close();
+      if (!editor) return;
+      Promise.resolve(action.run(editor, ctx)).catch(() =>
+        ctx.notify('toast.networkError', 'error'),
+      );
+    },
+    [editor, ctx, close],
+  );
 
-  const setTable = useCallback(() => {
-    cmd((e) =>
-      e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-    );
-  }, [cmd]);
+  const insertEmoji = useCallback(
+    (emoji) => {
+      if (editor) editor.chain().focus().insertContent(emoji).run();
+    },
+    [editor],
+  );
 
-  const setList = useCallback((type) => {
-    cmd((e) => {
-      if (type === 'bullet') return e.chain().focus().toggleBulletList().run();
-      if (type === 'ordered') return e.chain().focus().toggleOrderedList().run();
-    });
-  }, [cmd]);
+  const menus = [
+    { id: 'textStyle', actions: TEXT_STYLE_ACTIONS, anchor: textStyleRef, align: 'start' },
+    { id: 'format', actions: FORMAT_ACTIONS, anchor: formatRef, align: 'start' },
+    { id: 'lists', actions: LIST_ACTIONS, anchor: listsRef, align: 'start' },
+    { id: 'table', actions: TABLE_ACTIONS, anchor: tableRef, align: 'start' },
+    { id: 'media', actions: MEDIA_ACTIONS, anchor: mediaRef, align: 'center' },
+    { id: 'formula', actions: FORMULA_ACTIONS, anchor: formulaRef, align: 'end' },
+  ];
 
-  const setCodeBlock = useCallback(() => {
-    cmd((e) => e.chain().focus().toggleCodeBlock().run());
-  }, [cmd]);
-
-  const setBlockquote = useCallback(() => {
-    cmd((e) => e.chain().focus().toggleBlockquote().run());
-  }, [cmd]);
-
-  const setHorizontalRule = useCallback(() => {
-    cmd((e) => e.chain().focus().setHorizontalRule().run());
-  }, [cmd]);
-
-  const insertDetails = useCallback(() => {
-    cmd((e) => e.chain().focus().setDetails().run());
-  }, [cmd]);
-
-  const insertFooter = useCallback(() => {
-    cmd((e) => e.chain().focus().setFooter().run());
-  }, [cmd]);
-
-  const insertImage = useCallback(() => {
-    const url = prompt('Enter image URL:', 'https://');
-    if (!url) return;
-    const lower = url.trim().toLowerCase();
-    if (lower.startsWith('javascript:') || lower.startsWith('data:')) return;
-    cmd((e) => e.chain().focus().setImage({ src: url }).run());
-  }, [cmd]);
-
-  const toggleLink = useCallback(() => {
-    cmd((e) => {
-      const prev = e.getAttributes('link').href;
-      if (prev) return e.chain().focus().unsetLink().run();
-      const url = prompt('Enter URL:', 'https://');
-      if (!url) return e;
-      return e.chain().focus().setLink({ href: url }).run();
-    });
-  }, [cmd]);
+  const canUndo = !!editor && editor.can().undo();
+  const canRedo = !!editor && editor.can().redo();
 
   return (
-    <div className="toolbar">
-      {/* Group 1: Inline formatting */}
-      <TbBtn icon="B" label="Bold (Ctrl+B)" onClick={() => cmd(e => e.chain().focus().toggleBold().run())} active={getEditor()?.isActive('bold')} />
-      <TbBtn icon="I" label="Italic (Ctrl+I)" onClick={() => cmd(e => e.chain().focus().toggleItalic().run())} active={getEditor()?.isActive('italic')} />
-      <TbBtn icon="U" label="Underline (Ctrl+U)" onClick={() => cmd(e => e.chain().focus().toggleUnderline().run())} active={getEditor()?.isActive('underline')} />
-      <TbBtn icon="S̶" label="Strikethrough" onClick={() => cmd(e => e.chain().focus().toggleStrike().run())} active={getEditor()?.isActive('strike')} />
-      <TbBtn icon="S" label="Spoiler" onClick={() => cmd(e => e.chain().focus().toggleSpoiler().run())} active={getEditor()?.isActive('spoiler')} />
-      <TbBtn icon="==" label="Highlight" onClick={() => cmd(e => e.chain().focus().toggleHighlight().run())} active={getEditor()?.isActive('highlight')} />
-      <TbBtn icon="</>" label="Inline Code" onClick={() => cmd(e => e.chain().focus().toggleCode().run())} active={getEditor()?.isActive('code')} />
+    <div className="tfr-toolbar">
+      <div className="tb-group">
+        <TbButton
+          icon={UndoIcon}
+          label={t('toolbar.undo')}
+          disabled={!canUndo}
+          onClick={() => editor && editor.chain().focus().undo().run()}
+        />
+        <TbButton
+          icon={RedoIcon}
+          label={t('toolbar.redo')}
+          disabled={!canRedo}
+          onClick={() => editor && editor.chain().focus().redo().run()}
+        />
+      </div>
 
-      <TbSep />
+      <div className="tb-group">
+        <TbButton
+          buttonRef={textStyleRef}
+          icon={TextStyleIcon}
+          label={t('toolbar.textStyle')}
+          wide
+          active={menu === 'textStyle'}
+          onClick={() => toggle('textStyle')}
+        />
+        <TbButton
+          buttonRef={formatRef}
+          icon={BoldIcon}
+          label={t('toolbar.format')}
+          active={menu === 'format'}
+          onClick={() => toggle('format')}
+        />
+        <TbButton
+          buttonRef={listsRef}
+          icon={BulletListIcon}
+          label={t('toolbar.lists')}
+          premium
+          active={menu === 'lists'}
+          onClick={() => toggle('lists')}
+        />
+        <TbButton
+          buttonRef={tableRef}
+          icon={TableIcon}
+          label={t('toolbar.table')}
+          premium
+          active={menu === 'table'}
+          onClick={() => toggle('table')}
+        />
+        <TbButton
+          icon={LinkIcon}
+          label={t('toolbar.link')}
+          active={!!editor && editor.isActive('link')}
+          onClick={() => editor && toggleLink(editor, ctx)}
+        />
+        <TbButton
+          buttonRef={mediaRef}
+          icon={ImageIcon}
+          label={t('toolbar.media')}
+          premium
+          active={menu === 'media'}
+          onClick={() => toggle('media')}
+        />
+        <TbButton
+          buttonRef={formulaRef}
+          icon={FormulaIcon}
+          label={t('toolbar.formula')}
+          premium
+          active={menu === 'formula'}
+          onClick={() => toggle('formula')}
+        />
+      </div>
 
-      {/* Group 2: Block elements */}
-      <TbBtn icon="H1" label="Heading 1" onClick={() => setBlock('heading')} active={getEditor()?.isActive('heading', { level: 1 })} />
-      <TbBtn icon="H2" label="Heading 2" onClick={() => setBlock('heading')} active={getEditor()?.isActive('heading', { level: 2 })} />
-      <TbBtn icon="H3" label="Heading 3" onClick={() => setBlock('heading')} active={getEditor()?.isActive('heading', { level: 3 })} />
-      <TbBtn icon="❝" label="Blockquote" onClick={setBlockquote} active={getEditor()?.isActive('blockquote')} />
-      <TbBtn icon="•≡" label="Bullet List" onClick={() => setList('bullet')} active={getEditor()?.isActive('bulletList')} />
-      <TbBtn icon="1." label="Ordered List" onClick={() => setList('ordered')} active={getEditor()?.isActive('orderedList')} />
-      <TbBtn icon="</>" label="Code Block" onClick={setCodeBlock} active={getEditor()?.isActive('codeBlock')} />
-      <TbBtn icon="⊞" label="Table" onClick={setTable} active={getEditor()?.isActive('table')} />
-      <TbBtn icon="▸▾" label="Details/Collapsible" onClick={insertDetails} />
-      <TbBtn icon="—" label="Divider" onClick={setHorizontalRule} />
-      <TbBtn icon="⊥" label="Footer" onClick={insertFooter} />
-      <TbBtn icon="🔗" label="Link" onClick={toggleLink} active={getEditor()?.isActive('link')} />
+      <div className="tb-group tb-group-trailing">
+        <TbButton
+          buttonRef={emojiRef}
+          icon={EmojiIcon}
+          label={t('toolbar.emoji')}
+          round
+          active={menu === 'emoji'}
+          onClick={() => toggle('emoji')}
+        />
+      </div>
 
-      <TbSep />
+      {menus.map((config) => (
+        <Popover
+          key={config.id}
+          open={menu === config.id}
+          anchorEl={config.anchor.current}
+          align={config.align}
+          onClose={close}
+        >
+          <ActionMenu actions={config.actions} editor={editor} ctx={ctx} onRun={run} />
+        </Popover>
+      ))}
 
-      {/* Group 3: Media & Special */}
-      <TbBtn icon="🖼" label="Image" onClick={insertImage} />
-      <TbBtn icon="∑" label="Math Block" onClick={() => {
-        cmd(e => e.chain().focus().insertContent('<div class="tg-math">$$formula$$</div>').run());
-      }} />
+      <Popover
+        open={menu === 'emoji'}
+        anchorEl={emojiRef.current}
+        align="end"
+        onClose={close}
+        className="popover-emoji"
+      >
+        <EmojiPicker onPick={insertEmoji} />
+      </Popover>
     </div>
   );
 }

@@ -43,6 +43,7 @@ export const InlineType = Object.freeze({
   LINK: 'link',
   MENTION: 'mention',
   HASHTAG: 'hashtag',
+  BOT_COMMAND: 'bot_command',
   PHONE: 'phone_number',
   EMAIL: 'email',
   BANK_CARD: 'bank_card_number',

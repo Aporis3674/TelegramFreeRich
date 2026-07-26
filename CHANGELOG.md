@@ -1,5 +1,52 @@
 # Changelog
 
+## [4.0.0] - 2026-07-26
+
+### UI — Telegram Desktop composer
+- Window rebuilt to match Telegram Desktop's rich-text composer: frameless window with a
+  renderer-drawn title bar, hairline-outlined pill toolbar, violet Premium star badges and a
+  single salmon send button
+- Toolbar groups: undo/redo, then `Aa` (text style), `B` (formatting), lists, table, link,
+  media, formula, with the emoji picker trailing
+- New dropdown menu system (`Popover` + `ActionMenu`) with icons, shortcut hints, active
+  checkmarks and separators
+- Emoji picker: search, category strip, 480+ emoji dataset
+- Insert palette behind the wand button — searchable list of every block and inline format
+- Bottom bar: insert palette, character counter, clear, send; right-click send to choose
+  rich message / draft / edit
+- Live preview is now a collapsible side panel rendered as React elements (no
+  `dangerouslySetInnerHTML`), showing checklists, galleries, maps, spoilers and inline math
+- Custom promise-based prompt/confirm dialogs replace browser `prompt()` / `confirm()`
+- Light theme reworked alongside the dark Telegram Night palette
+- Persian UI mirrors the entire window (RTL), separate from the per-message RTL flag
+- Window controls (minimize / maximize / close) via a validated `window-control` IPC channel;
+  native traffic lights kept on macOS
+
+### Editor
+- Editor instance moved into React state and passed down as a prop — the `window.__tfrEditor`
+  global is gone, so toolbar state reflects the real selection
+- Extensions actually wired up: Link, Image, TaskList/TaskItem, Subscript, Superscript,
+  Spoiler, InlineMath, PullQuote, Details, Footer, MathBlock, MediaBlock, GalleryBlock, MapBlock
+- Single action registry (`lib/editor-actions.js`) drives the menus, the palette and the tests
+- Keyboard shortcuts: Ctrl+Enter send, Ctrl+K link, Ctrl+P preview, Ctrl+, settings
+  (Ctrl+Enter is left to the editor inside code blocks)
+
+### Data model
+- New `shared/inline-parser.js`: inline DOM is parsed into `{ text, marks[], href? }` segments
+  instead of being flattened with `textContent`
+- Serializer emits nested `RichText*` objects as `rich_text` next to the plain `text`
+- Parser now understands task lists (→ `sendChecklist`), pull quotes, images, video, audio,
+  slideshows, collages, maps, and reads math from `data-formula`
+- Math blocks no longer carry the `$$` delimiters into the API payload
+
+### Tooling
+- 141 unit tests (was 62): inline parser, action registry, i18n parity, emoji dataset, plus
+  the new block types
+- i18n gained a React provider (`I18nProvider` / `useI18n`) and a pure `translate()`; locale
+  files are key-for-key identical and covered by a test
+- Removed the dead `renderer/app.js`, `ActionBar.jsx`, `SettingsPanel.jsx` and `TipTapEditor.jsx`
+- Version unified at 4.0.0 across package.json, README and CHANGELOG
+
 ## [3.0.0] - 2026-07-24
 
 ### Security (Critical)

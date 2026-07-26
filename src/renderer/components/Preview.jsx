@@ -1,136 +1,254 @@
 /**
- * Preview — Live preview panel showing Telegram-style message bubble.
- * Re-renders on every editor change.
+ * Preview — live Telegram-style bubble rendered from Block State.
+ *
+ * Everything is rendered as React elements (no `dangerouslySetInnerHTML`), so
+ * message content can never inject markup into the app window.
+ *
+ * @module components/Preview
  */
 
-import { serializeBlocks } from '../../shared/block-serializer.js';
+import { useMemo } from 'react';
+import { BlockType, InlineType } from '../../shared/block-types.js';
 import { parseAllBlocks } from '../../shared/block-parser.js';
+import { CloseIcon } from './Icons.jsx';
+import { useI18n } from '../i18n/index.js';
+
+/** Marks that map straight onto an HTML wrapper element. */
+const MARK_TAGS = {
+  [InlineType.BOLD]: 'strong',
+  [InlineType.ITALIC]: 'em',
+  [InlineType.UNDERLINE]: 'u',
+  [InlineType.STRIKETHROUGH]: 's',
+  [InlineType.CODE]: 'code',
+  [InlineType.MARKED]: 'mark',
+  [InlineType.SUBSCRIPT]: 'sub',
+  [InlineType.SUPERSCRIPT]: 'sup',
+};
 
 /**
- * Convert TipTap HTML to blocks and render as Telegram preview.
- * @param {{ html: string }} props
+ * Render one inline segment with its marks applied.
+ * @param {{ text: string, marks?: string[], href?: string }} segment
+ * @param {number} index
+ * @returns {React.ReactNode}
  */
-export default function Preview({ html }) {
-  // Parse HTML to block state, then serialize for preview
-  let previewHtml = '';
+function renderSegment(segment, index) {
+  let node = segment.text;
 
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(`<div>${html || ''}</div>`, 'text/html');
-    const container = doc.body.firstChild;
-
-    if (container && container.children.length > 0) {
-      const blocks = parseAllBlocks(container);
-      const apiBlocks = serializeBlocks(blocks);
-      previewHtml = renderApiBlocks(apiBlocks);
+  for (const mark of segment.marks || []) {
+    const Tag = MARK_TAGS[mark];
+    if (Tag) {
+      node = <Tag>{node}</Tag>;
+    } else if (mark === InlineType.SPOILER) {
+      node = <span className="pv-spoiler">{node}</span>;
+    } else if (mark === InlineType.MATH) {
+      node = <span className="pv-math-inline">{node}</span>;
     }
-  } catch (e) {
-    previewHtml = '<p class="preview-error">Preview error</p>';
   }
 
-  return (
-    <div className="preview-panel">
-      <div className="preview-header">Live Preview</div>
-      <div className="telegram-bubble">
-        <div
-          className="preview-content"
-          dangerouslySetInnerHTML={{ __html: previewHtml }}
-        />
-      </div>
-    </div>
-  );
+  if (segment.href) {
+    node = (
+      <a href={segment.href} target="_blank" rel="noreferrer">
+        {node}
+      </a>
+    );
+  }
+
+  return <span key={index}>{node}</span>;
 }
 
 /**
- * Render API blocks to HTML for the preview bubble.
- * @param {object[]} apiBlocks
- * @returns {string}
- */
-function renderApiBlocks(apiBlocks) {
-  if (!apiBlocks || apiBlocks.length === 0) {
-    return '<p class="preview-empty">Start typing to see preview...</p>';
-  }
-
-  return apiBlocks.map(renderPreviewBlock).filter(Boolean).join('');
-}
-
-/**
- * Render a single API block to HTML string.
+ * Render a block's text, using inline segments when present.
  * @param {object} block
- * @returns {string}
+ * @returns {React.ReactNode}
  */
-function renderPreviewBlock(block) {
+function renderText(block) {
+  if (Array.isArray(block.inline) && block.inline.length > 0) {
+    return block.inline.map(renderSegment);
+  }
+  return block.text || '';
+}
+
+/**
+ * Render a single Block State entry.
+ * @param {object} block
+ * @param {number} index
+ * @returns {React.ReactNode}
+ */
+function renderBlock(block, index) {
+  const key = `${block.type}-${index}`;
+
   switch (block.type) {
-    case 'paragraph':
-      return `<p>${escapePreview(block.text)}</p>`;
+    case BlockType.PARAGRAPH:
+      return <p key={key}>{renderText(block)}</p>;
 
-    case 'heading': {
-      const lvl = Math.min(Math.max(block.level || 2, 1), 6);
-      return `<h${lvl}>${escapePreview(block.text)}</h${lvl}>`;
+    case BlockType.HEADING: {
+      const Tag = `h${Math.min(Math.max(block.level || 2, 1), 6)}`;
+      return <Tag key={key}>{renderText(block)}</Tag>;
     }
 
-    case 'blockquote':
-      return `<blockquote>${escapePreview(block.text)}</blockquote>`;
+    case BlockType.BLOCKQUOTE:
+      return <blockquote key={key}>{renderText(block)}</blockquote>;
 
-    case 'aside':
-      return `<blockquote class="pullquote">${escapePreview(block.text)}${block.attribution ? `<footer>— ${escapePreview(block.attribution)}</footer>` : ''}</blockquote>`;
+    case BlockType.PULLQUOTE:
+      return (
+        <blockquote key={key} className="pv-pullquote">
+          {renderText(block)}
+          {block.attribution && <footer>— {block.attribution}</footer>}
+        </blockquote>
+      );
 
-    case 'preformatted':
-      return `<pre><code class="language-${escapePreview(block.language || '')}">${escapePreview(block.text)}</code></pre>`;
+    case BlockType.CODE_BLOCK:
+      return (
+        <pre key={key}>
+          {block.language && <span className="pv-lang">{block.language}</span>}
+          <code>{block.text}</code>
+        </pre>
+      );
 
-    case 'divider':
-      return '<hr>';
+    case BlockType.DIVIDER:
+      return <hr key={key} />;
 
-    case 'list': {
-      const tag = block.style === 'numbered' ? 'ol' : 'ul';
-      const items = (block.items || []).map((item) => {
-        const text = typeof item === 'string' ? item : item.text || '';
-        return `<li>${escapePreview(text)}</li>`;
-      }).join('');
-      return `<${tag}>${items}</${tag}>`;
+    case BlockType.LIST: {
+      const Tag = block.style === 'numbered' ? 'ol' : 'ul';
+      return (
+        <Tag key={key}>
+          {(block.items || []).map((item, i) => (
+            <li key={i}>{typeof item === 'string' ? item : item.text || ''}</li>
+          ))}
+        </Tag>
+      );
     }
 
-    case 'table': {
-      const headerCells = (block.header || []).map((h) => `<th>${escapePreview(h)}</th>`).join('');
-      const bodyRows = (block.rows || []).map((row) => {
-        const cells = row.map((c) => `<td>${escapePreview(c)}</td>`).join('');
-        return `<tr>${cells}</tr>`;
-      }).join('');
-      return `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
-    }
+    case BlockType.CHECKLIST:
+      return (
+        <ul key={key} className="pv-checklist">
+          {(block.items || []).map((item, i) => (
+            <li key={i} className={item.done ? 'done' : ''}>
+              <span className="pv-box">{item.done ? '✓' : ''}</span>
+              {item.text}
+            </li>
+          ))}
+        </ul>
+      );
 
-    case 'details':
-      return `<details><summary>${escapePreview(block.summary)}</summary><p>${escapePreview(block.content)}</p></details>`;
+    case BlockType.TABLE:
+      return (
+        <table key={key}>
+          {(block.header || []).length > 0 && (
+            <thead>
+              <tr>
+                {block.header.map((cell, i) => (
+                  <th key={i}>{cell}</th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {(block.rows || []).map((row, r) => (
+              <tr key={r}>
+                {row.map((cell, c) => (
+                  <td key={c}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
 
-    case 'footer':
-      return `<footer>${escapePreview(block.text)}</footer>`;
+    case BlockType.DETAILS:
+      return (
+        <details key={key} open>
+          <summary>{block.summary}</summary>
+          <p>{block.content}</p>
+        </details>
+      );
 
-    case 'math':
-      return `<div class="tg-math">${escapePreview(block.text)}</div>`;
+    case BlockType.FOOTER:
+      return <footer key={key}>{renderText(block)}</footer>;
 
-    case 'photo':
-      return `<img src="${escapePreview(block.url)}" alt="${escapePreview(block.caption || 'photo')}" style="max-width:200px;border-radius:8px">`;
+    case BlockType.MATH_BLOCK:
+      return (
+        <div key={key} className="pv-math">
+          {block.text}
+        </div>
+      );
 
-    case 'video':
-      return `<video src="${escapePreview(block.url)}" controls style="max-width:200px;border-radius:8px"></video>`;
+    case BlockType.PHOTO:
+      return <img key={key} src={block.url} alt={block.caption || ''} />;
 
-    case 'audio':
-      return `<audio src="${escapePreview(block.url)}" controls></audio>`;
+    case BlockType.VIDEO:
+      return <video key={key} src={block.url} controls />;
+
+    case BlockType.AUDIO:
+      return <audio key={key} src={block.url} controls />;
+
+    case BlockType.SLIDESHOW:
+    case BlockType.COLLAGE:
+      return (
+        <div
+          key={key}
+          className={block.type === BlockType.COLLAGE ? 'pv-collage' : 'pv-slideshow'}
+        >
+          {(block.images || []).map((src, i) => (
+            <img key={i} src={src} alt="" />
+          ))}
+        </div>
+      );
+
+    case BlockType.MAP:
+      return (
+        <div key={key} className="pv-map">
+          📍 {block.latitude}, {block.longitude}
+        </div>
+      );
 
     default:
-      return '';
+      return null;
   }
 }
 
 /**
- * Escape text for safe HTML preview display.
- * @param {string} str
- * @returns {string}
+ * @param {{ html: string, isRtl: boolean, onClose: () => void }} props
  */
-function escapePreview(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+export default function Preview({ html, isRtl, onClose }) {
+  const { t } = useI18n();
+
+  const blocks = useMemo(() => {
+    if (!html) return [];
+    try {
+      const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
+      return parseAllBlocks(doc.body.firstChild);
+    } catch {
+      return [];
+    }
+  }, [html]);
+
+  return (
+    <aside className="preview">
+      <div className="preview-head">
+        <span>{t('preview.title')}</span>
+        <span className="preview-count">
+          {blocks.length > 0 ? t('preview.blocks', { count: blocks.length }) : ''}
+        </span>
+        <button
+          type="button"
+          className="tl-btn"
+          onClick={onClose}
+          aria-label={t('titlebar.preview')}
+        >
+          <CloseIcon />
+        </button>
+      </div>
+
+      <div className="preview-scroll">
+        {blocks.length === 0 ? (
+          <p className="preview-empty">{t('preview.empty')}</p>
+        ) : (
+          <div className="bubble" dir={isRtl ? 'rtl' : 'ltr'}>
+            {blocks.map(renderBlock)}
+          </div>
+        )}
+      </div>
+    </aside>
+  );
 }

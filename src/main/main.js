@@ -131,13 +131,19 @@ function tgRequest(url, payload = null) {
 // ===================== Window =====================
 
 function createWindow() {
+  const isMac = process.platform === 'darwin';
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    backgroundColor: '#0d0d12',
-    titleBarStyle: 'hiddenInset',
+    width: 520,
+    height: 700,
+    minWidth: 420,
+    minHeight: 480,
+    backgroundColor: '#212d3b',
+    // Frameless on Windows/Linux (the renderer draws its own title bar);
+    // hidden title bar with native traffic lights on macOS.
+    frame: isMac,
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac ? { x: 12, y: 8 } : undefined,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -247,6 +253,31 @@ ipcMain.handle('tg-test', async () => {
     return await tgRequest(url, null);
   } catch (e) {
     return { ok: false, description: e.message || 'Network error' };
+  }
+});
+
+/**
+ * Window controls for the renderer-drawn title bar.
+ */
+ipcMain.handle('window-control', async (event, { action } = {}) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  if (!win) return false;
+
+  switch (action) {
+    case 'minimize':
+      win.minimize();
+      return true;
+    case 'toggle-maximize':
+      if (win.isMaximized()) win.unmaximize();
+      else win.maximize();
+      return win.isMaximized();
+    case 'close':
+      win.close();
+      return true;
+    case 'is-maximized':
+      return win.isMaximized();
+    default:
+      return false;
   }
 });
 

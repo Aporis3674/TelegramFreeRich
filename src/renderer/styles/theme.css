@@ -1,0 +1,139 @@
+/**
+ * Design tokens — Telegram Desktop "Night" palette.
+ * The rich-text composer window in Telegram Desktop is the visual reference:
+ * flat dark surface, hairline-outlined pill buttons, muted icon grey,
+ * violet premium stars and a single salmon send button.
+ */
+
+*,
+::after,
+::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    'Vazirmatn', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:root {
+  /* Surfaces */
+  --bg: #212d3b;
+  --titlebar: #2b3648;
+  --surface: #17212b;
+  --surface2: #242f3d;
+  --surface3: #2b3848;
+  --menu: #2b3848;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(255, 255, 255, 0.1);
+
+  /* Hairline outlines used by every pill button in the reference UI */
+  --outline: rgba(255, 255, 255, 0.09);
+  --outline-strong: rgba(255, 255, 255, 0.16);
+  --border: #2b3945;
+
+  /* Text */
+  --text: #ffffff;
+  --icon: #aab8c6;
+  --text-dim: #8b98a5;
+  --text-muted: #708499;
+
+  /* Accents */
+  --accent: #4ea4f6;
+  --accent-hover: #6bb4f8;
+  --premium: #7f6cf0;
+  --premium-glow: rgba(127, 108, 240, 0.35);
+  --send: #c9756b;
+  --send-hover: #d6857b;
+  --danger: #ec5f5f;
+  --success: #64bf7a;
+  --warning: #f5a623;
+
+  /* Geometry */
+  --titlebar-h: 30px;
+  --pill-h: 32px;
+  --pill-w: 40px;
+  --pill-r: 11px;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+body.light {
+  --bg: #ffffff;
+  --titlebar: #f1f4f7;
+  --surface: #f4f6f8;
+  --surface2: #eef1f5;
+  --surface3: #e4e9ee;
+  --menu: #ffffff;
+  --hover: rgba(0, 0, 0, 0.05);
+  --active: rgba(0, 0, 0, 0.08);
+
+  --outline: rgba(0, 0, 0, 0.12);
+  --outline-strong: rgba(0, 0, 0, 0.22);
+  --border: #dfe5ea;
+
+  --text: #14181c;
+  --icon: #707d8b;
+  --text-dim: #707d8b;
+  --text-muted: #8c98a4;
+
+  --accent: #3390ec;
+  --accent-hover: #4c9ef0;
+  --premium: #7f6cf0;
+  --send: #c9756b;
+  --send-hover: #b9655b;
+  --danger: #e0483d;
+  --success: #4dbf6a;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  user-select: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Thin Telegram-style scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+}
+
+body.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -3,7 +3,51 @@
  * @module shared/block-serializer
  */
 
-import { BlockType } from './block-types.js';
+import { BlockType, InlineType } from './block-types.js';
+
+/**
+ * Convert one inline segment into a nested `RichText*` object.
+ * Marks wrap from the inside out, so `['bold','italic']` becomes
+ * `{ type: 'italic', text: { type: 'bold', text: { type: 'plain', … } } }`.
+ * @param {{ text: string, marks?: string[], href?: string }} segment
+ * @returns {object}
+ */
+function serializeSegment(segment) {
+  /** @type {object} */
+  let node = { type: InlineType.TEXT, text: segment.text };
+
+  for (const mark of segment.marks || []) {
+    if (mark === InlineType.LINK) continue; // handled below, needs the url
+    node = { type: mark, text: node };
+  }
+
+  if (segment.href) {
+    node = { type: InlineType.LINK, url: segment.href, text: node };
+  }
+  return node;
+}
+
+/**
+ * Convert inline segments into the `rich_text` array of a block.
+ * @param {Array<object>|undefined} segments
+ * @returns {object[]|null}
+ */
+export function serializeInline(segments) {
+  if (!Array.isArray(segments) || segments.length === 0) return null;
+  return segments.map(serializeSegment);
+}
+
+/**
+ * Attach `rich_text` to a serialized block when the source block carries
+ * inline formatting.
+ * @param {object} apiBlock
+ * @param {object} block
+ * @returns {object}
+ */
+function withInline(apiBlock, block) {
+  const richText = serializeInline(block.inline);
+  return richText ? { ...apiBlock, rich_text: richText } : apiBlock;
+}
 
 /**
  * Serialize an array of Block objects to Telegram InputRichBlock* format.
@@ -23,20 +67,26 @@ export function serializeBlocks(blocks) {
 function serializeBlock(block) {
   switch (block.type) {
     case BlockType.PARAGRAPH:
-      return { type: 'paragraph', text: block.text || '' };
+      return withInline({ type: 'paragraph', text: block.text || '' }, block);
 
     case BlockType.HEADING:
-      return { type: 'heading', level: block.level || 2, text: block.text || '' };
+      return withInline(
+        { type: 'heading', level: block.level || 2, text: block.text || '' },
+        block,
+      );
 
     case BlockType.BLOCKQUOTE:
-      return { type: 'blockquote', text: block.text || '' };
+      return withInline({ type: 'blockquote', text: block.text || '' }, block);
 
     case BlockType.PULLQUOTE:
-      return {
-        type: 'aside',
-        text: block.text || '',
-        attribution: block.attribution || '',
-      };
+      return withInline(
+        {
+          type: 'aside',
+          text: block.text || '',
+          attribution: block.attribution || '',
+        },
+        block,
+      );
 
     case BlockType.CODE_BLOCK:
       return {
@@ -72,7 +122,7 @@ function serializeBlock(block) {
       };
 
     case BlockType.FOOTER:
-      return { type: 'footer', text: block.text || '' };
+      return withInline({ type: 'footer', text: block.text || '' }, block);
 
     case BlockType.PHOTO:
       return { type: 'photo', url: block.url || '', caption: block.caption || '' };

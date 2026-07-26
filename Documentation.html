@@ -91,7 +91,7 @@
 <body>
 
 <h1>TelegramFreeRich</h1>
-<p class="meta">Design Specification — v2.0 (Corrected)<br>Last updated: July 2026</p>
+<p class="meta">Design Specification — v4.0 (as shipped)<br>Last updated: July 2026</p>
 
 <p><em>A desktop WYSIWYG rich text editor for Telegram Bot API 10.1.</em></p>
 <p>Send structured, formatted messages through any Telegram bot. No Premium required.</p>
@@ -106,29 +106,42 @@
 
 <hr>
 
-<h2>3. Architecture (CRITICAL CHANGE)</h2>
+<h2>3. Architecture</h2>
 
-<h3>OLD (Wrong)</h3>
+<h3>Rejected</h3>
 <div class="arch-box wrong">
 contenteditable DOM &rarr; Markdown string &rarr; sendRichMessage(markdown)
 </div>
-<p>The real API does <strong>not</strong> accept a Markdown string for complex blocks. It expects a structured JSON array of <code>InputRichBlock*</code> objects.</p>
+<p>The API does <strong>not</strong> accept a Markdown string for complex blocks. It expects a structured JSON array of <code>InputRichBlock*</code> objects.</p>
 
-<h3>NEW (Correct)</h3>
+<h3>Shipped</h3>
 <div class="arch-box correct">
-contenteditable DOM &rarr; Block State (JSON[]) &rarr; sendRichMessage(blocks)
+TipTap (ProseMirror) DOM &rarr; Block State (JSON[]) + inline segments &rarr; sendRichMessage(blocks)
 </div>
-<p>Each message section is an independent block object in an array. The editor must maintain this structured state from the start -- not try to extract blocks from a flat string later.</p>
+<p>Every message section is an independent block object in an array. Inline runs inside a block are parsed separately into <code>{ text, marks[], href? }</code> segments and serialized into nested <code>RichText*</code> objects as the block's <code>rich_text</code> field, so bold / spoiler / link formatting survives the trip to the API instead of being flattened to plain text.</p>
+
+<pre><code>src/renderer/components/useTfrEditor.js   TipTap instance + extensions
+src/renderer/lib/editor-actions.js        one registry for every command
+src/shared/block-parser.js                DOM        -&gt; Block State
+src/shared/inline-parser.js               inline DOM -&gt; styled segments
+src/shared/block-serializer.js            Block State -&gt; Telegram JSON</code></pre>
 
 <h3>Block Structure Example</h3>
 <pre><code>[
   { "type": "heading", "level": 2, "text": "Title" },
-  { "type": "paragraph", "text": "Text with **bold** and _italic_" },
-  { "type": "code_block", "language": "js", "text": "console.log('hi')" },
-  { "type": "table", "cells": [["Col A", "Col B"], ["1", "2"]] },
+  { "type": "paragraph", "text": "Text with bold and a link",
+    "rich_text": [
+      { "type": "text", "text": "Text with " },
+      { "type": "bold", "text": { "type": "text", "text": "bold" } },
+      { "type": "text", "text": " and a " },
+      { "type": "link", "url": "https://t.me/x",
+        "text": { "type": "text", "text": "link" } }
+    ] },
+  { "type": "preformatted", "language": "js", "text": "console.log('hi')" },
+  { "type": "table", "header": ["Col A", "Col B"], "rows": [["1", "2"]] },
   { "type": "list", "style": "bullet", "items": ["Item 1", "Item 2"] },
   { "type": "details", "summary": "Expand", "content": "Hidden content" },
-  { "type": "media", "media_type": "photo", "url": "..." },
+  { "type": "photo", "url": "https://...", "caption": "" },
   { "type": "divider" },
   { "type": "footer", "text": "Footnote 1" }
 ]</code></pre>
@@ -182,65 +195,65 @@ contenteditable DOM &rarr; Block State (JSON[]) &rarr; sendRichMessage(blocks)
 <h3>Math</h3>
 <p>Inline math, Block math</p>
 
-<h3>Footnotes</h3>
-<p>Auto-numbered with anchor/reference links</p>
+<h3>Footer / footnotes</h3>
+<p>Footer blocks (<code>InputRichBlockFooter</code>). Auto-numbered anchors are not implemented - see Section 9.</p>
 
 <hr>
 
 <h2>7. UI Layout</h2>
 
-<pre><code>+-----------------------------------------------------------------------+
-|  [T] TelegramFreeRich                  Dark/Light  [_]  [O]  [X]       |
-+---------------------------------------+-------------------------------+
-|                                       |                               |
-|         TOOLBAR                       |      LIVE PREVIEW             |
-|   +-----------------------------+     |   +-----------------------+   |
-|   | B I U S C Sp Hl ...        |     |   |  Telegram-style         |   |
-|   +-----------------------------+     |   |  message bubble        |   |
-|                                       |   |                        |   |
-|   BLOCK-BASED EDITOR                  |   |  (hover shows block    |   |
-|   (draggable cards, Notion-like)      |   |   outlines)            |   |
-|                                       |   |                        |   |
-|   +------- drag handle -------+      |   +-----------------------+   |
-|   | This is a paragraph       |      |                               |
-|   +---------------------------+      |                               |
-|   +------- drag handle -------+      |   [Send]  [Edit]  [Draft]     |
-|   | # Heading 2               |      |                               |
-|   +---------------------------+      |                               |
-|   +------- drag handle -------+      |                               |
-|   | | A  | B  |               |      |                               |
-|   | | 1  | 2  |               |      |                               |
-|   +---------------------------+      |                               |
-|                                       |                               |
-+---------------------------------------+-------------------------------+
-|  Characters: 1,200 / 32,768     Settings (gear icon)                 |
-+-----------------------------------------------------------------------+</code></pre>
+<p>The window mirrors Telegram Desktop's own rich-text composer: a frameless dark window, hairline-outlined pill buttons, violet Premium stars, and one salmon send button.</p>
 
-<h3>Toolbar - Three Visual Groups</h3>
+<pre><code>+------------------------------------------------------------  _  []  X -+
+| (undo)(redo)   (Aa)(B)(list*)(table*)(link)(img*)(S*)          (emoji) |
++----------------------------------------------+-------------------------+
+|                                              |                         |
+| Message                                      |  LIVE PREVIEW (Ctrl+P)  |
+|                                              |  +-------------------+  |
+| # Bot API 10.1 rich messages                 |  | Telegram bubble   |  |
+| Formatting Telegram charges for is free.     |  | rendered from the |  |
+| [ ] Checklist item                           |  | same Block State  |  |
+|                                              |  +-------------------+  |
++----------------------------------------------+-------------------------+
+| (palette*)                  341 / 32,768        (trash)        (SEND)  |
++------------------------------------------------------------------------+</code></pre>
+
+<h3>Toolbar</h3>
 
 <ol>
-<li><strong>Inline:</strong> Bold, Italic, Underline, Strikethrough, Code, Spoiler, Highlight, Subscript, Superscript</li>
-<li><strong>Block:</strong> Bullet List, Numbered List, Checklist (visually distinct - separate API), Link, Code Block, Table, Collapsible, Divider, Footnote</li>
-<li><strong>Media & Special:</strong> Image, Map, Slideshow, Collage, Math</li>
+<li><strong>History:</strong> undo, redo</li>
+<li><strong>Aa (text style):</strong> regular text, H1-H6, quote, pull quote, code block, footer, collapsible, divider, right-to-left message</li>
+<li><strong>B (formatting):</strong> bold, italic, underline, strikethrough, spoiler, highlight, monospace, subscript, superscript, clear formatting</li>
+<li><strong>Lists:</strong> bulleted, numbered, checklist (labelled "sent as sendChecklist" - see Section 4)</li>
+<li><strong>Table:</strong> insert 3x3, add/delete row and column, delete table</li>
+<li><strong>Link, Media, Formula:</strong> link toggle; image from URL or file, video, audio, slideshow, collage, location; block and inline math</li>
+<li><strong>Emoji:</strong> searchable picker with a category strip</li>
 </ol>
 
-<h3>Block-Based Editor</h3>
-<p>Instead of raw <code>contenteditable</code>, each block is an independent card with a drag handle -- similar to Notion / EditorJS pattern. This matches the real API structure (block array) and enables drag-to-reorder for tables, slideshows, and lists.</p>
+<p>The violet star marks features Telegram gates behind Premium. Every menu and the insert palette are generated from a single action registry, so a new command is declared once.</p>
+
+<h3>Bottom Bar</h3>
+<ul>
+<li>Wand button opens the insert palette - a searchable list of every block and inline format</li>
+<li>Character counter (32,768 limit) appears once the message is not empty</li>
+<li>Trash clears the message after an in-app confirmation</li>
+<li>Send posts the message; right-click chooses rich message / draft / edit</li>
+</ul>
 
 <h3>Live Preview</h3>
-<p>Right panel, Telegram-style message bubble:
+<p>Collapsible right panel, Telegram-style message bubble:</p>
 <ul>
-<li>Rounded corners, light blue background</li>
-<li>Hover on any section shows a subtle border for that block</li>
-<li>All formatting rendered inline</li>
-</ul></p>
+<li>Rendered as React elements from Block State - never <code>innerHTML</code></li>
+<li>Shows headings, quotes, tables, checklists, galleries, maps, spoilers and inline math</li>
+<li>Reports the block count, so the API payload shape is visible while writing</li>
+</ul>
 
-<h3>Settings Panel (Gear Icon)</h3>
+<h3>Settings (gear in the title bar, or Ctrl+,)</h3>
 <ul>
-<li>Bot Token (from @BotFather)</li>
-<li>Chat ID (channel or group)</li>
-<li><strong>"Test Connection" button</strong> -- calls <code>getMe</code> before any real send</li>
-<li>Send method: sendRichMessage (recommended), sendRichMessageDraft, editMessageText</li>
+<li>Bot Token (from @BotFather) - encrypted by the OS keychain in the main process</li>
+<li>Chat ID (channel or group) and the message ID used by Edit mode</li>
+<li><strong>"Test Connection" button</strong> - calls <code>getMe</code> before any real send</li>
+<li>Language (English / Persian) and theme (dark / light)</li>
 </ul>
 
 <hr>
@@ -249,30 +262,39 @@ contenteditable DOM &rarr; Block State (JSON[]) &rarr; sendRichMessage(blocks)
 
 <table>
 <tr><th>Layer</th><th>Technology</th></tr>
-<tr><td>Desktop shell</td><td>Electron (Node.js + Chromium)</td></tr>
-<tr><td>Frontend</td><td>HTML + CSS + JavaScript</td></tr>
+<tr><td>Desktop shell</td><td>Electron 35 (frameless window, safeStorage, contextBridge)</td></tr>
+<tr><td>Frontend</td><td>React 19 + TipTap 2 (ProseMirror), built with Vite 6</td></tr>
 <tr><td>Data model</td><td>Block State (JSON object array) -- not Markdown string</td></tr>
 <tr><td>Output</td><td>Block State &rarr; InputRichBlock* classes &rarr; sendRichMessage</td></tr>
 <tr><td>Checklist</td><td>Separate sendChecklist call (not part of Rich Message)</td></tr>
 <tr><td>Themes</td><td>Dark (default) + Light toggle</td></tr>
-<tr><td>Shortcuts</td><td>Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+K, Ctrl+E</td></tr>
+<tr><td>Shortcuts</td><td>Ctrl+Enter send, Ctrl+K link, Ctrl+P preview, Ctrl+, settings, Ctrl+B/I/U/E, Ctrl+Shift+P spoiler</td></tr>
+<tr><td>Tests</td><td>Vitest - 141 unit tests (parsers, serializer, action registry, i18n)</td></tr>
 <tr><td>Packaging</td><td>Windows, macOS, Linux</td></tr>
 </table>
 
 <hr>
 
-<h2>9. Open Questions</h2>
+<h2>9. Decisions and Open Questions</h2>
 
+<h3>Decided</h3>
 <ul>
-<li>Should users save drafts locally (using sendRichMessageDraft -- 30s temporary, private chats only)?</li>
-<li>What are the size/quantity limits for slideshow and collage media?</li>
-<li>UI language: Persian-only, or bilingual (English + Persian) toggle?</li>
-<li>Should the app save recent bot tokens / chat IDs to local storage?</li>
+<li><strong>UI language:</strong> bilingual (English + Persian). Choosing Persian mirrors the whole window to RTL; a message can also carry its own <code>is_rtl</code> flag independently.</li>
+<li><strong>Drafts:</strong> exposed as a send mode (<code>sendRichMessageDraft</code>) rather than local files - the 30-second server-side preview is what Telegram actually provides.</li>
+<li><strong>Credentials:</strong> the bot token goes straight to the main process and is encrypted with <code>safeStorage</code>; the renderer only learns whether a token exists. Chat ID and the edit target are stored the same way, never in plain <code>localStorage</code>.</li>
+<li><strong>Editor model:</strong> one ProseMirror document instead of Notion-style draggable cards. The block array is derived from the document at send time, which keeps typing, selection and undo behaving like Telegram's own composer.</li>
+</ul>
+
+<h3>Still open</h3>
+<ul>
+<li>Size and quantity limits for slideshow and collage media are undocumented by Telegram.</li>
+<li>Custom emoji (<code>RichTextCustomEmoji</code>) requires an uploaded emoji set, which bots cannot provide.</li>
+<li>Footnote auto-numbering with anchor links is not implemented; footers are plain blocks for now.</li>
 </ul>
 
 <hr>
 
-<p style="text-align:center;color:var(--text-muted);font-size:0.85em">Built for TelegramFreeRich &mdash; v2.0</p>
+<p style="text-align:center;color:var(--text-muted);font-size:0.85em">Built for TelegramFreeRich &mdash; v4.0</p>
 
 </body>
 </html>

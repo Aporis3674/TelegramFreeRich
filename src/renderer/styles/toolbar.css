@@ -1,0 +1,92 @@
+/**
+ * Toolbar — outlined pill buttons grouped exactly like Telegram Desktop's
+ * rich-text composer: history group, formatting group, trailing emoji circle.
+ */
+
+.tfr-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px 9px;
+  background: var(--bg);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tfr-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tb-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tb-group-trailing {
+  margin-inline-start: auto;
+}
+
+.tb-btn {
+  position: relative;
+  width: var(--pill-w);
+  height: var(--pill-h);
+  border-radius: var(--pill-r);
+  border: 1px solid var(--outline);
+  background: transparent;
+  color: var(--icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.tb-btn.wide {
+  width: 46px;
+}
+
+.tb-btn.round {
+  width: var(--pill-h);
+  border-radius: 50%;
+}
+
+.tb-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+  border-color: var(--outline-strong);
+}
+
+.tb-btn:active:not(:disabled) {
+  background: var(--active);
+}
+
+.tb-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--hover);
+}
+
+.tb-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+/* Violet Premium star badge, bottom-trailing corner of the pill */
+.tb-star {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  color: var(--premium);
+  display: flex;
+  filter: drop-shadow(0 0 3px var(--premium-glow));
+  pointer-events: none;
+}
+
+[dir='rtl'] .tb-star {
+  right: auto;
+  left: 5px;
+}

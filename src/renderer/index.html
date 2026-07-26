@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' http://localhost:5173 ws://localhost:5173;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: file: data:; media-src 'self' https: file:; connect-src 'self' http://localhost:5173 ws://localhost:5173;">
 <title>TelegramFreeRich</title>
-<link rel="stylesheet" href="styles/app.css">
 </head>
 <body>
   <div id="root"></div>
-  <!-- Vite injects React app here in dev; production uses built assets -->
   <script type="module" src="./main.jsx"></script>
 </body>
 </html>

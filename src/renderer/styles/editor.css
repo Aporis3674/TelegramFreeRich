@@ -1,22 +1,26 @@
-/* TipTap editor styles */
+/**
+ * Editor surface — Telegram composer typography and block styling.
+ */
 
-.tiptap-wrapper {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.tiptap-editor {
+.editor-pane .ProseMirror,
+.tfr-editor {
   min-height: 100%;
-  padding: 16px 18px 80px;
+  padding: 14px 20px 28px;
   outline: none;
   font-size: 15px;
-  line-height: 1.65;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  line-height: 1.62;
   color: var(--text);
+  caret-color: var(--accent);
+  overflow-wrap: break-word;
+  user-select: text;
 }
 
-.tiptap-editor p.is-editor-empty:first-child::before {
+.tfr-editor > * + * {
+  margin-top: 6px;
+}
+
+/* Placeholder (Placeholder extension) */
+.tfr-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--text-muted);
   pointer-events: none;
@@ -24,196 +28,342 @@
   height: 0;
 }
 
-.tiptap-editor a {
+[dir='rtl'] .tfr-editor p.is-editor-empty:first-child::before {
+  float: right;
+}
+
+/* ─────────────────────────── Inline ─────────────────────────── */
+
+.tfr-editor a {
   color: var(--accent);
-  text-decoration: underline;
-}
-
-.tiptap-editor code {
-  background: var(--surface3);
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 0.9em;
-}
-
-.tiptap-editor pre {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  font-family: monospace;
-  font-size: 13px;
-  white-space: pre-wrap;
-  overflow-x: auto;
-  margin: 8px 0;
-}
-
-.tiptap-editor pre code {
-  background: transparent;
-  padding: 0;
-}
-
-.tiptap-editor blockquote {
-  border-left: 3px solid var(--accent);
-  padding: 4px 12px;
-  margin: 8px 0;
-  color: var(--text-dim);
-  background: var(--surface);
-  border-radius: 0 6px 6px 0;
-}
-
-.tiptap-editor blockquote.pullquote {
-  border-left-color: var(--warning);
-  font-style: italic;
-}
-
-.tiptap-editor table {
-  border-collapse: collapse;
-  margin: 8px 0;
-  width: 100%;
-}
-
-.tiptap-editor th,
-.tiptap-editor td {
-  border: 1px solid var(--border);
-  padding: 6px 10px;
-  text-align: left;
-  min-width: 60px;
-}
-
-.tiptap-editor th {
-  background: var(--surface2);
-  font-weight: 600;
-}
-
-.tiptap-editor hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 12px 0;
-}
-
-.tiptap-editor details {
-  margin: 8px 0;
-  padding: 6px 0;
-}
-
-.tiptap-editor summary {
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   cursor: pointer;
-  font-weight: 600;
-  color: var(--accent);
 }
 
-.tiptap-editor img {
-  max-width: 200px;
-  border-radius: 8px;
-  margin: 4px 0;
+.tfr-editor code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 1px 5px;
 }
 
-.tiptap-editor .tg-spoiler {
-  background: var(--text-dim);
+.tfr-editor mark {
+  background: color-mix(in srgb, var(--warning) 35%, transparent);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.tfr-editor .tg-spoiler {
+  background: var(--surface3);
   color: transparent;
   border-radius: 3px;
+  padding: 0 2px;
   cursor: pointer;
-  padding: 0 2px;
+  transition: color 0.15s, background 0.15s;
 }
 
-.tiptap-editor .tg-spoiler:hover {
+.tfr-editor .tg-spoiler:hover {
   color: var(--text);
-  background: transparent;
+  background: color-mix(in srgb, var(--text-muted) 22%, transparent);
 }
 
-.tiptap-editor .tg-math {
+.tfr-editor .tg-math-inline {
+  font-family: 'Cambria Math', Georgia, serif;
   font-style: italic;
-  color: var(--warning);
-  text-align: center;
-  padding: 8px;
+  color: var(--premium);
 }
 
-.tiptap-editor mark {
-  background: rgba(44, 165, 224, 0.25);
-  color: var(--text);
-  border-radius: 2px;
-  padding: 0 2px;
-}
+/* ─────────────────────────── Blocks ─────────────────────────── */
 
-.tiptap-editor footer {
-  font-size: 12px;
+.tfr-editor h1 {
+  font-size: 1.6em;
+  font-weight: 600;
+  margin-top: 14px;
+}
+.tfr-editor h2 {
+  font-size: 1.38em;
+  font-weight: 600;
+  margin-top: 12px;
+}
+.tfr-editor h3 {
+  font-size: 1.22em;
+  font-weight: 600;
+  margin-top: 10px;
+}
+.tfr-editor h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+.tfr-editor h5 {
+  font-size: 1em;
+  font-weight: 600;
+}
+.tfr-editor h6 {
+  font-size: 0.92em;
+  font-weight: 600;
   color: var(--text-dim);
-  font-style: italic;
-  margin-top: 8px;
 }
 
-.tiptap-editor h1 { font-size: 1.8em; margin: 12px 0 6px; }
-.tiptap-editor h2 { font-size: 1.5em; margin: 10px 0 5px; }
-.tiptap-editor h3 { font-size: 1.25em; margin: 8px 0 4px; }
-.tiptap-editor h4 { font-size: 1.1em; margin: 6px 0 3px; }
-.tiptap-editor h5 { font-size: 1em; margin: 4px 0 2px; }
-.tiptap-editor h6 { font-size: 0.9em; margin: 4px 0 2px; color: var(--text-dim); }
+.tfr-editor blockquote {
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 3px;
+  padding-inline-start: 12px;
+  margin: 8px 0;
+  color: var(--text);
+}
 
-.tiptap-editor ul,
-.tiptap-editor ol {
-  padding-left: 24px;
+.tfr-editor blockquote.tg-pullquote {
+  border-inline-start: none;
+  text-align: center;
+  font-size: 1.1em;
+  font-style: italic;
+  color: var(--text-dim);
+  padding: 10px 18px;
+  border-top: 1px solid var(--outline);
+  border-bottom: 1px solid var(--outline);
+}
+
+.tfr-editor pre {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  margin: 8px 0;
+}
+
+.tfr-editor pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.tfr-editor hr {
+  border: none;
+  border-top: 1px solid var(--outline-strong);
+  margin: 14px 0;
+}
+
+.tfr-editor hr.ProseMirror-selectednode {
+  border-top-color: var(--accent);
+}
+
+.tfr-editor ul,
+.tfr-editor ol {
+  padding-inline-start: 24px;
   margin: 6px 0;
 }
 
-.tiptap-editor li {
+.tfr-editor li {
   margin: 2px 0;
 }
 
-/* Toolbar */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 10px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-  overflow-x: auto;
-  flex-wrap: wrap;
+.tfr-editor li p {
+  margin: 0;
 }
 
-.tb-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  min-width: 32px;
-  height: 32px;
-  border-radius: 8px;
+/* Task list (checklist → sendChecklist) */
+.tfr-editor ul[data-type='taskList'] {
+  list-style: none;
+  padding-inline-start: 2px;
+}
+
+.tfr-editor ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tfr-editor ul[data-type='taskList'] li > label {
+  display: flex;
+  align-items: center;
+  height: 1.62em;
+}
+
+.tfr-editor ul[data-type='taskList'] input[type='checkbox'] {
+  appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 1.6px solid var(--text-muted);
+  border-radius: 5px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s;
+  position: relative;
   flex-shrink: 0;
-  padding: 0 6px;
 }
 
-.tb-btn:hover {
+.tfr-editor ul[data-type='taskList'] input[type='checkbox']:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.tfr-editor ul[data-type='taskList'] input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4.5px;
+  top: 1.5px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+.tfr-editor ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* Tables */
+.tfr-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+  table-layout: fixed;
+  overflow: hidden;
+}
+
+.tfr-editor th,
+.tfr-editor td {
+  border: 1px solid var(--outline-strong);
+  padding: 6px 9px;
+  vertical-align: top;
+  position: relative;
+  min-width: 60px;
+}
+
+.tfr-editor th {
   background: var(--surface2);
-  color: var(--text);
+  font-weight: 600;
+  text-align: start;
 }
 
-.tb-btn.active {
-  background: var(--surface3);
+.tfr-editor .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  pointer-events: none;
+}
+
+.tfr-editor .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+}
+
+/* Details */
+.tfr-editor details {
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+
+.tfr-editor summary {
+  font-weight: 600;
   color: var(--accent);
+  cursor: default;
+  list-style: none;
 }
 
-.tb-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.tfr-editor summary::marker {
+  content: '';
 }
 
-.tb-icon {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
+.tfr-editor .details-content {
+  padding-top: 4px;
 }
 
-.tb-separator {
-  width: 1px;
-  height: 20px;
-  background: var(--border);
-  margin: 0 4px;
-  flex-shrink: 0;
+/* Footer */
+.tfr-editor footer {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--outline);
+  margin-top: 12px;
+  padding-top: 6px;
+}
+
+/* Math block */
+.tfr-editor .tg-math {
+  font-family: 'Cambria Math', Georgia, serif;
+  text-align: center;
+  color: var(--premium);
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0;
+}
+
+/* Media */
+.tfr-editor img {
+  max-width: min(100%, 320px);
+  border-radius: 10px;
+  display: block;
+}
+
+.tfr-editor img.ProseMirror-selectednode,
+.tfr-editor .tg-math.ProseMirror-selectednode,
+.tfr-editor .tg-gallery.ProseMirror-selectednode,
+.tfr-editor .tg-map.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tfr-editor video,
+.tfr-editor audio {
+  max-width: min(100%, 320px);
+  border-radius: 10px;
+  display: block;
+  margin: 6px 0;
+}
+
+.tfr-editor .tg-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 4px;
+  max-width: 340px;
+  margin: 8px 0;
+}
+
+.tfr-editor .tg-gallery img {
+  width: 100%;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.tfr-editor .tg-gallery[data-kind='slideshow'] {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  overflow-x: auto;
+}
+
+.tfr-editor .tg-gallery[data-kind='slideshow'] img {
+  width: 120px;
+}
+
+.tfr-editor .tg-map {
+  background: var(--surface2);
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  max-width: 320px;
+  margin: 8px 0;
+}
+
+/* Gap cursor */
+.tfr-editor .ProseMirror-gapcursor::after {
+  border-top-color: var(--accent);
 }

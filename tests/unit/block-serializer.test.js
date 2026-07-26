@@ -4,11 +4,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   serializeBlocks,
+  serializeInline,
   buildRichMessageBody,
   buildChecklistBody,
   separateChecklists,
 } from '../../src/shared/block-serializer.js';
-import { BlockType } from '../../src/shared/block-types.js';
+import { BlockType, InlineType } from '../../src/shared/block-types.js';
 
 describe('serializeBlocks', () => {
   it('returns empty array for non-array input', () => {
@@ -134,5 +135,85 @@ describe('separateChecklists', () => {
       { text: 'A', done: true },
       { text: 'B', done: false },
     ]);
+  });
+});
+
+describe('serializeInline', () => {
+  it('returns null when there are no segments', () => {
+    expect(serializeInline(undefined)).toBeNull();
+    expect(serializeInline([])).toBeNull();
+  });
+
+  it('wraps plain text in a text node', () => {
+    expect(serializeInline([{ text: 'hi', marks: [] }])).toEqual([
+      { type: InlineType.TEXT, text: 'hi' },
+    ]);
+  });
+
+  it('nests marks from the inside out', () => {
+    expect(
+      serializeInline([{ text: 'x', marks: [InlineType.BOLD, InlineType.ITALIC] }]),
+    ).toEqual([
+      {
+        type: InlineType.ITALIC,
+        text: { type: InlineType.BOLD, text: { type: InlineType.TEXT, text: 'x' } },
+      },
+    ]);
+  });
+
+  it('emits a link node carrying the url', () => {
+    expect(
+      serializeInline([{ text: 'chat', marks: [InlineType.LINK], href: 'https://t.me/x' }]),
+    ).toEqual([
+      {
+        type: InlineType.LINK,
+        url: 'https://t.me/x',
+        text: { type: InlineType.TEXT, text: 'chat' },
+      },
+    ]);
+  });
+
+  it('keeps a link wrapping other marks', () => {
+    const [node] = serializeInline([
+      { text: 'x', marks: [InlineType.BOLD, InlineType.LINK], href: 'https://a' },
+    ]);
+    expect(node.type).toBe(InlineType.LINK);
+    expect(node.text.type).toBe(InlineType.BOLD);
+  });
+});
+
+describe('rich_text on serialized blocks', () => {
+  it('attaches rich_text to text blocks that carry inline formatting', () => {
+    const [block] = serializeBlocks([
+      {
+        type: BlockType.PARAGRAPH,
+        text: 'bold text',
+        inline: [
+          { text: 'bold', marks: [InlineType.BOLD] },
+          { text: ' text', marks: [] },
+        ],
+      },
+    ]);
+    expect(block.text).toBe('bold text');
+    expect(block.rich_text).toHaveLength(2);
+    expect(block.rich_text[0].type).toBe(InlineType.BOLD);
+  });
+
+  it('omits rich_text when the block has none', () => {
+    const [block] = serializeBlocks([{ type: BlockType.PARAGRAPH, text: 'plain' }]);
+    expect(block).toEqual({ type: 'paragraph', text: 'plain' });
+  });
+
+  it('supports headings, quotes, asides and footers', () => {
+    const inline = [{ text: 'x', marks: [InlineType.UNDERLINE] }];
+    const blocks = serializeBlocks([
+      { type: BlockType.HEADING, level: 2, text: 'x', inline },
+      { type: BlockType.BLOCKQUOTE, text: 'x', inline },
+      { type: BlockType.PULLQUOTE, text: 'x', inline },
+      { type: BlockType.FOOTER, text: 'x', inline },
+    ]);
+    for (const block of blocks) {
+      expect(block.rich_text, block.type).toHaveLength(1);
+    }
   });
 });

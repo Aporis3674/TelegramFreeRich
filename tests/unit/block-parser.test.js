@@ -80,9 +80,88 @@ describe('parseBlockElement', () => {
     expect(result.summary).toBe('Click');
   });
 
-  it('parses math block', () => {
+  it('parses math block and strips the $$ delimiters', () => {
     const result = parseBlockElement(el('<div class="tg-math">$$x^2$$</div>'));
-    expect(result).toEqual({ type: BlockType.MATH_BLOCK, text: '$$x^2$$' });
+    expect(result).toEqual({ type: BlockType.MATH_BLOCK, text: 'x^2' });
+  });
+
+  it('prefers the data-formula attribute for math blocks', () => {
+    const result = parseBlockElement(
+      el('<div class="tg-math" data-formula="a+b">$$rendered$$</div>'),
+    );
+    expect(result.text).toBe('a+b');
+  });
+
+  it('parses a task list as a checklist block', () => {
+    const result = parseBlockElement(
+      el(
+        '<ul data-type="taskList"><li data-checked="true">Ship it</li>' +
+          '<li data-checked="false">Write docs</li></ul>',
+      ),
+    );
+    expect(result.type).toBe(BlockType.CHECKLIST);
+    expect(result.items).toEqual([
+      { text: 'Ship it', done: true },
+      { text: 'Write docs', done: false },
+    ]);
+  });
+
+  it('parses a pull quote with attribution', () => {
+    const result = parseBlockElement(
+      el('<blockquote data-pullquote data-attribution="Durov">Free forever</blockquote>'),
+    );
+    expect(result.type).toBe(BlockType.PULLQUOTE);
+    expect(result.attribution).toBe('Durov');
+    expect(result.text).toBe('Free forever');
+  });
+
+  it('parses images, video and audio', () => {
+    expect(parseBlockElement(el('<img src="https://x/a.png" alt="cap">'))).toEqual({
+      type: BlockType.PHOTO,
+      url: 'https://x/a.png',
+      caption: 'cap',
+    });
+    expect(parseBlockElement(el('<video src="https://x/v.mp4"></video>')).type).toBe(
+      BlockType.VIDEO,
+    );
+    expect(parseBlockElement(el('<audio src="https://x/a.mp3"></audio>')).type).toBe(
+      BlockType.AUDIO,
+    );
+  });
+
+  it('parses a slideshow gallery from data-images', () => {
+    const result = parseBlockElement(
+      el('<div class="tg-gallery" data-kind="slideshow" data-images="a.jpg,b.jpg"></div>'),
+    );
+    expect(result).toEqual({ type: BlockType.SLIDESHOW, images: ['a.jpg', 'b.jpg'] });
+  });
+
+  it('parses a collage gallery from child images', () => {
+    const result = parseBlockElement(
+      el('<div class="tg-gallery" data-kind="collage"><img src="a.jpg"><img src="b.jpg"></div>'),
+    );
+    expect(result).toEqual({ type: BlockType.COLLAGE, images: ['a.jpg', 'b.jpg'] });
+  });
+
+  it('parses a map block', () => {
+    const result = parseBlockElement(
+      el('<div class="tg-map" data-lat="35.6892" data-lon="51.389"></div>'),
+    );
+    expect(result).toEqual({ type: BlockType.MAP, latitude: 35.6892, longitude: 51.389 });
+  });
+
+  it('keeps inline formatting as segments', () => {
+    const result = parseBlockElement(el('<p>plain <strong>bold</strong></p>'));
+    expect(result.text).toBe('plain bold');
+    expect(result.inline).toEqual([
+      { text: 'plain ', marks: [] },
+      { text: 'bold', marks: ['bold'] },
+    ]);
+  });
+
+  it('omits the inline list when there is no formatting', () => {
+    const result = parseBlockElement(el('<p>just text</p>'));
+    expect(result.inline).toBeUndefined();
   });
 
   it('parses footer', () => {

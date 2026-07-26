@@ -1,187 +1,307 @@
 /**
- * App — Root React component for TelegramFreeRich.
- * Orchestrates editor, preview, toolbar, settings, send.
+ * App — application shell.
+ *
+ *   ┌ titlebar ──────────────────────────────────── ─ □ ✕ ┐
+ *   │ [undo][redo]  [Aa][B][list][table][link][img][Σ]  (☺) │
+ *   │                                                       │
+ *   │  editor                              │  preview       │
+ *   │                                                       │
+ *   │ (✦A)                        chars   (🗑)         (➤)  │
+ *   └───────────────────────────────────────────────────────┘
+ *
+ * @module App
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import TipTapEditor from './components/TipTapEditor.jsx';
-import Toolbar from './components/Toolbar.jsx';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { EditorContent } from '@tiptap/react';
+
+import BottomBar from './components/BottomBar.jsx';
+import { DialogProvider, useDialogs } from './components/Dialog.jsx';
 import Preview from './components/Preview.jsx';
 import Settings from './components/Settings.jsx';
-import ActionBar from './components/ActionBar.jsx';
+import TitleBar from './components/TitleBar.jsx';
 import { ToastProvider, useToast } from './components/Toast.jsx';
+import Toolbar from './components/Toolbar.jsx';
+import useTfrEditor from './components/useTfrEditor.js';
+import { I18nProvider, useI18n } from './i18n/index.js';
 import { parseAllBlocks } from '../shared/block-parser.js';
-import { buildRichMessageBody, separateChecklists, buildChecklistBody } from '../shared/block-serializer.js';
+import {
+  buildChecklistBody,
+  buildRichMessageBody,
+  separateChecklists,
+} from '../shared/block-serializer.js';
+import { DEFAULT_LANG, DEFAULT_THEME } from '../shared/constants.js';
+import { toggleLink } from './lib/editor-actions.js';
 
 const THEME_KEY = 'tfr-theme';
+const LANG_KEY = 'tfr-lang';
+const EDIT_ID_KEY = 'tfr-edit-id';
+const RTL_KEY = 'tfr-rtl';
 
-function AppInner() {
+/**
+ * @param {{ lang: string, onLangChange: (lang: string) => void }} props
+ */
+function Shell({ lang, onLangChange }) {
+  const { t, dir } = useI18n();
   const toast = useToast();
-  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark');
-  const [settings, setSettings] = useState({ tokenSet: false, chatId: '', lang: 'en' });
+  const { askText, confirm } = useDialogs();
+
+  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || DEFAULT_THEME);
+  const [settings, setSettings] = useState(() => ({
+    tokenSet: false,
+    chatId: '',
+    editId: localStorage.getItem(EDIT_ID_KEY) || '',
+    lang,
+  }));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [isRtl, setIsRtl] = useState(() => localStorage.getItem(RTL_KEY) === '1');
   const [html, setHtml] = useState('');
+  const [charCount, setCharCount] = useState(0);
   const [mode, setMode] = useState('rich');
   const [sending, setSending] = useState(false);
-  const [charCount, setCharCount] = useState(0);
-  const [isRtl, setIsRtl] = useState(false);
 
-  // Load settings from main process on mount
-  useEffect(() => {
-    window.app.loadSettings().then(setSettings).catch(() => {});
+  const tRef = useRef(t);
+  tRef.current = t;
+
+  const handleUpdate = useCallback((nextHtml, text) => {
+    setHtml(nextHtml);
+    setCharCount(text.length);
   }, []);
 
-  // Apply theme
+  const editor = useTfrEditor({
+    placeholder: () => tRef.current('editor.placeholder'),
+    onUpdate: handleUpdate,
+  });
+
+  /* ── persisted preferences ── */
+
   useEffect(() => {
     document.body.classList.toggle('light', theme === 'light');
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
-  // Apply RTL
   useEffect(() => {
-    const editor = document.querySelector('.tiptap-editor');
-    if (editor) editor.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+    localStorage.setItem(LANG_KEY, lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dir;
+  }, [lang, dir]);
+
+  useEffect(() => {
+    localStorage.setItem(RTL_KEY, isRtl ? '1' : '0');
   }, [isRtl]);
 
-  const handleUpdate = useCallback((newHtml) => {
-    setHtml(newHtml);
-    // Count plain text chars
-    const div = document.createElement('div');
-    div.innerHTML = newHtml;
-    setCharCount((div.textContent || '').length);
+  useEffect(() => {
+    if (settings.editId) localStorage.setItem(EDIT_ID_KEY, settings.editId);
+  }, [settings.editId]);
+
+  // Load chat ID / token presence / language from the main process on mount.
+  useEffect(() => {
+    if (!window.app || !window.app.loadSettings) return;
+    window.app
+      .loadSettings()
+      .then((loaded) => {
+        setSettings((prev) => ({ ...prev, ...loaded }));
+        if (loaded.lang && loaded.lang !== lang) onLangChange(loaded.lang);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ── services handed to the action registry ── */
+
+  const notify = useCallback((key, type) => toast(tRef.current(key), type), [toast]);
+
+  const toggleRtl = useCallback(() => {
+    setIsRtl((prev) => {
+      notify(prev ? 'toast.rtlOff' : 'toast.rtlOn');
+      return !prev;
+    });
+  }, [notify]);
+
+  const pickFile = useCallback(async (kind) => {
+    if (!window.app || !window.app.openFile) return null;
+    const filters =
+      kind === 'image'
+        ? [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }]
+        : undefined;
+    return window.app.openFile(filters);
+  }, []);
+
+  const ctx = useMemo(
+    () => ({ askText, pickFile, toggleRtl, isRtl, notify }),
+    [askText, pickFile, toggleRtl, isRtl, notify],
+  );
+
+  /* ── send ── */
+
   const handleSend = useCallback(async () => {
-    if (!settings.tokenSet) { toast('Configure bot token', 'error'); return; }
-    if (!settings.chatId) { toast('Set chat ID', 'error'); return; }
-    if (!html.trim()) { toast('Nothing to send', 'error'); return; }
+    if (!settings.tokenSet) {
+      notify('toast.configureToken', 'error');
+      setSettingsOpen(true);
+      return;
+    }
+    if (!settings.chatId) {
+      notify('toast.setChatId', 'error');
+      setSettingsOpen(true);
+      return;
+    }
+    if (!html.trim() || charCount === 0) {
+      notify('toast.nothingToSend', 'error');
+      return;
+    }
+    if (mode === 'edit' && !settings.editId) {
+      notify('toast.needEditId', 'error');
+      setSettingsOpen(true);
+      return;
+    }
 
     setSending(true);
     try {
-      // Parse HTML → Block State
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+      const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
       const blocks = parseAllBlocks(doc.body.firstChild);
-
-      // Separate checklists (they use a different API)
       const { richBlocks, checklistItems } = separateChecklists(blocks);
 
-      // Send checklist separately if present
       if (checklistItems.length > 0) {
-        const clBody = buildChecklistBody(checklistItems, settings.chatId);
-        const clResult = await window.app.api('sendChecklist', clBody);
-        if (!clResult.ok) {
-          toast(`Checklist error: ${clResult.description}`, 'error');
+        const result = await window.app.api(
+          'sendChecklist',
+          buildChecklistBody(checklistItems, settings.chatId),
+        );
+        if (!result.ok) {
+          toast(`${tRef.current('toast.networkError')}: ${result.description}`, 'error');
+        } else if (richBlocks.length === 0) {
+          notify('toast.checklistSent', 'success');
         }
       }
 
-      // Send rich message
       if (richBlocks.length > 0) {
         const body = buildRichMessageBody(richBlocks, settings.chatId, { isRtl });
 
         let result;
         if (mode === 'draft') {
           result = await window.app.api('sendRichMessageDraft', body);
-        } else if (mode === 'edit' && settings.editId) {
-          body.message_id = settings.editId;
+        } else if (mode === 'edit') {
+          body.message_id = Number(settings.editId) || settings.editId;
           result = await window.app.api('editMessageText', body);
         } else {
           result = await window.app.api('sendRichMessage', body);
         }
 
         if (result.ok) {
-          toast(mode === 'draft' ? 'Draft sent' : mode === 'edit' ? 'Edited!' : 'Sent!', 'success');
+          notify(
+            mode === 'draft' ? 'toast.draftSent' : mode === 'edit' ? 'toast.edited' : 'toast.sent',
+            'success',
+          );
         } else {
-          toast(`Error: ${result.description}`, 'error');
+          toast(`${tRef.current('toast.networkError')}: ${result.description}`, 'error');
         }
       } else if (checklistItems.length === 0) {
-        toast('Nothing to send', 'error');
-      } else {
-        toast('Checklist sent!', 'success');
+        notify('toast.nothingToSend', 'error');
       }
     } catch {
-      toast('Network error', 'error');
+      notify('toast.networkError', 'error');
     }
     setSending(false);
-  }, [settings, html, mode, isRtl, toast]);
+  }, [settings, html, charCount, mode, isRtl, notify, toast]);
 
-  const handleClear = useCallback(() => {
-    const editor = window.__tfrEditor;
-    if (editor) editor.commands.clearContent();
+  const handleClear = useCallback(async () => {
+    if (charCount === 0 && !html.trim()) return;
+    const ok = await confirm({
+      titleKey: 'dialog.clearTitle',
+      bodyKey: 'dialog.clearBody',
+      confirmKey: 'dialog.clearConfirm',
+      danger: true,
+    });
+    if (!ok || !editor) return;
+    editor.chain().focus().clearContent(true).run();
     setHtml('');
     setCharCount(0);
-    toast('Cleared');
-  }, [toast]);
+    notify('toast.cleared');
+  }, [charCount, html, confirm, editor, notify]);
+
+  /* ── shortcuts ── */
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+      if (event.key === 'Enter') {
+        // Inside a code block Ctrl+Enter belongs to the editor (exit code block).
+        if (editor && editor.isActive('codeBlock')) return;
+        event.preventDefault();
+        handleSend();
+      } else if (event.key === ',') {
+        event.preventDefault();
+        setSettingsOpen(true);
+      } else if (!event.shiftKey && event.key.toLowerCase() === 'p') {
+        // Ctrl+Shift+P stays with the editor (spoiler).
+        event.preventDefault();
+        setPreviewOpen((v) => !v);
+      } else if (event.key.toLowerCase() === 'k' && editor) {
+        event.preventDefault();
+        toggleLink(editor, ctx);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleSend, editor, ctx]);
 
   return (
     <>
-      {/* Header */}
-      <header id="header">
-        <div className="header-left">
-          <svg className="logo" viewBox="0 0 24 24" width="22" height="22">
-            <path d="M11.944.042C5.347.042.042 5.347.042 11.944c0 6.596 5.305 11.902 11.902 11.902 6.596 0 11.902-5.306 11.902-11.902C23.846 5.347 18.54.042 11.944.042zM17.92 8.182l-2.057 9.668c-.153.695-.558.865-1.13.538l-3.117-2.298-1.505 1.448c-.166.166-.306.306-.63.306l.44-3.128 5.69-5.142c.248-.22-.054-.343-.384-.122l-7.04 4.435-3.032-.988c-.66-.206-.673-.66.138-.977l11.83-4.56c.55-.203 1.03.136.852.97z" fill="currentColor" />
-          </svg>
-          <span className="title">FreeRich</span>
-        </div>
-        <div className="header-right">
-          <button
-            className="icon-btn"
-            title={isRtl ? 'LTR' : 'RTL'}
-            onClick={() => setIsRtl((v) => !v)}
-          >
-            {isRtl ? 'LTR' : 'RTL'}
-          </button>
-          <button className="icon-btn" title="Settings" onClick={() => setSettingsOpen(true)}>
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-        </div>
-      </header>
+      <TitleBar
+        tokenSet={settings.tokenSet}
+        previewOpen={previewOpen}
+        onTogglePreview={() => setPreviewOpen((v) => !v)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
-      {/* Split pane: Editor + Preview */}
-      <div className="split-pane">
-        <div className="editor-side">
-          <TipTapEditor onUpdate={handleUpdate} />
-        </div>
-        <div className="split-handle" />
-        <div className="preview-side">
-          <Preview html={html} />
-        </div>
-      </div>
+      <Toolbar editor={editor} ctx={ctx} />
 
-      {/* Toolbar */}
-      <Toolbar />
+      <main className={`workspace${previewOpen ? ' with-preview' : ''}`}>
+        <div className="editor-pane" dir={isRtl ? 'rtl' : 'ltr'}>
+          <EditorContent editor={editor} />
+        </div>
+        {previewOpen && <Preview html={html} isRtl={isRtl} onClose={() => setPreviewOpen(false)} />}
+      </main>
 
-      {/* Action bar */}
-      <ActionBar
+      <BottomBar
+        editor={editor}
+        ctx={ctx}
         charCount={charCount}
         mode={mode}
         onModeChange={setMode}
-        tokenSet={settings.tokenSet}
         sending={sending}
         onSend={handleSend}
         onClear={handleClear}
       />
 
-      {/* Settings modal */}
       <Settings
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        onSaved={setSettings}
         settings={settings}
+        onSaved={(next) => {
+          setSettings(next);
+          notify('toast.settingsSaved', 'success');
+        }}
         theme={theme}
         onThemeChange={setTheme}
+        lang={lang}
+        onLangChange={onLangChange}
       />
     </>
   );
 }
 
 export default function App() {
+  const [lang, setLang] = useState(() => localStorage.getItem(LANG_KEY) || DEFAULT_LANG);
+
   return (
-    <ToastProvider>
-      <AppInner />
-    </ToastProvider>
+    <I18nProvider lang={lang}>
+      <ToastProvider>
+        <DialogProvider>
+          <Shell lang={lang} onLangChange={setLang} />
+        </DialogProvider>
+      </ToastProvider>
+    </I18nProvider>
   );
 }
