@@ -57,6 +57,17 @@ const chain = (editor) => editor.chain().focus();
 
 /* ═════════════════════ 1. Formatting — the "Aa" button ═════════════════════ */
 
+/**
+ * The source currently named by the quote the caret sits in.
+ * @param {object} editor
+ * @returns {string}
+ */
+function quoteAttribution(editor) {
+  if (!editor) return '';
+  const node = editor.isActive('pullQuote') ? 'pullQuote' : 'blockquote';
+  return (editor.getAttributes(node) || {}).attribution || '';
+}
+
 /** Heading levels, shown as a second menu level under "Heading". */
 export const HEADING_ACTIONS = [1, 2, 3, 4, 5, 6].map((level) => ({
   id: `heading${level}`,
@@ -94,6 +105,24 @@ export const TEXT_STYLE_ACTIONS = [
     icon: PullQuoteIcon,
     run: (editor) => chain(editor).togglePullQuote().run(),
     isActive: (editor) => editor.isActive('pullQuote'),
+  },
+  {
+    // Rich HTML lets a quote name its source in a <cite>; this writes it.
+    id: 'attribution',
+    i18nKey: 'block.attribution',
+    icon: QuoteIcon,
+    enabled: (editor) => editor.isActive('blockquote') || editor.isActive('pullQuote'),
+    isActive: (editor) => !!quoteAttribution(editor),
+    run: async (editor, ctx) => {
+      const current = quoteAttribution(editor);
+      const name = await ctx.askText({
+        titleKey: 'block.attribution',
+        placeholderKey: 'dialog.attributionPlaceholder',
+        value: current,
+      });
+      if (name === null) return;
+      chain(editor).setQuoteAttribution(name.trim()).run();
+    },
   },
   {
     id: 'codeBlock',

@@ -3,7 +3,7 @@
  * (blocked in Electron and visually foreign).
  *
  * Three kinds:
- *   askText({ titleKey, placeholder, value })  → Promise<string|null>
+ *   askText({ titleKey, placeholder|placeholderKey, value }) → Promise<string|null>
  *   askLink({ text, url })                     → Promise<{text, url}|null>
  *   confirm({ titleKey, bodyKey, confirmKey }) → Promise<boolean>
  *
@@ -135,7 +135,11 @@ export function DialogProvider({ children }) {
                 className="dialog-input"
                 type="text"
                 value={value}
-                placeholder={dialog.options.placeholder || ''}
+                placeholder={
+                  dialog.options.placeholderKey
+                    ? t(dialog.options.placeholderKey)
+                    : dialog.options.placeholder || ''
+                }
                 onChange={(event) => setValue(event.target.value)}
                 onKeyDown={(event) => event.key === 'Enter' && accept()}
               />

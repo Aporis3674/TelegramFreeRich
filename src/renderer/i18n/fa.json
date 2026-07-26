@@ -1,4 +1,5 @@
 {
+  "block.attribution": "منبع نقل‌قول…",
   "block.blockquote": "نقل‌قول",
   "block.bulletList": "فهرست نقطه‌ای",
   "block.checklist": "چک‌لیست",
@@ -22,6 +23,7 @@
   "bottom.clear": "پاک‌کردن همه",
   "bottom.palette": "درج بلوک",
   "bottom.send": "ارسال",
+  "dialog.attributionPlaceholder": "گویندهٔ نقل‌قول — خالی بگذار تا حذف شود",
   "dialog.cancel": "لغو",
   "dialog.checklistTitle": "عنوان چک‌لیست",
   "dialog.checklistTitleFallback": "چک‌لیست",

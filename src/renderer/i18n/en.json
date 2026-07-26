@@ -1,4 +1,5 @@
 {
+  "block.attribution": "Attribution…",
   "block.blockquote": "Quote",
   "block.bulletList": "Bulleted list",
   "block.checklist": "Checklist",
@@ -22,6 +23,7 @@
   "bottom.clear": "Clear all",
   "bottom.palette": "Insert block",
   "bottom.send": "Send",
+  "dialog.attributionPlaceholder": "Who said it — leave empty to remove",
   "dialog.cancel": "Cancel",
   "dialog.checklistTitle": "Checklist title",
   "dialog.checklistTitleFallback": "Checklist",

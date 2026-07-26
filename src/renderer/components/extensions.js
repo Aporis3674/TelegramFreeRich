@@ -8,7 +8,7 @@
  * @module components/extensions
  */
 
-import { Mark, Node, mergeAttributes } from '@tiptap/core';
+import { Extension, Mark, Node, mergeAttributes } from '@tiptap/core';
 import { mediaKindForUrl } from '../lib/editor-actions.js';
 
 /* ─────────────────────── Gallery node view helpers ─────────────────────── */
@@ -216,6 +216,46 @@ export const PullQuote = Node.create({
         () =>
         ({ commands }) =>
           commands.toggleWrap(this.name),
+    };
+  },
+});
+
+/**
+ * Who said it — the `<cite>` a quote may carry.
+ *
+ * Rich HTML documents `<blockquote>text<cite>Author</cite></blockquote>` and the
+ * same for `<aside>`, so both quote kinds can name a source. `PullQuote` above
+ * declares its own `attribution`; this adds the matching one to the plain
+ * blockquote that StarterKit provides, and one command that writes to whichever
+ * of the two the caret is in.
+ */
+export const QuoteAttribution = Extension.create({
+  name: 'quoteAttribution',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['blockquote'],
+        attributes: {
+          attribution: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-attribution') || '',
+            renderHTML: (attrs) =>
+              attrs.attribution ? { 'data-attribution': attrs.attribution } : {},
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setQuoteAttribution:
+        (attribution = '') =>
+        ({ commands, editor }) =>
+          commands.updateAttributes(editor.isActive('pullQuote') ? 'pullQuote' : 'blockquote', {
+            attribution,
+          }),
     };
   },
 });

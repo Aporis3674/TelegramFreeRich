@@ -125,10 +125,16 @@
   color: var(--text-dim);
 }
 
-.bubble blockquote.pv-pullquote footer {
-  font-size: 11px;
-  color: var(--text-muted);
+.bubble blockquote cite {
+  display: block;
   margin-top: 4px;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.bubble blockquote cite::before {
+  content: '— ';
 }
 
 .bubble hr {

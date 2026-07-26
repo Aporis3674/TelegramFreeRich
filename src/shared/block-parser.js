@@ -91,14 +91,13 @@ export function parseBlockElement(el) {
         ...textContentOf(el),
       };
 
+    // Both quote kinds may name a source — Rich HTML puts it in a <cite>.
     case BlockType.BLOCKQUOTE:
-      return el.hasAttribute('data-pullquote')
-        ? {
-            type: BlockType.PULLQUOTE,
-            attribution: el.getAttribute('data-attribution') || '',
-            ...textContentOf(el),
-          }
-        : { type: BlockType.BLOCKQUOTE, ...textContentOf(el) };
+      return {
+        type: el.hasAttribute('data-pullquote') ? BlockType.PULLQUOTE : BlockType.BLOCKQUOTE,
+        attribution: el.getAttribute('data-attribution') || '',
+        ...textContentOf(el),
+      };
 
     case BlockType.CODE_BLOCK: {
       const codeEl = el.querySelector('code');

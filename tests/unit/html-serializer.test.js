@@ -126,9 +126,24 @@ describe('blocks', () => {
     );
   });
 
-  it('adds <cite> for an attribution', () => {
+  it('adds <cite> for an attribution, on both quote kinds', () => {
     expect(html('<blockquote data-pullquote="" data-attribution="Durov"><p>q</p></blockquote>')).toBe(
       '<aside><p>q</p><cite>Durov</cite></aside>',
+    );
+    expect(html('<blockquote data-attribution="Durov"><p>q</p></blockquote>')).toBe(
+      '<blockquote><p>q</p><cite>Durov</cite></blockquote>',
+    );
+  });
+
+  it('escapes the attribution', () => {
+    expect(html('<blockquote data-attribution="a &lt; b"><p>q</p></blockquote>')).toBe(
+      '<blockquote><p>q</p><cite>a &lt; b</cite></blockquote>',
+    );
+  });
+
+  it('leaves out an empty <cite>', () => {
+    expect(html('<blockquote data-attribution=""><p>q</p></blockquote>')).toBe(
+      '<blockquote><p>q</p></blockquote>',
     );
   });
 

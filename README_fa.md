@@ -8,12 +8,12 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.2.1-2ca5e0" alt="نسخه ۵٫۲٫۱">
+  <img src="https://img.shields.io/badge/version-5.3.0-2ca5e0" alt="نسخه ۵٫۳٫۰">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-253%20passing-4fc3a1" alt="۲۵۳ تست">
+  <img src="https://img.shields.io/badge/tests-258%20passing-4fc3a1" alt="۲۵۸ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -151,7 +151,7 @@ npm run dev
 | دکمه | با کلیک چه می‌شود |
 |:--:|---|
 | ↶ ↷ | بازگردانی / انجام دوباره — تاریخچهٔ کامل ProseMirror |
-| **Aa** | **قالب‌بندی** ← عنوان (H1 تا H6 را باز می‌کند)، متن، نقل‌قول، نقل‌قول برجسته، بلوک کد، پاورقی، جداکننده |
+| **Aa** | **قالب‌بندی** ← عنوان (H1 تا H6 را باز می‌کند)، متن، نقل‌قول، نقل‌قول برجسته، **منبع نقل‌قول** (همان `<cite>`)، بلوک کد، پاورقی، جداکننده |
 | **B** | **سبک متن** ← پررنگ، کج، زیرخط‌دار، خط‌خورده، اسپویلر، زیرنویس، بالانویس، هایلایت |
 | ☰ | **درج فهرست** ← شماره‌دار، نقطه‌ای، چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))*، بخش تاشو |
 | ▦ | **درج جدول** ← یک جدول ۳×۳ آمادهٔ ویرایش؛ نوار شناور ردیف و ستون را کم و زیاد می‌کند و پهنای ستون‌ها با موس کشیده می‌شود |
@@ -176,7 +176,7 @@ npm run dev
 | | |
 |---|---|
 | **متن** | پررنگ · کج · زیرخط‌دار · خط‌خورده · اسپویلر · هایلایت · زیرنویس · بالانویس · تک‌فاصله · فرمول درون‌خطی · پیوند |
-| **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول · نقل‌قول برجسته · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
+| **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول *(با منبع)* · نقل‌قول برجسته *(با منبع)* · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
 | **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))* |
 | **جدول** | ردیف سرصفحه، سلول‌های قابل ویرایش، تغییر پهنای ستون با موس |
 | **رسانه** | عکس · ویدیو · صدا · اسلایدشو *(کروسل ‹ ›)* · کلاژ · موقعیت مکانی |
@@ -338,11 +338,11 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۲۵۳ تست واحد (Vitest)
+npm test              # ۲۵۸ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.2.1.exe و …-portable.exe
-npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.2.1.AppImage
+npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.3.0.exe و …-portable.exe
+npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.3.0.AppImage
 ```
 
 <details>
@@ -389,7 +389,7 @@ src/
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۲۵۳ تست — سریالایزر HTML، پروکسی، بسته‌بندی، مستندات، پارسرها،
+tests/unit/                     ۲۵۸ تست — سریالایزر HTML، پروکسی، بسته‌بندی، مستندات، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 

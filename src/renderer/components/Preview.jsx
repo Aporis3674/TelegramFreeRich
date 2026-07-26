@@ -193,13 +193,18 @@ function renderBlock(block, index) {
     }
 
     case BlockType.BLOCKQUOTE:
-      return <blockquote key={key}>{renderText(block)}</blockquote>;
+      return (
+        <blockquote key={key}>
+          {renderText(block)}
+          {block.attribution && <cite>{block.attribution}</cite>}
+        </blockquote>
+      );
 
     case BlockType.PULLQUOTE:
       return (
         <blockquote key={key} className="pv-pullquote">
           {renderText(block)}
-          {block.attribution && <footer>— {block.attribution}</footer>}
+          {block.attribution && <cite>{block.attribution}</cite>}
         </blockquote>
       );
 

@@ -8,12 +8,12 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.2.1-2ca5e0" alt="Version 5.2.1">
+  <img src="https://img.shields.io/badge/version-5.3.0-2ca5e0" alt="Version 5.3.0">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-253%20passing-4fc3a1" alt="253 tests">
+  <img src="https://img.shields.io/badge/tests-258%20passing-4fc3a1" alt="258 tests">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -153,7 +153,7 @@ buttons and one salmon send button.
 | Button | Click it and you get |
 |:--:|---|
 | ↶ ↷ | Undo / redo — the full ProseMirror history |
-| **Aa** | **Formatting** → Heading (opens H1–H6), Text, Quote, Pull quote, Code block, Footer, Divider |
+| **Aa** | **Formatting** → Heading (opens H1–H6), Text, Quote, Pull quote, **Attribution** (the `<cite>` a quote may name), Code block, Footer, Divider |
 | **B** | **Text style** → Bold, Italic, Underline, Strikethrough, Spoiler, Subscript, Superscript, Marked |
 | ☰ | **Insert list** → Ordered list, Bullet list, Checklist *(see [Checklists](#checklists))*, Details |
 | ▦ | **Insert table** → an editable 3×3 table; a floating bar adds and removes rows and columns, and column widths drag on the borders |
@@ -178,7 +178,7 @@ right-to-left switch for the message you are writing.
 | | |
 |---|---|
 | **Text** | Bold · Italic · Underline · Strikethrough · Spoiler · Marked · Subscript · Superscript · Monospace · Inline formula · Links |
-| **Blocks** | Heading H1–H6 · Paragraph · Quote · Pull quote · Code block with language · Divider · Collapsible · Footer · Formula block |
+| **Blocks** | Heading H1–H6 · Paragraph · Quote *(with attribution)* · Pull quote *(with attribution)* · Code block with language · Divider · Collapsible · Footer · Formula block |
 | **Lists** | Ordered · Bulleted · Checklist *(see [Checklists](#checklists))* |
 | **Tables** | Header row, editable cells, drag-to-resize columns |
 | **Media** | Photo · Video · Audio · Slideshow *(‹ › carousel)* · Collage · Location |
@@ -255,8 +255,8 @@ The live preview keeps its own path — `block-parser.js` and `inline-parser.js`
 |---|---|
 | heading H1–H6 | `<h1>`…`<h6>` |
 | paragraph | `<p>` |
-| quote | `<blockquote>` (plus `<cite>` for a credit) |
-| pull quote | `<aside>` |
+| quote | `<blockquote>` — plus `<cite>` when it names a source |
+| pull quote | `<aside>` — plus `<cite>` when it names a source |
 | code block | `<pre><code class="language-…">` |
 | divider | `<hr/>` |
 | bullet / ordered list | `<ul>` / `<ol start="…">` |
@@ -340,11 +340,11 @@ Renderer (React)                     Main process (Electron)
 
 ```bash
 npm run dev           # Vite + Electron with hot reload
-npm test              # 253 unit tests (Vitest)
+npm test              # 258 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows: dist/TelegramFreeRich-Setup-5.2.1.exe + …-portable.exe
-npm run build:linux   # Linux: dist/TelegramFreeRich-5.2.1.AppImage
+npm run build         # Windows: dist/TelegramFreeRich-Setup-5.3.0.exe + …-portable.exe
+npm run build:linux   # Linux: dist/TelegramFreeRich-5.3.0.AppImage
 ```
 
 <details>
@@ -391,7 +391,7 @@ src/
     ├── constants.js            limits and defaults
     └── utils.js                sanitizeUrl, validation, helpers
 
-tests/unit/                     253 tests — HTML serializer, proxy, packaging, docs, parsers,
+tests/unit/                     258 tests — HTML serializer, proxy, packaging, docs, parsers,
                                 i18n parity, stylesheets, validation
 ```
 

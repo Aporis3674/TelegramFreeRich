@@ -500,3 +500,14 @@
 .tfr-editor .ProseMirror-gapcursor::after {
   border-top-color: var(--accent);
 }
+
+/* The <cite> a quote carries — drawn from the attribute, so it stays out of the
+   editable text and cannot be half-deleted. */
+.tfr-editor blockquote[data-attribution]:not([data-attribution=''])::after {
+  content: '— ' attr(data-attribution);
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-style: normal;
+  color: var(--text-muted);
+}

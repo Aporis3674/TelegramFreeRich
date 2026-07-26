@@ -36,6 +36,7 @@ import {
   MathBlock,
   MediaBlock,
   PullQuote,
+  QuoteAttribution,
   Spoiler,
 } from './extensions.js';
 
@@ -73,6 +74,7 @@ export default function useTfrEditor({ placeholder, onUpdate, t }) {
       Spoiler,
       InlineMath,
       PullQuote,
+      QuoteAttribution,
       Details,
       Footer,
       MathBlock,

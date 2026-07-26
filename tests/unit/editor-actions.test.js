@@ -119,16 +119,44 @@ describe('registry shape', () => {
 /* ═══════════════════ 1. Formatting (Aa) ═══════════════════ */
 
 describe('the Aa menu', () => {
-  it('lists heading, text, quote, pull quote, code block, footer and divider', () => {
+  it('lists heading, text, quote, pull quote, attribution, code block, footer and divider', () => {
     expect(TEXT_STYLE_ACTIONS.map((a) => a.id)).toEqual([
       'heading',
       'paragraph',
       'blockquote',
       'pullquote',
+      'attribution',
       'codeBlock',
       'footer',
       'divider',
     ]);
+  });
+
+  it('offers the attribution only inside a quote', () => {
+    const action = TEXT_STYLE_ACTIONS.find((a) => a.id === 'attribution');
+    expect(isActionEnabled(action, mockEditor({ active: ['blockquote'] }))).toBe(true);
+    expect(isActionEnabled(action, mockEditor({ active: ['pullQuote'] }))).toBe(true);
+    expect(isActionEnabled(action, mockEditor({ active: ['paragraph'] }))).toBe(false);
+  });
+
+  it('shows a tick once a quote names a source', () => {
+    const action = TEXT_STYLE_ACTIONS.find((a) => a.id === 'attribution');
+    expect(action.isActive(mockEditor({ active: ['blockquote'], attrs: {} }))).toBe(false);
+    expect(
+      action.isActive(mockEditor({ active: ['blockquote'], attrs: { attribution: 'Durov' } })),
+    ).toBe(true);
+  });
+
+  it('writes the trimmed answer onto the quote, and ignores a cancelled prompt', async () => {
+    const action = TEXT_STYLE_ACTIONS.find((a) => a.id === 'attribution');
+
+    const editor = mockEditor({ active: ['blockquote'], attrs: { attribution: 'Old' } });
+    await action.run(editor, mockCtx({ askText: vi.fn(async () => '  Durov  ') }));
+    expect(editor.calls).toEqual([{ name: 'setQuoteAttribution', args: ['Durov'] }]);
+
+    const cancelled = mockEditor({ active: ['blockquote'] });
+    await action.run(cancelled, mockCtx({ askText: vi.fn(async () => null) }));
+    expect(cancelled.calls).toEqual([]);
   });
 
   it('nests all six heading levels under Heading', () => {

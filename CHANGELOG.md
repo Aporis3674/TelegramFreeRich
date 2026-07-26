@@ -1,5 +1,31 @@
 # Changelog
 
+## [5.3.0] - 2026-07-26
+
+### Added — a quote can name its source
+- Rich HTML documents `<blockquote>text<cite>Author</cite></blockquote>`, and the same `<cite>` on
+  `<aside>`. The serializer already emitted it from a `data-attribution` attribute — but nothing
+  could ever set that attribute, so no quote ever carried one. A plain `<blockquote>` did not even
+  have the attribute to set
+- **Aa ▸ Attribution…** asks who said it and writes it onto the quote the caret is in — either
+  kind. It is greyed out outside a quote, shows a tick once a source is named, and clearing the
+  field removes the `<cite>` again
+- The attribution is drawn from the attribute rather than kept in the editable text, so it cannot
+  be half-deleted while editing, and the live preview renders it as a real `<cite>`
+- `block-parser.js` now reads the attribution off a plain quote too, not only a pull quote
+
+### Internal
+- `askText` accepts `placeholderKey` beside `placeholder`, so a translated hint can be shown where
+  the existing callers pass a literal example
+- 258 unit tests: the new menu entry and its enablement, the trimmed/cancelled prompt, `<cite>` on
+  both quote kinds, escaping, and an empty attribution emitting no `<cite>`
+
+### Verified
+- Driven in a real Electron window: the Aa menu lists **Attribution…** after Pull quote, the editor
+  document becomes `<blockquote data-attribution="Pavel Durov">`, the preview shows the cite, and
+  the send payload is
+  `<blockquote><p>Bots deserve rights too</p><cite>Pavel Durov</cite></blockquote>`
+
 ## [5.2.1] - 2026-07-26
 
 Same application code as 5.2.0. Only the release notes changed: 5.2.0 shipped before the workflow
