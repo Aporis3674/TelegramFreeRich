@@ -1,5 +1,32 @@
 # Changelog
 
+## [5.2.1] - 2026-07-26
+
+Same application code as 5.2.0. Only the release notes changed: 5.2.0 shipped before the workflow
+could compose them, and a published release's body cannot be rewritten afterwards — so this tag
+carries the notes and the screenshots that 5.2.0's release page is missing.
+
+### The slideshow carousel, in the editor and in the preview
+
+| A slideshow, frame 1 of 3 | The same slideshow on the video frame |
+|---|---|
+| ![Slideshow carousel](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.1/docs/slideshow.png) | ![Video that cannot be previewed](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.1/docs/slideshow-video.png) |
+
+A collage stays a grid — tiles, no arrows:
+
+![Collage](https://raw.githubusercontent.com/Aporis3674/TelegramFreeRich/v5.2.1/docs/collage.png)
+
+- A slideshow is **one frame at a time** now, with `‹` / `›` buttons, a `2 / 3` counter and
+  clickable dots, wrapping around at either end. It was a row of thumbnails scrolling sideways
+- **A video in a gallery no longer draws a broken image.** Every entry used to be rendered as
+  `<img>`, so a video or audio URL always showed the browser's broken-image icon even though
+  Telegram renders it perfectly once sent. Entries are `<img>` / `<video controls>` /
+  `<audio controls>` by extension, and when the media genuinely will not load in the app window the
+  tile says what the file is — a ▶ / ♪ / 🖼 glyph, the file name, and *"Not previewable here —
+  Telegram will show it"*
+- The editor's gallery is drawn by a TipTap node view, so the wire format is untouched
+- Full detail in the [5.2.0 entry](#520---2026-07-26) below
+
 ## [5.2.0] - 2026-07-26
 
 | A slideshow, frame 1 of 3 | The same slideshow on the video frame |
