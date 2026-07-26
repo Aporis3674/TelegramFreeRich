@@ -475,3 +475,44 @@
 .dialog-fields label + .dialog-input {
   margin-bottom: 4px;
 }
+
+/* Settings: section headers, port field and proxy presets */
+
+.sheet-section {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--outline);
+}
+
+.sheet-field-port {
+  max-width: 88px;
+}
+
+.proxy-presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.proxy-preset {
+  border: 1px solid var(--outline);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.proxy-preset:hover {
+  background: var(--hover);
+  color: var(--text);
+}

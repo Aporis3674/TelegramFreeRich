@@ -1,5 +1,30 @@
 # Changelog
 
+## [5.1.0] - 2026-07-26
+
+### Added — proxy support for blocked countries
+- Every Telegram request now goes through Electron's `net` module (Chromium's network stack)
+  instead of Node's `https`. Node ignores the operating system's proxy settings, so with a VPN
+  client on "Set system proxy" — the normal v2rayN setup where Telegram is blocked — requests
+  used to leave unproxied and time out
+- Settings → **Connection** with three modes: **System proxy** (default), **Manual proxy** and
+  **No proxy**. Manual mode has one-click presets for v2rayN's SOCKS5 (`127.0.0.1:10808`) and
+  HTTP (`127.0.0.1:10809`) endpoints, plus optional credentials
+- **Check connection to Telegram** reports the proxy Chromium resolved and whether
+  `api.telegram.org` answered, so a blocked network is distinguishable from a bad token
+- Proxy failures now name the cause: a dead tunnel reports
+  `ERR_PROXY_CONNECTION_FAILED — check the proxy (socks5://127.0.0.1:10808)`, and a
+  TLS-intercepting proxy says so instead of showing a bare certificate error
+- Proxy credentials are answered through Electron's `login` event and stored encrypted beside
+  the bot token; the renderer only learns whether a password exists
+
+### Internal
+- New `src/main/net/proxy.js` (pure configuration helpers) and `src/main/net/request.js`
+  (injectable requester with timeout, 1 MB cap and proxy-aware errors)
+- 214 unit tests; the request layer is covered with a fake `net`, and the proxy modes were
+  verified in a real Electron runtime (`system` resolved the OS proxy, `manual` resolved
+  `SOCKS5 127.0.0.1:10808`, `direct` resolved `DIRECT`)
+
 ## [5.0.0] - 2026-07-26
 
 ### Fixed (Critical) — messages could not be sent at all

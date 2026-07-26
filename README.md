@@ -8,12 +8,12 @@
 <p align="center"><em>Because bots should not have more rights than humans.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.0.0-2ca5e0" alt="Version 5.0.0">
+  <img src="https://img.shields.io/badge/version-5.1.0-2ca5e0" alt="Version 5.1.0">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-179%20passing-4fc3a1" alt="179 tests">
+  <img src="https://img.shields.io/badge/tests-214%20passing-4fc3a1" alt="214 tests">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -70,6 +70,31 @@ npm run dev
 (`@channel` or a numeric ID), press **Test connection**, then **Save**.
 
 Write your message and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>. That's it.
+
+---
+
+## 🌐 Blocked country? Use your proxy
+
+Telegram is blocked in some countries, and people reach it through v2rayN, Nekoray or a similar
+client. Those clients offer **“Set system proxy”**, which configures Windows — and therefore
+Chromium — but **not Node**. Any Electron app that sends with Node's `https` module ignores it
+and times out.
+
+This app sends every Telegram request through **Chromium's network stack** (`net.request` on the
+default session), so the system proxy is honoured, PAC scripts included.
+
+Settings → **Connection**:
+
+| Mode | When to use it |
+|---|---|
+| **System proxy** *(default)* | Your VPN client has “Set system proxy” enabled — nothing else to do |
+| **Manual proxy** | The client only exposes a port. One click fills in v2rayN's defaults: SOCKS5 `127.0.0.1:10808` or HTTP `127.0.0.1:10809` |
+| **No proxy** | Direct connection |
+
+**Check connection to Telegram** reports which proxy Chromium resolved and whether
+`api.telegram.org` answered, so a blocked network is never mistaken for a bad token. Manual
+proxies may carry a username and password; the password is encrypted next to the bot token and
+never reaches the window you type in.
 
 ---
 
@@ -240,7 +265,7 @@ Renderer (React)                     Main process (Electron)
 
 | Layer | Protection |
 |---|---|
-| Token storage | `safeStorage` — OS keychain encryption, on disk as `settings.enc` |
+| Token storage | `safeStorage` — OS keychain encryption, on disk as `settings.enc`; the proxy password sits beside it |
 | IPC bridge | `contextBridge` with `contextIsolation` — no Node APIs in the renderer |
 | Input validation | Allowlists for API methods, chat IDs and languages |
 | HTTP | 30-second timeout, 1 MB response limit |
@@ -254,10 +279,10 @@ Renderer (React)                     Main process (Electron)
 
 ```bash
 npm run dev           # Vite + Electron with hot reload
-npm test              # 179 unit tests (Vitest)
+npm test              # 214 unit tests (Vitest)
 npm run lint          # ESLint, zero warnings
 npm run format        # Prettier
-npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.0.0.exe
+npm run build         # Windows installer → dist/TelegramFreeRich-Setup-5.1.0.exe
 npm run build:linux   # AppImage
 ```
 
@@ -267,8 +292,10 @@ npm run build:linux   # AppImage
 ```
 src/
 ├── main/                       Electron main process
-│   ├── main.js                 window, IPC handlers, Telegram requests
+│   ├── main.js                 window, IPC handlers, encrypted settings
 │   ├── preload.js              contextBridge — the only renderer surface
+│   ├── net/proxy.js            system / manual / direct proxy resolution
+│   ├── net/request.js          requests over Chromium's stack, proxy-aware errors
 │   └── security/validation.js  method / chat ID / language allowlists
 │
 ├── renderer/                   React UI
@@ -301,7 +328,7 @@ src/
     ├── constants.js            limits and defaults
     └── utils.js                sanitizeUrl, validation, helpers
 
-tests/unit/                     179 tests — HTML serializer, parsers,
+tests/unit/                     214 tests — HTML serializer, proxy, parsers,
                                 i18n parity, stylesheets, validation
 ```
 

@@ -7,6 +7,16 @@
  */
 
 import { useEffect, useState } from 'react';
+
+/** Mirrors the main process defaults (a stock v2rayN SOCKS5 endpoint). */
+const DEFAULT_PROXY_FORM = {
+  mode: 'system',
+  scheme: 'socks5',
+  host: '127.0.0.1',
+  port: 10808,
+  username: '',
+  hasPassword: false,
+};
 import { CloseIcon } from './Icons.jsx';
 import { useI18n } from '../i18n/index.js';
 
@@ -39,6 +49,10 @@ export default function Settings({
   const [status, setStatus] = useState({ text: '', type: '' });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [proxy, setProxy] = useState(DEFAULT_PROXY_FORM);
+  const [proxyPassword, setProxyPassword] = useState('');
+  const [proxyStatus, setProxyStatus] = useState({ text: '', type: '' });
+  const [checkingProxy, setCheckingProxy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -46,13 +60,16 @@ export default function Settings({
     setChatId(settings.chatId || '');
     setEditId(settings.editId || '');
     setStatus({ text: '', type: '' });
+    setProxyStatus({ text: '', type: '' });
+    setProxyPassword('');
+    setProxy({ ...DEFAULT_PROXY_FORM, ...(settings.proxy || {}) });
   }, [open, settings]);
 
   if (!open) return null;
 
   async function handleSave() {
     setSaving(true);
-    const payload = { chatId, lang };
+    const payload = { chatId, lang, proxy: proxyPayload() };
     if (token) payload.token = token;
 
     try {
@@ -67,12 +84,49 @@ export default function Settings({
         chatId,
         editId,
         lang,
+        proxy: result.proxy || proxy,
       });
       onClose();
     } catch {
       setStatus({ text: t('toast.networkError'), type: 'error' });
     }
     setSaving(false);
+  }
+
+  /** The proxy fields to send; an untouched password keeps the stored one. */
+  function proxyPayload() {
+    const payload = {
+      mode: proxy.mode,
+      scheme: proxy.scheme,
+      host: proxy.host,
+      port: Number(proxy.port) || 0,
+      username: proxy.username || '',
+    };
+    if (proxyPassword) payload.password = proxyPassword;
+    return payload;
+  }
+
+  /** Save the proxy first, then ask the main process what the path looks like. */
+  async function handleProxyTest() {
+    setCheckingProxy(true);
+    setProxyStatus({ text: t('proxy.checking'), type: '' });
+    try {
+      const saved = await window.app.saveSettings({ proxy: proxyPayload() });
+      if (!saved.ok) {
+        setProxyStatus({ text: saved.description || t('toast.networkError'), type: 'error' });
+        setCheckingProxy(false);
+        return;
+      }
+      const result = await window.app.testProxy();
+      setProxyStatus(
+        result.reachable
+          ? { text: `✓ ${t('proxy.reachable')} — ${result.resolved}`, type: 'ok' }
+          : { text: `✗ ${result.resolved} — ${result.description || ''}`, type: 'error' },
+      );
+    } catch {
+      setProxyStatus({ text: t('toast.networkError'), type: 'error' });
+    }
+    setCheckingProxy(false);
   }
 
   async function handleTest() {
@@ -153,6 +207,115 @@ export default function Settings({
             placeholder={t('settings.editIdPlaceholder')}
             autoComplete="off"
           />
+
+          <div className="sheet-section">{t('proxy.section')}</div>
+          <p className="sheet-note">{t('proxy.help')}</p>
+
+          <label htmlFor="set-proxy-mode">{t('proxy.mode')}</label>
+          <select
+            id="set-proxy-mode"
+            value={proxy.mode}
+            onChange={(event) => setProxy({ ...proxy, mode: event.target.value })}
+          >
+            <option value="system">{t('proxy.mode.system')}</option>
+            <option value="manual">{t('proxy.mode.manual')}</option>
+            <option value="direct">{t('proxy.mode.direct')}</option>
+          </select>
+
+          {proxy.mode === 'manual' && (
+            <>
+              <div className="sheet-row">
+                <div className="sheet-field">
+                  <label htmlFor="set-proxy-scheme">{t('proxy.scheme')}</label>
+                  <select
+                    id="set-proxy-scheme"
+                    value={proxy.scheme}
+                    onChange={(event) => setProxy({ ...proxy, scheme: event.target.value })}
+                  >
+                    <option value="socks5">SOCKS5</option>
+                    <option value="socks4">SOCKS4</option>
+                    <option value="http">HTTP</option>
+                    <option value="https">HTTPS</option>
+                  </select>
+                </div>
+                <div className="sheet-field">
+                  <label htmlFor="set-proxy-host">{t('proxy.host')}</label>
+                  <input
+                    id="set-proxy-host"
+                    type="text"
+                    value={proxy.host}
+                    placeholder="127.0.0.1"
+                    onChange={(event) => setProxy({ ...proxy, host: event.target.value })}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="sheet-field sheet-field-port">
+                  <label htmlFor="set-proxy-port">{t('proxy.port')}</label>
+                  <input
+                    id="set-proxy-port"
+                    type="number"
+                    value={proxy.port}
+                    placeholder="10808"
+                    onChange={(event) => setProxy({ ...proxy, port: event.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="proxy-presets">
+                <span>{t('proxy.presets')}</span>
+                <button
+                  type="button"
+                  className="proxy-preset"
+                  onClick={() => setProxy({ ...proxy, scheme: 'socks5', host: '127.0.0.1', port: 10808 })}
+                >
+                  v2rayN SOCKS5 · 10808
+                </button>
+                <button
+                  type="button"
+                  className="proxy-preset"
+                  onClick={() => setProxy({ ...proxy, scheme: 'http', host: '127.0.0.1', port: 10809 })}
+                >
+                  v2rayN HTTP · 10809
+                </button>
+              </div>
+
+              <div className="sheet-row">
+                <div className="sheet-field">
+                  <label htmlFor="set-proxy-user">{t('proxy.username')}</label>
+                  <input
+                    id="set-proxy-user"
+                    type="text"
+                    value={proxy.username}
+                    onChange={(event) => setProxy({ ...proxy, username: event.target.value })}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="sheet-field">
+                  <label htmlFor="set-proxy-pass">{t('proxy.password')}</label>
+                  <input
+                    id="set-proxy-pass"
+                    type="password"
+                    value={proxyPassword}
+                    placeholder={proxy.hasPassword ? t('settings.tokenKeep') : ''}
+                    onChange={(event) => setProxyPassword(event.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <button
+            type="button"
+            className="dialog-btn"
+            onClick={handleProxyTest}
+            disabled={checkingProxy}
+          >
+            {checkingProxy ? t('proxy.checking') : t('proxy.check')}
+          </button>
+          {proxyStatus.text && <div className={`sheet-status ${proxyStatus.type}`}>{proxyStatus.text}</div>}
+
+          <div className="sheet-section">{t('settings.appearance')}</div>
 
           <div className="sheet-row">
             <div className="sheet-field">

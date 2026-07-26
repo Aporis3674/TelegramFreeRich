@@ -8,12 +8,12 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.0.0-2ca5e0" alt="نسخه ۵٫۰٫۰">
+  <img src="https://img.shields.io/badge/version-5.1.0-2ca5e0" alt="نسخه ۵٫۱٫۰">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-179%20passing-4fc3a1" alt="۱۵۱ تست">
+  <img src="https://img.shields.io/badge/tests-214%20passing-4fc3a1" alt="۱۵۱ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -70,6 +70,30 @@ npm run dev
 وارد کن، **تست اتصال** را بزن و **ذخیره** کن.
 
 پیامت را بنویس و <kbd>Ctrl</kbd>+<kbd>Enter</kbd> بزن. تمام.
+
+---
+
+## 🌐 تلگرام فیلتر است؟ از پروکسی خودت استفاده کن
+
+در کشورهایی که تلگرام فیلتر است، کاربران با v2rayN، Nekoray یا کلاینت‌های مشابه وصل می‌شوند. این
+کلاینت‌ها گزینهٔ **«Set system proxy»** دارند که ویندوز — و در نتیجه کرومیوم — را تنظیم می‌کند، ولی
+**نود** آن را نمی‌بیند. هر اپ الکترونی که با ماژول `https` نود بفرستد، پروکسی سیستم را نادیده
+می‌گیرد و تایم‌اوت می‌خورد.
+
+این برنامه همهٔ درخواست‌های تلگرام را از **مسیر شبکهٔ کرومیوم** می‌فرستد (`net.request` روی نشست
+پیش‌فرض)، پس پروکسی سیستم — و حتی اسکریپت PAC — رعایت می‌شود.
+
+تنظیمات ← **اتصال**:
+
+| حالت | چه وقت |
+|---|---|
+| **پروکسی سیستم** *(پیش‌فرض)* | کلاینت VPN گزینهٔ «Set system proxy» را روشن دارد — کار دیگری لازم نیست |
+| **پروکسی دستی** | کلاینت فقط پورت می‌دهد. با یک کلیک مقادیر پیش‌فرض v2rayN پر می‌شود: SOCKS5 روی `127.0.0.1:10808` یا HTTP روی `127.0.0.1:10809` |
+| **بدون پروکسی** | اتصال مستقیم |
+
+دکمهٔ **بررسی اتصال به تلگرام** می‌گوید کرومیوم چه پروکسی‌ای انتخاب کرده و آیا `api.telegram.org`
+جواب داده — تا شبکهٔ فیلترشده با توکن اشتباه قاطی نشود. پروکسی دستی می‌تواند نام کاربری و گذرواژه
+داشته باشد؛ گذرواژه کنار توکن ربات رمزنگاری می‌شود و هرگز به پنجره‌ای که در آن تایپ می‌کنی نمی‌رسد.
 
 ---
 
@@ -240,7 +264,7 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 | لایه | محافظت |
 |---|---|
-| ذخیرهٔ توکن | `safeStorage` — رمزنگاری با کلیدخانهٔ سیستم‌عامل، روی دیسک در `settings.enc` |
+| ذخیرهٔ توکن | `safeStorage` — رمزنگاری با کلیدخانهٔ سیستم‌عامل در `settings.enc`؛ گذرواژهٔ پروکسی هم کنارش |
 | پل IPC | `contextBridge` با `contextIsolation` — هیچ API نودی در رندرر نیست |
 | اعتبارسنجی ورودی | فهرست سفید برای متدهای API، شناسهٔ چت و زبان |
 | HTTP | تایم‌اوت ۳۰ ثانیه، سقف پاسخ ۱ مگابایت |
@@ -254,10 +278,10 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۱۷۹ تست واحد (Vitest)
+npm test              # ۲۱۴ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.0.0.exe
+npm run build         # نصب‌کنندهٔ ویندوز → dist/TelegramFreeRich-Setup-5.1.0.exe
 npm run build:linux   # AppImage
 ```
 
@@ -267,8 +291,10 @@ npm run build:linux   # AppImage
 ```
 src/
 ├── main/                       پردازشگر اصلی Electron
-│   ├── main.js                 پنجره، هندلرهای IPC، درخواست‌های تلگرام
+│   ├── main.js                 پنجره، هندلرهای IPC، تنظیمات رمزنگاری‌شده
 │   ├── preload.js              contextBridge — تنها سطح تماس رندرر
+│   ├── net/proxy.js            تشخیص پروکسی سیستم / دستی / مستقیم
+│   ├── net/request.js          درخواست از مسیر کرومیوم با خطاهای پروکسی‌آگاه
 │   └── security/validation.js  فهرست سفید متد / شناسهٔ چت / زبان
 │
 ├── renderer/                   رابط کاربری React
@@ -301,7 +327,7 @@ src/
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۱۷۹ تست — سریالایزر HTML، پارسرها،
+tests/unit/                     ۲۱۴ تست — سریالایزر HTML، پروکسی، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 

@@ -43,6 +43,13 @@ contextBridge.exposeInMainWorld('app', {
   testConnection: () => ipcRenderer.invoke('tg-test'),
 
   /**
+   * Check the network path: which proxy Chromium resolves for api.telegram.org
+   * and whether the host is reachable through it.
+   * @returns {Promise<{ ok: boolean, reachable: boolean, resolved: string, mode: string, description?: string }>}
+   */
+  testProxy: () => ipcRenderer.invoke('proxy-test'),
+
+  /**
    * Open native file dialog.
    * @param {Array} filters
    * @returns {Promise<string|null>} Selected file path or null.

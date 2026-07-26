@@ -4,9 +4,8 @@
  * Security: token NEVER leaves main process.
  */
 
-const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, net, safeStorage, session } = require('electron');
 const path = require('path');
-const https = require('https');
 const fs = require('fs');
 const {
   isValidToken,
@@ -14,14 +13,21 @@ const {
   isValidLang,
   isValidMethod,
 } = require('./security/validation');
+const {
+  buildSessionProxyConfig,
+  isValidProxyConfig,
+  normalizeProxyConfig,
+  publicProxyConfig,
+} = require('./net/proxy');
+const { createRequester } = require('./net/request');
 
-const HTTP_TIMEOUT_MS = 30000;
-const MAX_RESPONSE_BYTES = 1048576;
+const TELEGRAM_PROBE_URL = 'https://api.telegram.org/';
 
 let mainWindow;
 let secureToken = '';
 let secureChatId = '';
 let secureLang = 'en';
+let secureProxy = normalizeProxyConfig();
 
 // ===================== Encrypted Settings =====================
 
@@ -45,6 +51,7 @@ function loadSecureSettings() {
     secureToken = parsed.token || '';
     secureChatId = parsed.chatId || '';
     secureLang = parsed.lang || 'en';
+    secureProxy = normalizeProxyConfig(parsed.proxy);
   } catch (e) {
     console.error('[Settings] Failed to load:', e.message);
   }
@@ -61,6 +68,7 @@ function saveSecureSettings() {
       token: secureToken,
       chatId: secureChatId,
       lang: secureLang,
+      proxy: secureProxy,
     });
     const encrypted = safeStorage.encryptString(data);
     fs.writeFileSync(filePath, encrypted);
@@ -71,62 +79,45 @@ function saveSecureSettings() {
   }
 }
 
-// ===================== HTTP Request with Timeout =====================
+// ===================== Proxy =====================
 
 /**
- * Make an HTTPS request to Telegram API with timeout and size limit.
- * @param {string} url
- * @param {object|null} payload - null for GET, object for POST
- * @returns {Promise<object>}
+ * Apply the stored proxy configuration to the default session.
+ * Every Telegram request rides on this session, so "system" mode picks up
+ * whatever v2rayN (or any other client) set as the OS proxy.
+ * @returns {Promise<void>}
  */
-function tgRequest(url, payload = null) {
-  return new Promise((resolve, reject) => {
-    const isPost = payload !== null;
-    const data = isPost ? JSON.stringify(payload) : null;
-
-    const options = {
-      method: isPost ? 'POST' : 'GET',
-      headers: isPost
-        ? {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(data),
-          }
-        : {},
-    };
-
-    const req = https.request(url, options, (res) => {
-      let body = '';
-      let size = 0;
-
-      res.on('data', (chunk) => {
-        size += chunk.length;
-        if (size > MAX_RESPONSE_BYTES) {
-          req.destroy();
-          reject(new Error('Response too large'));
-          return;
-        }
-        body += chunk;
-      });
-
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch {
-          reject(new Error('Invalid JSON response'));
-        }
-      });
-    });
-
-    req.setTimeout(HTTP_TIMEOUT_MS, () => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    });
-
-    req.on('error', reject);
-    if (data) req.write(data);
-    req.end();
-  });
+async function applyProxy() {
+  try {
+    await session.defaultSession.setProxy(buildSessionProxyConfig(secureProxy));
+  } catch (e) {
+    console.error('[Proxy] Failed to apply:', e.message);
+  }
 }
+
+/**
+ * Ask Chromium which proxy it would use for the Telegram API.
+ * @returns {Promise<string>} e.g. `PROXY 127.0.0.1:10809` or `DIRECT`
+ */
+async function resolveTelegramProxy() {
+  try {
+    return await session.defaultSession.resolveProxy(TELEGRAM_PROBE_URL);
+  } catch (e) {
+    return `error: ${e.message}`;
+  }
+}
+
+// ===================== HTTP Request =====================
+
+/**
+ * Telegram requests ride Chromium's stack, so they follow the proxy resolved
+ * above — that is what makes a system proxy (v2rayN and friends) work.
+ */
+const tgRequest = createRequester({
+  net,
+  session: session.defaultSession,
+  getProxy: () => secureProxy,
+});
 
 // ===================== Window =====================
 
@@ -164,9 +155,17 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   loadSecureSettings();
+  await applyProxy();
   createWindow();
+});
+
+// Answer proxy authentication challenges with the stored credentials.
+app.on('login', (event, _webContents, _details, authInfo, callback) => {
+  if (!authInfo.isProxy) return;
+  event.preventDefault();
+  callback(secureProxy.username, secureProxy.password);
 });
 
 app.on('window-all-closed', () => {
@@ -204,7 +203,7 @@ ipcMain.handle('tg-api', async (_event, { method, body }) => {
 /**
  * Save settings — encrypted via safeStorage. Token is validated.
  */
-ipcMain.handle('save-settings', async (_event, { token, chatId, lang }) => {
+ipcMain.handle('save-settings', async (_event, { token, chatId, lang, proxy }) => {
   if (token !== undefined) {
     if (typeof token === 'string' && token.length > 0 && !isValidToken(token)) {
       return { ok: false, description: 'Invalid bot token format' };
@@ -223,9 +222,22 @@ ipcMain.handle('save-settings', async (_event, { token, chatId, lang }) => {
     }
     secureLang = lang;
   }
+  if (proxy !== undefined) {
+    const candidate = normalizeProxyConfig({
+      ...proxy,
+      // An omitted password means "keep the stored one".
+      password: typeof proxy.password === 'string' ? proxy.password : secureProxy.password,
+    });
+    if (!isValidProxyConfig(candidate)) {
+      return { ok: false, description: 'Invalid proxy configuration' };
+    }
+    secureProxy = candidate;
+    await applyProxy();
+  }
+
   const saved = saveSecureSettings();
   return saved
-    ? { ok: true }
+    ? { ok: true, proxy: publicProxyConfig(secureProxy) }
     : { ok: false, description: 'Failed to encrypt/save settings' };
 });
 
@@ -237,7 +249,30 @@ ipcMain.handle('load-settings', async () => {
     tokenSet: !!secureToken,
     chatId: secureChatId,
     lang: secureLang,
+    proxy: publicProxyConfig(secureProxy),
   };
+});
+
+/**
+ * Report which proxy Chromium resolves for the Telegram API, and whether a
+ * plain HTTPS request to it gets through. Used by the Settings panel so a
+ * blocked connection can be told apart from a bad token.
+ */
+ipcMain.handle('proxy-test', async () => {
+  const resolved = await resolveTelegramProxy();
+  try {
+    await tgRequest(`${TELEGRAM_PROBE_URL}bot0:invalid/getMe`, null);
+    // Telegram answered — even a 401 body means the tunnel works.
+    return { ok: true, reachable: true, resolved, mode: secureProxy.mode };
+  } catch (e) {
+    return {
+      ok: false,
+      reachable: false,
+      resolved,
+      mode: secureProxy.mode,
+      description: e.message,
+    };
+  }
 });
 
 /**
