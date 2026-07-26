@@ -13,6 +13,21 @@
   (`.menu-sep`, `.palette-foot`) on its first run
 - 151 unit tests
 
+### Packaging
+- Renderer now builds to `build/renderer`. electron-builder excludes its own output directory
+  from the packaged app, so with the renderer inside `dist/` the installers risked shipping
+  without a UI; `app.asar` is now verified to contain `build/renderer/index.html`
+- `package.json` gained author, license, homepage and repository — without the repository field
+  electron-builder aborted a Linux build with "Cannot read properties of null (reading
+  'channel')"
+- App icon set to `logo.png` (512×512); Linux target declares category and maintainer;
+  `build.publish` is null because the workflow uploads the release
+
+### CI
+- Build & Release now runs a verify job (lint + tests) and then a two-platform matrix —
+  NSIS installer on Windows, AppImage on Linux — attaching both to the GitHub release
+- The workflow can also be triggered manually (`workflow_dispatch`)
+
 ### Docs
 - README and README_fa rewritten: hero screenshot, Premium-vs-bot comparison, three-step quick
   start, toolbar map, folded reference tables, security diagram and project layout

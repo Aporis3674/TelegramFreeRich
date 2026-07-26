@@ -54,8 +54,10 @@ No coding, no server, no subscription. Point the app at a bot token and a chat, 
 **1 — Get a bot.** Message [@BotFather](https://t.me/BotFather), send `/newbot`, copy the token.
 Add the bot to your channel or group as an administrator.
 
-**2 — Install.** Grab the installer from the
-[releases page](https://github.com/Aporis3674/TelegramFreeRich/releases/latest), or run from source:
+**2 — Install.** Grab a package from the
+[latest release](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) —
+`TelegramFreeRich-Setup-*.exe` for Windows, `TelegramFreeRich-*.AppImage` for Linux
+(`chmod +x` it and run) — or start from source:
 
 ```bash
 git clone https://github.com/Aporis3674/TelegramFreeRich.git

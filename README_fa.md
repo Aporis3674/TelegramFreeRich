@@ -54,8 +54,10 @@
 **۱ — یک بات بساز.** به [@BotFather](https://t.me/BotFather) پیام بده، `/newbot` بفرست و توکن را
 کپی کن. بات را به‌عنوان ادمین به کانال یا گروهت اضافه کن.
 
-**۲ — نصب کن.** فایل نصبی را از
-[صفحهٔ انتشار](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) بگیر، یا از سورس اجرا کن:
+**۲ — نصب کن.** بسته را از
+[آخرین انتشار](https://github.com/Aporis3674/TelegramFreeRich/releases/latest) بگیر —
+`TelegramFreeRich-Setup-*.exe` برای ویندوز و `TelegramFreeRich-*.AppImage` برای لینوکس
+(اجازهٔ اجرا بده و اجرا کن) — یا از سورس شروع کن:
 
 ```bash
 git clone https://github.com/Aporis3674/TelegramFreeRich.git
