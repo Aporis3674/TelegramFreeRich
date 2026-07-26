@@ -41,9 +41,21 @@ function isValidMethod(method) {
   return typeof method === 'string' && /^[a-zA-Z]{3,64}$/.test(method);
 }
 
+/**
+ * Validate a business connection ID — the opaque token `sendChecklist` needs.
+ * Telegram does not document its shape, so this only bounds the length and
+ * keeps it to the characters its IDs are made of.
+ * @param {string} id
+ * @returns {boolean}
+ */
+function isValidBusinessConnectionId(id) {
+  return typeof id === 'string' && /^[A-Za-z0-9_-]{4,128}$/.test(id);
+}
+
 module.exports = {
   isValidToken,
   isValidChatId,
   isValidLang,
   isValidMethod,
+  isValidBusinessConnectionId,
 };

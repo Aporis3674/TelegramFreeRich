@@ -13,6 +13,7 @@ import {
   buildEditBody,
   buildInputRichMessage,
   buildRichMessageBody,
+  checkChecklist,
   checkLimits,
   escapeText,
   isPrivateChatId,
@@ -254,6 +255,56 @@ describe('checklists', () => {
     expect(out.checklist).toEqual([]);
     expect(out.html).toBe('<ul><li>a</li></ul>');
   });
+
+  it('renders task items into the body when asked to inline them', () => {
+    // The fallback for a bot without a business connection: sendChecklist is
+    // unavailable, so the list travels inside the message instead.
+    const out = serializeEditorHtml(
+      '<p>intro</p><ul data-type="taskList"><li data-checked="true">done</li>' +
+        '<li data-checked="false">todo</li></ul>',
+      { inlineChecklist: true },
+    );
+    expect(out.html).toBe('<p>intro</p><ul><li>☑ done</li><li>☐ todo</li></ul>');
+    expect(out.inlinedChecklist).toBe(true);
+    // Still reported, so the caller can say which form was sent.
+    expect(out.checklist).toEqual([
+      { text: 'done', done: true },
+      { text: 'todo', done: false },
+    ]);
+  });
+
+  it('does not claim an inlined checklist when the document has none', () => {
+    const out = serializeEditorHtml('<p>hi</p>', { inlineChecklist: true });
+    expect(out.inlinedChecklist).toBe(false);
+    expect(out.html).toBe('<p>hi</p>');
+  });
+
+  it('reads the markup TipTap actually emits for a task list', () => {
+    // TaskItem wraps the text in a <div><p>, next to a <label> holding the
+    // checkbox — the label contributes no text, so the item text is clean.
+    const tiptap =
+      '<ul data-type="taskList">' +
+      '<li data-checked="true" data-type="taskItem">' +
+      '<label><input type="checkbox" checked="checked"><span></span></label>' +
+      '<div><p>hello</p></div></li>' +
+      '<li data-checked="false" data-type="taskItem">' +
+      '<label><input type="checkbox"><span></span></label>' +
+      '<div><p>world</p></div></li></ul>';
+    expect(ser(tiptap).checklist).toEqual([
+      { text: 'hello', done: true },
+      { text: 'world', done: false },
+    ]);
+    expect(serializeEditorHtml(tiptap, { inlineChecklist: true }).html).toBe(
+      '<ul><li>☑ hello</li><li>☐ world</li></ul>',
+    );
+  });
+
+  it('escapes task text when inlining', () => {
+    const out = serializeEditorHtml('<ul data-type="taskList"><li>a &lt; b</li></ul>', {
+      inlineChecklist: true,
+    });
+    expect(out.html).toBe('<ul><li>☐ a &lt; b</li></ul>');
+  });
 });
 
 describe('request bodies', () => {
@@ -287,11 +338,72 @@ describe('request bodies', () => {
     });
   });
 
-  it('builds a checklist body', () => {
-    expect(buildChecklistBody([{ text: 'a', done: true }], '@chan')).toEqual({
-      chat_id: '@chan',
-      checklist: { items: [{ text: 'a', done: true }] },
+  it('builds a checklist as InputChecklist: a title plus tasks with ids', () => {
+    // "items" with a "done" flag is not a shape the API accepts; it answered
+    // `can't parse InputChecklist: Can't find field "title"`.
+    const body = buildChecklistBody([{ text: 'a', done: true }, { text: 'b' }], '12345', {
+      title: 'Groceries',
+      businessConnectionId: 'biz_1',
     });
+    expect(body).toEqual({
+      chat_id: '12345',
+      business_connection_id: 'biz_1',
+      checklist: {
+        title: 'Groceries',
+        tasks: [
+          { id: 1, text: 'a' },
+          { id: 2, text: 'b' },
+        ],
+      },
+    });
+  });
+
+  it('gives every task a positive unique id', () => {
+    const tasks = buildChecklistBody([{ text: 'a' }, { text: 'b' }, { text: 'c' }], '1').checklist
+      .tasks;
+    const ids = tasks.map((task) => task.id);
+    expect(ids).toEqual([1, 2, 3]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(Math.min(...ids)).toBeGreaterThan(0);
+  });
+
+  it('drops the done flag — a task cannot be sent already ticked', () => {
+    const tasks = buildChecklistBody([{ text: 'a', done: true }], '1').checklist.tasks;
+    expect(tasks[0]).toEqual({ id: 1, text: 'a' });
+    expect('done' in tasks[0]).toBe(false);
+  });
+
+  it('omits business_connection_id when there is none to send', () => {
+    expect(buildChecklistBody([{ text: 'a' }], '1')).not.toHaveProperty(
+      'business_connection_id',
+    );
+  });
+
+  it('caps tasks and task text at the documented limits', () => {
+    const many = Array.from({ length: LIMITS.CHECKLIST_TASKS + 5 }, (_, i) => ({
+      text: `t${i}`,
+    }));
+    expect(buildChecklistBody(many, '1').checklist.tasks).toHaveLength(LIMITS.CHECKLIST_TASKS);
+
+    const long = buildChecklistBody([{ text: 'x'.repeat(200) }], '1').checklist.tasks[0];
+    expect(long.text).toHaveLength(LIMITS.CHECKLIST_TASK_CHARS);
+  });
+});
+
+describe('checkChecklist', () => {
+  it('accepts a checklist inside every limit', () => {
+    expect(checkChecklist([{ text: 'a' }])).toEqual({ ok: true });
+  });
+
+  it('reports why a checklist cannot be sent', () => {
+    expect(checkChecklist([]).reason).toBe('empty');
+    expect(
+      checkChecklist(Array.from({ length: LIMITS.CHECKLIST_TASKS + 1 }, () => ({ text: 'a' })))
+        .reason,
+    ).toBe('tasks');
+    expect(checkChecklist([{ text: 'x'.repeat(LIMITS.CHECKLIST_TASK_CHARS + 1) }]).reason).toBe(
+      'taskChars',
+    );
   });
 });
 

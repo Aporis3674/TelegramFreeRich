@@ -10,6 +10,7 @@ const {
   isValidChatId,
   isValidLang,
   isValidMethod,
+  isValidBusinessConnectionId,
 } = require('../../src/main/security/validation.js');
 
 describe('isValidToken', () => {
@@ -54,5 +55,21 @@ describe('isValidMethod', () => {
     expect(isValidMethod('../evil')).toBe(false);
     expect(isValidMethod('send message')).toBe(false);
     expect(isValidMethod('')).toBe(false);
+  });
+});
+
+describe('isValidBusinessConnectionId', () => {
+  it('accepts the opaque ids Telegram hands out', () => {
+    expect(isValidBusinessConnectionId('Bqs3Kj_9-xY')).toBe(true);
+    expect(isValidBusinessConnectionId('a'.repeat(128))).toBe(true);
+  });
+
+  it('rejects anything that could not be one', () => {
+    expect(isValidBusinessConnectionId('abc')).toBe(false);
+    expect(isValidBusinessConnectionId('a'.repeat(129))).toBe(false);
+    expect(isValidBusinessConnectionId('has space')).toBe(false);
+    expect(isValidBusinessConnectionId('semi;colon')).toBe(false);
+    expect(isValidBusinessConnectionId('')).toBe(false);
+    expect(isValidBusinessConnectionId(null)).toBe(false);
   });
 });

@@ -12,6 +12,7 @@ const {
   isValidChatId,
   isValidLang,
   isValidMethod,
+  isValidBusinessConnectionId,
 } = require('./security/validation');
 const {
   buildSessionProxyConfig,
@@ -27,6 +28,7 @@ let mainWindow;
 let secureToken = '';
 let secureChatId = '';
 let secureLang = 'en';
+let secureBusinessId = '';
 let secureProxy = normalizeProxyConfig();
 
 // ===================== Encrypted Settings =====================
@@ -51,6 +53,7 @@ function loadSecureSettings() {
     secureToken = parsed.token || '';
     secureChatId = parsed.chatId || '';
     secureLang = parsed.lang || 'en';
+    secureBusinessId = parsed.businessConnectionId || '';
     secureProxy = normalizeProxyConfig(parsed.proxy);
   } catch (e) {
     console.error('[Settings] Failed to load:', e.message);
@@ -68,6 +71,7 @@ function saveSecureSettings() {
       token: secureToken,
       chatId: secureChatId,
       lang: secureLang,
+      businessConnectionId: secureBusinessId,
       proxy: secureProxy,
     });
     const encrypted = safeStorage.encryptString(data);
@@ -224,43 +228,53 @@ ipcMain.handle('tg-api', async (_event, { method, body }) => {
 /**
  * Save settings — encrypted via safeStorage. Token is validated.
  */
-ipcMain.handle('save-settings', async (_event, { token, chatId, lang, proxy }) => {
-  if (token !== undefined) {
-    if (typeof token === 'string' && token.length > 0 && !isValidToken(token)) {
-      return { ok: false, description: 'Invalid bot token format' };
+ipcMain.handle(
+  'save-settings',
+  async (_event, { token, chatId, lang, businessConnectionId, proxy }) => {
+    if (token !== undefined) {
+      if (typeof token === 'string' && token.length > 0 && !isValidToken(token)) {
+        return { ok: false, description: 'Invalid bot token format' };
+      }
+      secureToken = token || '';
     }
-    secureToken = token || '';
-  }
-  if (chatId !== undefined) {
-    if (typeof chatId === 'string' && chatId.length > 0 && !isValidChatId(chatId)) {
-      return { ok: false, description: 'Invalid chat ID format' };
+    if (chatId !== undefined) {
+      if (typeof chatId === 'string' && chatId.length > 0 && !isValidChatId(chatId)) {
+        return { ok: false, description: 'Invalid chat ID format' };
+      }
+      secureChatId = chatId || '';
     }
-    secureChatId = chatId || '';
-  }
-  if (lang !== undefined) {
-    if (!isValidLang(lang)) {
-      return { ok: false, description: 'Invalid language' };
+    if (lang !== undefined) {
+      if (!isValidLang(lang)) {
+        return { ok: false, description: 'Invalid language' };
+      }
+      secureLang = lang;
     }
-    secureLang = lang;
-  }
-  if (proxy !== undefined) {
-    const candidate = normalizeProxyConfig({
-      ...proxy,
-      // An omitted password means "keep the stored one".
-      password: typeof proxy.password === 'string' ? proxy.password : secureProxy.password,
-    });
-    if (!isValidProxyConfig(candidate)) {
-      return { ok: false, description: 'Invalid proxy configuration' };
+    if (businessConnectionId !== undefined) {
+      const id = typeof businessConnectionId === 'string' ? businessConnectionId.trim() : '';
+      if (id.length > 0 && !isValidBusinessConnectionId(id)) {
+        return { ok: false, description: 'Invalid business connection ID' };
+      }
+      secureBusinessId = id;
     }
-    secureProxy = candidate;
-    await applyProxy();
-  }
+    if (proxy !== undefined) {
+      const candidate = normalizeProxyConfig({
+        ...proxy,
+        // An omitted password means "keep the stored one".
+        password: typeof proxy.password === 'string' ? proxy.password : secureProxy.password,
+      });
+      if (!isValidProxyConfig(candidate)) {
+        return { ok: false, description: 'Invalid proxy configuration' };
+      }
+      secureProxy = candidate;
+      await applyProxy();
+    }
 
-  const saved = saveSecureSettings();
-  return saved
-    ? { ok: true, proxy: publicProxyConfig(secureProxy) }
-    : { ok: false, description: 'Failed to encrypt/save settings' };
-});
+    const saved = saveSecureSettings();
+    return saved
+      ? { ok: true, proxy: publicProxyConfig(secureProxy) }
+      : { ok: false, description: 'Failed to encrypt/save settings' };
+  },
+);
 
 /**
  * Load settings — returns everything EXCEPT the token (security).
@@ -270,6 +284,7 @@ ipcMain.handle('load-settings', async () => {
     tokenSet: !!secureToken,
     chatId: secureChatId,
     lang: secureLang,
+    businessConnectionId: secureBusinessId,
     proxy: publicProxyConfig(secureProxy),
   };
 });

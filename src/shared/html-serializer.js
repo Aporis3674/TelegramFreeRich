@@ -26,7 +26,12 @@ export const LIMITS = Object.freeze({
   TABLE_COLUMNS: 20,
   MAP_ZOOM_MIN: 13,
   MAP_ZOOM_MAX: 20,
+  CHECKLIST_TASKS: 30,
+  CHECKLIST_TASK_CHARS: 100,
 });
+
+/** Prefixes for a checklist rendered as ordinary list text. */
+const CHECK_MARKS = Object.freeze({ done: '☑', open: '☐' });
 
 /** Inline tags that map straight through, editor tag → API tag. */
 const INLINE_MAP = {
@@ -108,12 +113,19 @@ export function safeUrl(raw, schemes = LINK_SCHEMES) {
  * own API (`sendChecklist`), so they are returned separately instead of being
  * flattened into the message body.
  *
+ * `sendChecklist` only works on behalf of a connected business account, though,
+ * so `inlineChecklist` renders the task list into the message body as an
+ * ordinary list marked with ☑ / ☐ instead. The items are still reported, so the
+ * caller can say which form was sent.
+ *
  * @param {string} editorHtml - `editor.getHTML()` output.
  * @param {object} [options]
  * @param {(html: string) => Document} [options.parse] - Injected for tests.
+ * @param {boolean} [options.inlineChecklist] - Render task lists into the body.
  * @returns {{
  *   html: string,
  *   checklist: Array<{ text: string, done: boolean }>,
+ *   inlinedChecklist: boolean,
  *   blocks: number,
  *   media: number,
  *   chars: number,
@@ -127,13 +139,19 @@ export function serializeEditorHtml(editorHtml, options = {}) {
     ? doc.getElementById('tfr-root')
     : doc.body && doc.body.firstChild;
 
-  const state = { blocks: 0, media: 0, checklist: [] };
+  const state = {
+    blocks: 0,
+    media: 0,
+    checklist: [],
+    inlineChecklist: !!options.inlineChecklist,
+  };
   const html = root ? childrenToHtml(root, state) : '';
   const text = root ? root.textContent || '' : '';
 
   return {
     html: html.trim(),
     checklist: state.checklist,
+    inlinedChecklist: state.inlineChecklist && state.checklist.length > 0,
     blocks: state.blocks,
     media: state.media,
     chars: text.length,
@@ -194,8 +212,10 @@ function nodeToHtml(node, state, inlineOnly) {
   // ── blocks ──
   if (BLOCK_MAP[tag]) {
     if (tag === 'UL' && isTaskList(el)) {
+      const before = state.checklist.length;
       collectChecklist(el, state);
-      return '';
+      if (!state.inlineChecklist) return '';
+      return checklistToHtml(state.checklist.slice(before), state);
     }
     state.blocks += 1;
     // A list item holding a single paragraph reads better without the wrapper.
@@ -327,6 +347,28 @@ function collectChecklist(el, state) {
 }
 
 /**
+ * Render collected task items as an ordinary list marked with ☑ / ☐.
+ *
+ * The fallback for bots without a business connection: not interactive, but it
+ * reads as a checklist and travels in the message body like any other list.
+ *
+ * @param {Array<{ text: string, done: boolean }>} items
+ * @param {object} state
+ * @returns {string}
+ */
+function checklistToHtml(items, state) {
+  if (!items.length) return '';
+  state.blocks += 1 + items.length;
+  const rows = items
+    .map(
+      (item) =>
+        `<li>${escapeText(`${item.done ? CHECK_MARKS.done : CHECK_MARKS.open} ${item.text}`)}</li>`,
+    )
+    .join('');
+  return `<ul>${rows}</ul>`;
+}
+
+/**
  * @param {Element} el
  * @param {object} state
  * @returns {string}
@@ -436,17 +478,52 @@ export function buildEditBody(html, chatId, messageId, options = {}) {
 
 /**
  * Body for `sendChecklist`.
+ *
+ * `InputChecklist` is `{ title, tasks }`, and each `InputChecklistTask` is
+ * `{ id, text }` with a positive id unique within the checklist. There is no
+ * per-task "done" flag on the sending side — a task can only be ticked
+ * afterwards, through `markChecklistTasksAsDone` — so `done` is dropped here.
+ *
+ * `business_connection_id` is required by the method: a checklist is always
+ * sent on behalf of a connected business account.
+ *
  * @param {Array<{ text: string, done: boolean }>} items
  * @param {string} chatId
+ * @param {{ title?: string, businessConnectionId?: string }} [options]
  * @returns {object}
  */
-export function buildChecklistBody(items, chatId) {
-  return {
+export function buildChecklistBody(items, chatId, options = {}) {
+  const body = {
     chat_id: chatId,
     checklist: {
-      items: (items || []).map((item) => ({ text: item.text || '', done: !!item.done })),
+      title: options.title || '',
+      tasks: (items || []).slice(0, LIMITS.CHECKLIST_TASKS).map((item, index) => ({
+        id: index + 1,
+        text: (item.text || '').slice(0, LIMITS.CHECKLIST_TASK_CHARS),
+      })),
     },
   };
+  if (options.businessConnectionId) {
+    body.business_connection_id = options.businessConnectionId;
+  }
+  return body;
+}
+
+/**
+ * Check a checklist against the documented limits before sending.
+ * @param {Array<{ text: string }>} items
+ * @returns {{ ok: boolean, reason?: 'empty'|'tasks'|'taskChars' }}
+ */
+export function checkChecklist(items) {
+  const list = items || [];
+  if (list.length === 0) return { ok: false, reason: 'empty' };
+  if (list.length > LIMITS.CHECKLIST_TASKS) return { ok: false, reason: 'tasks' };
+  for (const item of list) {
+    if ((item.text || '').length > LIMITS.CHECKLIST_TASK_CHARS) {
+      return { ok: false, reason: 'taskChars' };
+    }
+  }
+  return { ok: true };
 }
 
 /**

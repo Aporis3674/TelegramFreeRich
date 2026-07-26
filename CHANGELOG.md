@@ -1,5 +1,35 @@
 # Changelog
 
+## [5.1.4] - 2026-07-26
+
+### Fixed — checklists could not be sent
+- Telegram answered `Bad Request: can't parse InputChecklist: Can't find field "title"`. The body
+  was `checklist: { items: [{ text, done }] }`, which is not a shape the API has. `InputChecklist`
+  is `{ title, tasks }`, and each `InputChecklistTask` is `{ id, text }` with a **positive id
+  unique within the checklist**
+- `buildChecklistBody` now emits exactly that, caps the list at the documented **30 tasks** and
+  each task at **100 characters**, and drops `done`: there is no way to send a task pre-ticked —
+  `markChecklistTasksAsDone` is what ticks one afterwards. The app says so before sending when
+  items were checked in the editor
+- The app asks for the checklist title, since the API requires one
+
+### Added — checklists work without a business account too
+- `sendChecklist` only works for **a bot acting on behalf of a connected business account, in a
+  private chat**. That is a Telegram restriction, not a payload problem, so a plain bot token can
+  never send an interactive checklist
+- Settings gained **Business connection ID** (optional, stored encrypted beside the bot token).
+  With it set and a private chat, a real checklist is sent
+- Without it, the task list is rendered into the message body as a `☑` / `☐` list instead of
+  failing, and a toast says which of the two conditions was missing
+- Both READMEs gained a **Checklists** section spelling out the three cases
+
+### Verified
+- Driven in a real Electron window with a stubbed API: with a business connection the app emits
+  `{"chat_id":"12345","checklist":{"title":"Shopping","tasks":[{"id":1,"text":"buy milk"}]},"business_connection_id":"…"}`;
+  without one it emits `rich_message.html = "<ul><li>☐ buy milk</li></ul>"` and shows the
+  explanatory toast
+- 240 unit tests, including the markup TipTap actually emits for a task list
+
 ## [5.1.3] - 2026-07-26
 
 ### Fixed (Critical) — every send failed with `net::ERR_INVALID_ARGUMENT`

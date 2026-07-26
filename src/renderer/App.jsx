@@ -30,6 +30,7 @@ import {
   buildDraftBody,
   buildEditBody,
   buildRichMessageBody,
+  checkChecklist,
   checkLimits,
   isPrivateChatId,
   serializeEditorHtml,
@@ -159,7 +160,12 @@ function Shell({ lang, onLangChange }) {
 
     setSending(true);
     try {
-      const message = serializeEditorHtml(html);
+      // An interactive checklist is its own API, and that API only works on
+      // behalf of a connected business account. Without one, the task list
+      // travels inside the message body as a ☑ / ☐ list instead of failing.
+      const businessId = settings.businessConnectionId || '';
+      const asChecklist = !!businessId && isPrivateChatId(settings.chatId);
+      const message = serializeEditorHtml(html, { inlineChecklist: !asChecklist });
       const limits = checkLimits(message);
       if (!limits.ok) {
         notify(`toast.limit.${limits.reason}`, 'error');
@@ -167,11 +173,37 @@ function Shell({ lang, onLangChange }) {
         return;
       }
 
-      // Interactive checklists are their own API — never part of the rich body.
-      if (message.checklist.length > 0) {
+      if (message.inlinedChecklist) {
+        // Say which of the two reasons applied, so it is actionable.
+        notify(businessId ? 'toast.checklistPrivateOnly' : 'toast.checklistNeedsBusiness', 'info');
+      }
+
+      if (asChecklist && message.checklist.length > 0) {
+        const valid = checkChecklist(message.checklist);
+        if (!valid.ok) {
+          notify(`toast.checklist.${valid.reason}`, 'error');
+          setSending(false);
+          return;
+        }
+        // Telegram takes a title above the tasks, and there is no way to send a
+        // task pre-ticked — only markChecklistTasksAsDone can do that later.
+        const title = await askText({
+          titleKey: 'dialog.checklistTitle',
+          placeholder: tRef.current('dialog.checklistTitlePlaceholder'),
+        });
+        if (title === null) {
+          setSending(false);
+          return;
+        }
+        if (message.checklist.some((item) => item.done)) {
+          notify('toast.checklistDoneIgnored', 'info');
+        }
         const result = await window.app.api(
           'sendChecklist',
-          buildChecklistBody(message.checklist, settings.chatId),
+          buildChecklistBody(message.checklist, settings.chatId, {
+            title: title.trim() || tRef.current('dialog.checklistTitleFallback'),
+            businessConnectionId: businessId,
+          }),
         );
         if (!result.ok) {
           toast(`${tRef.current('toast.networkError')}: ${result.description}`, 'error');
@@ -215,7 +247,7 @@ function Shell({ lang, onLangChange }) {
       notify('toast.networkError', 'error');
     }
     setSending(false);
-  }, [settings, html, charCount, mode, isRtl, notify, toast]);
+  }, [settings, html, charCount, mode, isRtl, notify, toast, askText]);
 
   const handleClear = useCallback(async () => {
     if (charCount === 0 && !html.trim()) return;

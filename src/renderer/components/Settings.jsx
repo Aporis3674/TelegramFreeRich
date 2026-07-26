@@ -46,6 +46,7 @@ export default function Settings({
   const [token, setToken] = useState('');
   const [chatId, setChatId] = useState('');
   const [editId, setEditId] = useState('');
+  const [businessId, setBusinessId] = useState('');
   const [status, setStatus] = useState({ text: '', type: '' });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -59,6 +60,7 @@ export default function Settings({
     setToken('');
     setChatId(settings.chatId || '');
     setEditId(settings.editId || '');
+    setBusinessId(settings.businessConnectionId || '');
     setStatus({ text: '', type: '' });
     setProxyStatus({ text: '', type: '' });
     setProxyPassword('');
@@ -69,7 +71,12 @@ export default function Settings({
 
   async function handleSave() {
     setSaving(true);
-    const payload = { chatId, lang, proxy: proxyPayload() };
+    const payload = {
+      chatId,
+      lang,
+      businessConnectionId: businessId.trim(),
+      proxy: proxyPayload(),
+    };
     if (token) payload.token = token;
 
     try {
@@ -84,6 +91,7 @@ export default function Settings({
         chatId,
         editId,
         lang,
+        businessConnectionId: businessId.trim(),
         proxy: result.proxy || proxy,
       });
       onClose();
@@ -207,6 +215,17 @@ export default function Settings({
             placeholder={t('settings.editIdPlaceholder')}
             autoComplete="off"
           />
+
+          <label htmlFor="set-business">{t('settings.businessId')}</label>
+          <input
+            id="set-business"
+            type="text"
+            value={businessId}
+            onChange={(event) => setBusinessId(event.target.value)}
+            placeholder={t('settings.businessIdPlaceholder')}
+            autoComplete="off"
+          />
+          <p className="sheet-note">{t('settings.businessIdHelp')}</p>
 
           <div className="sheet-section">{t('proxy.section')}</div>
           <p className="sheet-note">{t('proxy.help')}</p>
