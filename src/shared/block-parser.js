@@ -110,16 +110,24 @@ export function parseBlockElement(el) {
       };
     }
 
+    // A caption travels as data-caption, with an optional data-credit that
+    // becomes the <cite> inside the <figcaption>.
     case BlockType.PHOTO:
       return {
         type: BlockType.PHOTO,
         url: el.getAttribute('src') || '',
-        caption: el.getAttribute('alt') || '',
+        caption: el.getAttribute('data-caption') || el.getAttribute('alt') || '',
+        credit: el.getAttribute('data-credit') || '',
       };
 
     case BlockType.VIDEO:
     case BlockType.AUDIO:
-      return { type, url: el.getAttribute('src') || '', caption: '' };
+      return {
+        type,
+        url: el.getAttribute('src') || '',
+        caption: el.getAttribute('data-caption') || '',
+        credit: el.getAttribute('data-credit') || '',
+      };
 
     case BlockType.TABLE:
       return parseTable(el);
@@ -237,5 +245,10 @@ function parseGallery(el) {
         .map((img) => img.getAttribute('src') || '')
         .filter(Boolean);
   const kind = el.getAttribute('data-kind') === 'collage' ? BlockType.COLLAGE : BlockType.SLIDESHOW;
-  return { type: kind, images };
+  return {
+    type: kind,
+    images,
+    caption: el.getAttribute('data-caption') || '',
+    credit: el.getAttribute('data-credit') || '',
+  };
 }

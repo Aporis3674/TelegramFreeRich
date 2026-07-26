@@ -511,3 +511,14 @@
   font-style: normal;
   color: var(--text-muted);
 }
+
+/* The media caption, drawn from the attribute so it stays out of the text */
+.tfr-editor [data-caption]:not([data-caption=''])::after,
+.tfr-editor .tg-gallery[data-caption]:not([data-caption=''])::after {
+  content: attr(data-caption);
+  display: block;
+  max-width: 340px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}

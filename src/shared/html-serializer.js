@@ -273,7 +273,7 @@ function nodeToHtml(node, state, inlineOnly) {
     if (!src) return '';
     state.blocks += 1;
     state.media += 1;
-    return `<img src="${escapeAttr(src)}"/>`;
+    return `<img src="${escapeAttr(src)}"/>${figcaptionOf(el)}`;
   }
 
   if (tag === 'VIDEO' || tag === 'AUDIO') {
@@ -282,7 +282,7 @@ function nodeToHtml(node, state, inlineOnly) {
     state.blocks += 1;
     state.media += 1;
     const name = tag.toLowerCase();
-    return `<${name} src="${escapeAttr(src)}"></${name}>`;
+    return `<${name} src="${escapeAttr(src)}"></${name}>${figcaptionOf(el)}`;
   }
 
   if (tag === 'DIV' && el.classList) {
@@ -371,6 +371,25 @@ function checklistToHtml(items, state) {
 }
 
 /**
+ * The `<figcaption>` a media element or gallery may carry.
+ *
+ * Rich HTML puts the caption *after* the media it belongs to, and the caption
+ * may name a source of its own:
+ *
+ *   <video src="…"/><figcaption>Clip title<cite>The Author</cite></figcaption>
+ *
+ * @param {Element} el
+ * @returns {string}
+ */
+function figcaptionOf(el) {
+  const caption = (el.getAttribute('data-caption') || '').trim();
+  const credit = (el.getAttribute('data-credit') || '').trim();
+  if (!caption && !credit) return '';
+  const cite = credit ? `<cite>${escapeText(credit)}</cite>` : '';
+  return `<figcaption>${escapeText(caption)}${cite}</figcaption>`;
+}
+
+/**
  * @param {Element} el
  * @param {object} state
  * @returns {string}
@@ -416,7 +435,7 @@ function galleryToHtml(el, state) {
   state.blocks += 1;
   state.media += sources.length;
   const images = sources.map((src) => `<img src="${escapeAttr(src)}"/>`).join('');
-  return `<${wrapper}>${images}</${wrapper}>`;
+  return `<${wrapper}>${images}${figcaptionOf(el)}</${wrapper}>`;
 }
 
 /* ═══════════════════════════ Request bodies ═══════════════════════════ */

@@ -144,7 +144,10 @@ function Shell({ lang, onLangChange }) {
       setSettingsOpen(true);
       return;
     }
-    if (!html.trim() || charCount === 0) {
+    // Not `charCount === 0`: a message of nothing but a photo, a gallery or a
+    // map has no characters at all and is still perfectly sendable. Whether
+    // anything survived serialization is checked below instead.
+    if (!html.trim()) {
       notify('toast.nothingToSend', 'error');
       return;
     }
@@ -252,7 +255,7 @@ function Shell({ lang, onLangChange }) {
       notify('toast.networkError', 'error');
     }
     setSending(false);
-  }, [settings, html, charCount, mode, isRtl, notify, toast, askText]);
+  }, [settings, html, mode, isRtl, notify, toast, askText]);
 
   const handleClear = useCallback(async () => {
     if (charCount === 0 && !html.trim()) return;

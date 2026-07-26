@@ -1,5 +1,34 @@
 # Changelog
 
+## [5.4.0] - 2026-07-26
+
+### Added — media can carry a caption
+- Rich HTML captions a media item with a `<figcaption>` that follows it, and that caption may name
+  its own source in a `<cite>`:
+  `<video src="…"></video><figcaption>Clip title<cite>The Author</cite></figcaption>`
+- **Media ▸ Caption…** asks for the caption, then for its credit, and writes both onto the photo,
+  video, audio file or gallery the caret is on. Greyed out elsewhere, ticked once something is set,
+  and clearing both fields removes the `<figcaption>` again
+- A gallery's caption goes inside the wrapper, which is where the documented example puts it:
+  `<tg-slideshow><img …/><figcaption>Trip<cite>Ada</cite></figcaption></tg-slideshow>`
+- Like the quote attribution, the text lives in an attribute rather than in the editable body, so
+  it survives editing; the editor shows it under the media and the live preview renders a real
+  `<figcaption>`
+
+### Fixed — a message of nothing but media could not be sent
+- The send guard refused anything with zero characters, so a photo on its own, a gallery on its own
+  or a map on its own was rejected as "nothing to send" — media carries no text. The guard now only
+  refuses a document that produces no blocks at all, which the existing check after serialization
+  already covered
+
+### Verified
+- Driven in a real Electron window: the media menu lists **Caption…**, both prompts appear with
+  their translated hints, the editor document becomes
+  `<img data-caption="A view from the pass" data-credit="Ada Lovelace" src="…">`, the preview shows
+  the caption with its cite, and the send payload is
+  `<img src="…"/><figcaption>A view from the pass<cite>Ada Lovelace</cite></figcaption>`
+- 265 unit tests
+
 ## [5.3.0] - 2026-07-26
 
 ### Added — a quote can name its source

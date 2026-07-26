@@ -207,6 +207,45 @@ describe('media', () => {
     );
   });
 
+  it('captions media with <figcaption>, and its credit with <cite>', () => {
+    expect(html('<img src="https://a/p.jpg" data-caption="A view">')).toBe(
+      '<img src="https://a/p.jpg"/><figcaption>A view</figcaption>',
+    );
+    expect(
+      html('<video src="https://a/v.mp4" data-caption="Clip" data-credit="Ada"></video>'),
+    ).toBe(
+      '<video src="https://a/v.mp4"></video><figcaption>Clip<cite>Ada</cite></figcaption>',
+    );
+    // A credit with no caption is still a caption element.
+    expect(html('<audio src="https://a/s.mp3" data-credit="Ada"></audio>')).toBe(
+      '<audio src="https://a/s.mp3"></audio><figcaption><cite>Ada</cite></figcaption>',
+    );
+  });
+
+  it('captions a gallery from inside the wrapper', () => {
+    expect(
+      html(
+        '<div class="tg-gallery" data-kind="slideshow" data-images="https://a.jpg"' +
+          ' data-caption="Trip" data-credit="Ada"></div>',
+      ),
+    ).toBe(
+      '<tg-slideshow><img src="https://a.jpg"/>' +
+        '<figcaption>Trip<cite>Ada</cite></figcaption></tg-slideshow>',
+    );
+  });
+
+  it('writes no <figcaption> when there is nothing to say', () => {
+    expect(html('<img src="https://a/p.jpg" data-caption="" data-credit="">')).toBe(
+      '<img src="https://a/p.jpg"/>',
+    );
+  });
+
+  it('escapes the caption and the credit', () => {
+    expect(html('<img src="https://a/p.jpg" data-caption="a &lt; b" data-credit="c &amp; d">')).toBe(
+      '<img src="https://a/p.jpg"/><figcaption>a &lt; b<cite>c &amp; d</cite></figcaption>',
+    );
+  });
+
   it('accepts only http(s) media, per the documented restriction', () => {
     expect(html('<img src="file:///tmp/a.png">')).toBe('');
     expect(html('<img src="javascript:alert(1)">')).toBe('');

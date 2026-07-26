@@ -120,6 +120,7 @@ describe('parseBlockElement', () => {
       type: BlockType.PHOTO,
       url: 'https://x/a.png',
       caption: 'cap',
+      credit: '',
     });
     expect(parseBlockElement(el('<video src="https://x/v.mp4"></video>')).type).toBe(
       BlockType.VIDEO,
@@ -133,14 +134,52 @@ describe('parseBlockElement', () => {
     const result = parseBlockElement(
       el('<div class="tg-gallery" data-kind="slideshow" data-images="a.jpg,b.jpg"></div>'),
     );
-    expect(result).toEqual({ type: BlockType.SLIDESHOW, images: ['a.jpg', 'b.jpg'] });
+    expect(result).toEqual({
+      type: BlockType.SLIDESHOW,
+      images: ['a.jpg', 'b.jpg'],
+      caption: '',
+      credit: '',
+    });
   });
 
   it('parses a collage gallery from child images', () => {
     const result = parseBlockElement(
       el('<div class="tg-gallery" data-kind="collage"><img src="a.jpg"><img src="b.jpg"></div>'),
     );
-    expect(result).toEqual({ type: BlockType.COLLAGE, images: ['a.jpg', 'b.jpg'] });
+    expect(result).toEqual({
+      type: BlockType.COLLAGE,
+      images: ['a.jpg', 'b.jpg'],
+      caption: '',
+      credit: '',
+    });
+  });
+
+  it('reads a media caption and its credit', () => {
+    // The <figcaption> Rich HTML puts after the media, and the <cite> in it.
+    expect(
+      parseBlockElement(
+        el('<video src="https://x/v.mp4" data-caption="Clip" data-credit="Ada"></video>'),
+      ),
+    ).toEqual({
+      type: BlockType.VIDEO,
+      url: 'https://x/v.mp4',
+      caption: 'Clip',
+      credit: 'Ada',
+    });
+
+    expect(
+      parseBlockElement(
+        el(
+          '<div class="tg-gallery" data-kind="slideshow" data-images="a.jpg"' +
+            ' data-caption="Trip" data-credit="Ada"></div>',
+        ),
+      ),
+    ).toEqual({
+      type: BlockType.SLIDESHOW,
+      images: ['a.jpg'],
+      caption: 'Trip',
+      credit: 'Ada',
+    });
   });
 
   it('parses a map block', () => {

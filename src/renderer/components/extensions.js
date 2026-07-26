@@ -260,6 +260,54 @@ export const QuoteAttribution = Extension.create({
   },
 });
 
+/**
+ * The `<figcaption>` a media item may carry.
+ *
+ * Rich HTML puts the caption after the media it belongs to, and the caption may
+ * name its own source:
+ *
+ *   <video src="…"/><figcaption>Clip title<cite>The Author</cite></figcaption>
+ *
+ * TipTap's Image and the gallery node get the pair here; MediaBlock declares it
+ * itself, above.
+ */
+export const MediaCaption = Extension.create({
+  name: 'mediaCaption',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['image', 'galleryBlock'],
+        attributes: {
+          caption: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-caption') || '',
+            renderHTML: (attrs) => (attrs.caption ? { 'data-caption': attrs.caption } : {}),
+          },
+          credit: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-credit') || '',
+            renderHTML: (attrs) => (attrs.credit ? { 'data-credit': attrs.credit } : {}),
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setMediaCaption:
+        (caption = '', credit = '') =>
+        ({ commands, editor }) => {
+          const node = ['image', 'mediaBlock', 'galleryBlock'].find((name) =>
+            editor.isActive(name),
+          );
+          return node ? commands.updateAttributes(node, { caption, credit }) : false;
+        },
+    };
+  },
+});
+
 /** Collapsible block — `InputRichBlockDetails`. */
 export const Details = Node.create({
   name: 'details',
@@ -383,7 +431,16 @@ export const MediaBlock = Node.create({
     return {
       kind: { default: 'video' },
       src: { default: '' },
-      caption: { default: '' },
+      caption: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-caption') || '',
+        renderHTML: (attrs) => (attrs.caption ? { 'data-caption': attrs.caption } : {}),
+      },
+      credit: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-credit') || '',
+        renderHTML: (attrs) => (attrs.credit ? { 'data-credit': attrs.credit } : {}),
+      },
     };
   },
 

@@ -8,12 +8,12 @@
 <p align="center"><em>چون بات‌ها نباید از انسان‌ها حقوق بیشتری داشته باشند.</em></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-5.3.0-2ca5e0" alt="نسخه ۵٫۳٫۰">
+  <img src="https://img.shields.io/badge/version-5.4.0-2ca5e0" alt="نسخه ۵٫۴٫۰">
   <img src="https://img.shields.io/badge/Bot%20API-10.1-2ca5e0?logo=telegram&logoColor=white" alt="Bot API 10.1">
   <img src="https://img.shields.io/badge/Electron-35-47848f?logo=electron&logoColor=white" alt="Electron 35">
   <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React 19">
   <img src="https://img.shields.io/badge/TipTap-2-8b5cf6" alt="TipTap 2">
-  <img src="https://img.shields.io/badge/tests-258%20passing-4fc3a1" alt="۲۵۸ تست">
+  <img src="https://img.shields.io/badge/tests-265%20passing-4fc3a1" alt="۲۶۵ تست">
   <img src="https://img.shields.io/badge/license-MIT-8b99a7" alt="MIT">
 </p>
 
@@ -156,7 +156,7 @@ npm run dev
 | ☰ | **درج فهرست** ← شماره‌دار، نقطه‌ای، چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))*، بخش تاشو |
 | ▦ | **درج جدول** ← یک جدول ۳×۳ آمادهٔ ویرایش؛ نوار شناور ردیف و ستون را کم و زیاد می‌کند و پهنای ستون‌ها با موس کشیده می‌شود |
 | 🔗 | **درج پیوند** ← پنل *ساخت پیوند* با دو فیلد **متن** و **نشانی** |
-| 🖼 | **درج رسانه** ← عکس یا ویدیو (دو مورد یا بیشتر، اسلایدشو می‌شود)، فایل صوتی، موقعیت مکانی |
+| 🖼 | **درج رسانه** ← عکس یا ویدیو (دو مورد یا بیشتر، اسلایدشو می‌شود)، فایل صوتی، موقعیت مکانی، **کپشن…** (همان `<figcaption>` زیر رسانه) |
 | Σ | **درج فرمول** ← فرمول را می‌پرسد و بلوک ریاضی می‌گذارد |
 | ✦ | پالت درج — جست‌وجوی همهٔ بلوک‌ها و قالب‌ها با نام |
 | 🗑 ➤ | پاک‌کردن پیام · ارسال (با کلیک راست: پیام غنی، پیش‌نویس یا ویرایش) |
@@ -179,7 +179,7 @@ npm run dev
 | **بلوک‌ها** | عنوان H1 تا H6 · پاراگراف · نقل‌قول *(با منبع)* · نقل‌قول برجسته *(با منبع)* · بلوک کد با زبان · جداکننده · بخش تاشو · پاورقی · بلوک فرمول |
 | **فهرست‌ها** | شماره‌دار · نقطه‌ای · چک‌لیست *(بخش [چک‌لیست‌ها](#checklists))* |
 | **جدول** | ردیف سرصفحه، سلول‌های قابل ویرایش، تغییر پهنای ستون با موس |
-| **رسانه** | عکس · ویدیو · صدا · اسلایدشو *(کروسل ‹ ›)* · کلاژ · موقعیت مکانی |
+| **رسانه** | عکس · ویدیو · صدا · اسلایدشو *(کروسل ‹ ›)* · کلاژ · موقعیت مکانی — هرکدام با کپشن اختیاری |
 
 و هنگام نوشتن:
 
@@ -338,11 +338,11 @@ Renderer (React)                     پردازشگر Main (Electron)
 
 ```bash
 npm run dev           # Vite + Electron با هات‌ریلود
-npm test              # ۲۵۸ تست واحد (Vitest)
+npm test              # ۲۶۵ تست واحد (Vitest)
 npm run lint          # ESLint، بدون هشدار
 npm run format        # Prettier
-npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.3.0.exe و …-portable.exe
-npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.3.0.AppImage
+npm run build         # ویندوز: dist/TelegramFreeRich-Setup-5.4.0.exe و …-portable.exe
+npm run build:linux   # لینوکس: dist/TelegramFreeRich-5.4.0.AppImage
 ```
 
 <details>
@@ -389,7 +389,7 @@ src/
     ├── constants.js            محدودیت‌ها و پیش‌فرض‌ها
     └── utils.js                sanitizeUrl، اعتبارسنجی، ابزارها
 
-tests/unit/                     ۲۵۸ تست — سریالایزر HTML، پروکسی، بسته‌بندی، مستندات، پارسرها،
+tests/unit/                     ۲۶۵ تست — سریالایزر HTML، پروکسی، بسته‌بندی، مستندات، پارسرها،
                                 یکسانی i18n، استایل‌ها، اعتبارسنجی
 ```
 

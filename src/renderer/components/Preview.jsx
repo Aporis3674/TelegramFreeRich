@@ -49,6 +49,22 @@ function GalleryMedia({ url }) {
 }
 
 /**
+ * The caption under a media item — Rich HTML's `<figcaption>`, with the `<cite>`
+ * it may carry.
+ *
+ * @param {{ caption?: string, credit?: string }} props
+ */
+function Figcaption({ caption, credit }) {
+  if (!caption && !credit) return null;
+  return (
+    <figcaption className="pv-figcaption">
+      {caption}
+      {credit && <cite>{credit}</cite>}
+    </figcaption>
+  );
+}
+
+/**
  * A slideshow shows one frame at a time with ‹ › controls; a collage keeps its
  * grid, because that is what a collage is.
  *
@@ -285,22 +301,39 @@ function renderBlock(block, index) {
       );
 
     case BlockType.PHOTO:
-      return <img key={key} src={block.url} alt={block.caption || ''} />;
+      return (
+        <figure key={key} className="pv-figure">
+          <img src={block.url} alt={block.caption || ''} />
+          <Figcaption caption={block.caption} credit={block.credit} />
+        </figure>
+      );
 
     case BlockType.VIDEO:
-      return <video key={key} src={block.url} controls />;
+      return (
+        <figure key={key} className="pv-figure">
+          <video src={block.url} controls />
+          <Figcaption caption={block.caption} credit={block.credit} />
+        </figure>
+      );
 
     case BlockType.AUDIO:
-      return <audio key={key} src={block.url} controls />;
+      return (
+        <figure key={key} className="pv-figure">
+          <audio src={block.url} controls />
+          <Figcaption caption={block.caption} credit={block.credit} />
+        </figure>
+      );
 
     case BlockType.SLIDESHOW:
     case BlockType.COLLAGE:
       return (
-        <PreviewGallery
-          key={key}
-          images={block.images || []}
-          collage={block.type === BlockType.COLLAGE}
-        />
+        <figure key={key} className="pv-figure">
+          <PreviewGallery
+            images={block.images || []}
+            collage={block.type === BlockType.COLLAGE}
+          />
+          <Figcaption caption={block.caption} credit={block.credit} />
+        </figure>
       );
 
     case BlockType.MAP:

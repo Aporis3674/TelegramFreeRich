@@ -359,8 +359,39 @@ describe('media helpers', () => {
 });
 
 describe('the media menu', () => {
-  it('offers exactly photo-or-video, audio file and location', () => {
-    expect(MEDIA_ACTIONS.map((a) => a.id)).toEqual(['photoOrVideo', 'audioFile', 'location']);
+  it('offers exactly photo-or-video, audio file, location and caption', () => {
+    expect(MEDIA_ACTIONS.map((a) => a.id)).toEqual([
+      'photoOrVideo',
+      'audioFile',
+      'location',
+      'caption',
+    ]);
+  });
+
+  it('offers the caption only on a media node', () => {
+    const action = MEDIA_ACTIONS.find((a) => a.id === 'caption');
+    for (const node of ['image', 'mediaBlock', 'galleryBlock']) {
+      expect(isActionEnabled(action, mockEditor({ active: [node] })), node).toBe(true);
+    }
+    expect(isActionEnabled(action, mockEditor({ active: ['paragraph'] }))).toBe(false);
+  });
+
+  it('asks for the caption then its credit, and stops on either cancel', async () => {
+    const action = MEDIA_ACTIONS.find((a) => a.id === 'caption');
+
+    const editor = mockEditor({ active: ['image'], attrs: { caption: 'Old', credit: '' } });
+    const answers = ['  Clip title  ', ' Ada '];
+    await action.run(editor, mockCtx({ askText: vi.fn(async () => answers.shift()) }));
+    expect(editor.calls).toEqual([{ name: 'setMediaCaption', args: ['Clip title', 'Ada'] }]);
+
+    const atCaption = mockEditor({ active: ['image'] });
+    await action.run(atCaption, mockCtx({ askText: vi.fn(async () => null) }));
+    expect(atCaption.calls).toEqual([]);
+
+    const atCredit = mockEditor({ active: ['image'] });
+    const second = ['Clip', null];
+    await action.run(atCredit, mockCtx({ askText: vi.fn(async () => second.shift()) }));
+    expect(atCredit.calls).toEqual([]);
   });
 
   const photoOrVideo = () => MEDIA_ACTIONS.find((a) => a.id === 'photoOrVideo');

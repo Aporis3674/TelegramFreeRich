@@ -350,6 +350,21 @@ export function mediaKindForUrl(url) {
   return 'photo';
 }
 
+/** The media node the caret is on, if any. */
+const CAPTIONABLE = ['image', 'mediaBlock', 'galleryBlock'];
+
+/**
+ * The caption and credit currently on the selected media.
+ * @param {object} editor
+ * @returns {{ caption: string, credit: string }}
+ */
+function mediaCaption(editor) {
+  if (!editor) return { caption: '', credit: '' };
+  const node = CAPTIONABLE.find((name) => editor.isActive(name));
+  const attrs = node ? editor.getAttributes(node) || {} : {};
+  return { caption: attrs.caption || '', credit: attrs.credit || '' };
+}
+
 /**
  * Split a comma-separated list of URLs and drop unsafe ones.
  * @param {string} raw
@@ -424,6 +439,34 @@ export const MEDIA_ACTIONS = [
         return;
       }
       chain(editor).setMapBlock({ latitude: lat, longitude: lon }).run();
+    },
+  },
+  {
+    // Rich HTML captions media with a <figcaption> that follows it, and the
+    // caption may name a source of its own in a <cite>.
+    id: 'caption',
+    i18nKey: 'media.caption',
+    icon: QuoteIcon,
+    enabled: (editor) => CAPTIONABLE.some((name) => editor.isActive(name)),
+    isActive: (editor) => {
+      const { caption, credit } = mediaCaption(editor);
+      return !!(caption || credit);
+    },
+    run: async (editor, ctx) => {
+      const current = mediaCaption(editor);
+      const caption = await ctx.askText({
+        titleKey: 'media.caption',
+        placeholderKey: 'dialog.captionPlaceholder',
+        value: current.caption,
+      });
+      if (caption === null) return;
+      const credit = await ctx.askText({
+        titleKey: 'media.captionCredit',
+        placeholderKey: 'dialog.captionCreditPlaceholder',
+        value: current.credit,
+      });
+      if (credit === null) return;
+      chain(editor).setMediaCaption(caption.trim(), credit.trim()).run();
     },
   },
 ];
