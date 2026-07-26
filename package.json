@@ -23,7 +23,7 @@
     "files": [
       "src/main/**/*",
       "src/shared/**/*",
-      "dist/renderer/**/*",
+      "build/renderer/**/*",
       "package.json"
     ],
     "win": {

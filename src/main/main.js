@@ -158,7 +158,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // Prefer Vite build output, fall back to source HTML
-    const built = path.join(__dirname, '..', '..', 'dist', 'renderer', 'index.html');
+    const built = path.join(__dirname, '..', '..', 'build', 'renderer', 'index.html');
     const source = path.join(__dirname, '..', 'renderer', 'index.html');
     mainWindow.loadFile(fs.existsSync(built) ? built : source);
   }
