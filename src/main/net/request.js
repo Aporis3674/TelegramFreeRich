@@ -109,7 +109,8 @@ function createRequester({
       }
 
       request.on('response', (response) => {
-        let body = '';
+        /** @type {Buffer[]} */
+        const chunks = [];
         let size = 0;
 
         response.on('data', (chunk) => {
@@ -118,15 +119,25 @@ function createRequester({
             fail(new Error('Response too large'));
             return;
           }
-          body += chunk;
+          // Kept as buffers and decoded once at the end. Appending each chunk
+          // to a string decodes it on its own, and a UTF-8 character split
+          // across two chunks becomes two replacement characters — which
+          // mangles any non-ASCII text Telegram sends back, and breaks the
+          // JSON parse outright when the split lands inside a string.
+          chunks.push(Buffer.from(chunk));
         });
 
         response.on('end', () => {
           if (settled) return;
+          const body = Buffer.concat(chunks).toString('utf8');
           try {
             succeed(JSON.parse(body));
           } catch {
-            fail(new Error('Invalid JSON response'));
+            // The status matters here: a blocked network answers with a portal
+            // page rather than JSON, and "Invalid JSON response" alone gives
+            // the user nothing to go on.
+            const status = response.statusCode ? ` (HTTP ${response.statusCode})` : '';
+            fail(new Error(`Invalid JSON response${status}`));
           }
         });
 

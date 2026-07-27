@@ -6,7 +6,7 @@
  * @module components/Settings
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** Mirrors the main process defaults (a stock v2rayN SOCKS5 endpoint). */
 const DEFAULT_PROXY_FORM = {
@@ -25,7 +25,7 @@ import { useI18n } from '../i18n/index.js';
  *   open: boolean,
  *   onClose: () => void,
  *   settings: object,
- *   onSaved: (settings: object) => void,
+ *   onSaved: (settings: object, options?: { announce?: boolean }) => void,
  *   theme: string,
  *   onThemeChange: (theme: string) => void,
  *   lang: string,
@@ -55,17 +55,28 @@ export default function Settings({
   const [proxyStatus, setProxyStatus] = useState({ text: '', type: '' });
   const [checkingProxy, setCheckingProxy] = useState(false);
 
+  // Read through a ref so the effect below can fill the form from the current
+  // settings without re-running every time they change.
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  // Fill the form when the panel opens, and only then. Depending on `settings`
+  // as well used to make "Test connection" wipe the form mid-test: the test
+  // saves the token, the parent stores the new settings, and the new object
+  // re-ran this effect — clearing the token field, the proxy password and any
+  // unsaved edits to the chat, edit and business IDs while the user watched.
   useEffect(() => {
     if (!open) return;
+    const current = settingsRef.current;
     setToken('');
-    setChatId(settings.chatId || '');
-    setEditId(settings.editId || '');
-    setBusinessId(settings.businessConnectionId || '');
+    setChatId(current.chatId || '');
+    setEditId(current.editId || '');
+    setBusinessId(current.businessConnectionId || '');
     setStatus({ text: '', type: '' });
     setProxyStatus({ text: '', type: '' });
     setProxyPassword('');
-    setProxy({ ...DEFAULT_PROXY_FORM, ...(settings.proxy || {}) });
-  }, [open, settings]);
+    setProxy({ ...DEFAULT_PROXY_FORM, ...(current.proxy || {}) });
+  }, [open]);
 
   if (!open) return null;
 
@@ -149,7 +160,10 @@ export default function Settings({
           setTesting(false);
           return;
         }
-        onSaved({ ...settings, tokenSet: true });
+        // The parent needs to know a token now exists, or the send button will
+        // still say "configure a token". It is not a save of the whole panel
+        // though — the other fields are still unsaved — so it stays quiet.
+        onSaved({ ...settings, tokenSet: true }, { announce: false });
       }
       const data = await window.app.testConnection();
       if (data.ok) {

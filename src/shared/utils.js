@@ -24,22 +24,42 @@ export function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+/** Schemes a link may use. Everything else is refused. */
+const SAFE_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:', 'tg:'];
+
 /**
- * Sanitize a URL to prevent XSS via javascript: or data: schemes.
+ * Keep a URL only if its scheme is one we allow.
+ *
+ * This used to reject `javascript:`, `data:` and `vbscript:` by prefix, which is
+ * the wrong way round. A denylist has to anticipate every dangerous scheme, and
+ * it misses the ones written to defeat it: browsers ignore control characters
+ * inside a scheme, so `java&#9;script:` survives a `startsWith('javascript:')`
+ * test and still runs. An allowlist cannot be widened by an input nobody thought
+ * of, and it matches the vocabulary `html-serializer.js` already enforces on the
+ * wire — so what the editor accepts is what Telegram will accept.
+ *
  * @param {string} url
- * @returns {string} The original URL if safe, or empty string if dangerous.
+ * @returns {string} A usable URL, or '' when it is not acceptable.
  */
 export function sanitizeUrl(url) {
   if (typeof url !== 'string') return '';
-  const trimmed = url.trim().toLowerCase();
-  if (
-    trimmed.startsWith('javascript:') ||
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('vbscript:')
-  ) {
-    return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  // In-document anchors are addresses, not schemes.
+  if (trimmed.startsWith('#')) return trimmed;
+  // Relative and protocol-relative forms have no meaning in a sent message.
+  if (trimmed.startsWith('/')) return '';
+
+  const scheme = (trimmed.match(/^([a-zA-Z][\w+.-]*:)/) || [])[1];
+  if (scheme) {
+    return SAFE_SCHEMES.includes(scheme.toLowerCase()) ? trimmed : '';
   }
-  return url;
+
+  // No scheme at all — someone typed "example.com". Assume https rather than
+  // dropping it later on the wire. A colon anywhere means it was trying to be a
+  // scheme and the regex refused it, so that is rejected instead of guessed at.
+  return trimmed.includes(':') ? '' : `https://${trimmed}`;
 }
 
 /**

@@ -33,12 +33,29 @@ function isValidLang(lang) {
 }
 
 /**
- * Validate a Telegram API method name (alphanumeric only).
+ * The Telegram methods the renderer is allowed to ask the main process to call.
+ *
+ * An allowlist rather than a shape check: every call is signed with the stored
+ * bot token, so anything reachable here is reachable with the user's bot
+ * identity. A pattern like /^[a-zA-Z]+$/ would also admit `getUpdates` (read
+ * everything the bot receives), `setWebhook` (redirect it) and
+ * `banChatMember` — none of which this app has any reason to send.
+ */
+const ALLOWED_METHODS = Object.freeze([
+  'sendRichMessage',
+  'sendRichMessageDraft',
+  'editMessageText',
+  'sendChecklist',
+  'getMe',
+]);
+
+/**
+ * Validate a Telegram API method name against the allowlist.
  * @param {string} method
  * @returns {boolean}
  */
 function isValidMethod(method) {
-  return typeof method === 'string' && /^[a-zA-Z]{3,64}$/.test(method);
+  return typeof method === 'string' && ALLOWED_METHODS.includes(method);
 }
 
 /**
@@ -53,6 +70,7 @@ function isValidBusinessConnectionId(id) {
 }
 
 module.exports = {
+  ALLOWED_METHODS,
   isValidToken,
   isValidChatId,
   isValidLang,

@@ -10,6 +10,10 @@
 
 import { BlockType } from './block-types.js';
 import { hasFormatting, parseInlineSegments, segmentsToText } from './inline-parser.js';
+import { MEDIA_SCHEMES, safeUrl } from './html-serializer.js';
+
+/** Media the message cannot carry should not render in a preview of it. */
+const mediaUrl = (raw) => safeUrl(raw || '', MEDIA_SCHEMES);
 
 /**
  * Map of DOM tag names to BlockType constants.
@@ -115,7 +119,7 @@ export function parseBlockElement(el) {
     case BlockType.PHOTO:
       return {
         type: BlockType.PHOTO,
-        url: el.getAttribute('src') || '',
+        url: mediaUrl(el.getAttribute('src')),
         caption: el.getAttribute('data-caption') || el.getAttribute('alt') || '',
         credit: el.getAttribute('data-credit') || '',
       };
@@ -124,7 +128,7 @@ export function parseBlockElement(el) {
     case BlockType.AUDIO:
       return {
         type,
-        url: el.getAttribute('src') || '',
+        url: mediaUrl(el.getAttribute('src')),
         caption: el.getAttribute('data-caption') || '',
         credit: el.getAttribute('data-credit') || '',
       };
@@ -239,11 +243,13 @@ function parseDetails(el) {
 function parseGallery(el) {
   const attr = el.getAttribute('data-images') || '';
   const fromAttr = attr.split(',').filter(Boolean);
-  const images = fromAttr.length
-    ? fromAttr
-    : Array.from(el.querySelectorAll('img'))
-        .map((img) => img.getAttribute('src') || '')
-        .filter(Boolean);
+  const images = (
+    fromAttr.length
+      ? fromAttr
+      : Array.from(el.querySelectorAll('img')).map((img) => img.getAttribute('src'))
+  )
+    .map(mediaUrl)
+    .filter(Boolean);
   const kind = el.getAttribute('data-kind') === 'collage' ? BlockType.COLLAGE : BlockType.SLIDESHOW;
   return {
     type: kind,

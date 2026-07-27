@@ -48,11 +48,4 @@ contextBridge.exposeInMainWorld('app', {
    * @returns {Promise<{ ok: boolean, reachable: boolean, resolved: string, mode: string, description?: string }>}
    */
   testProxy: () => ipcRenderer.invoke('proxy-test'),
-
-  /**
-   * Open native file dialog.
-   * @param {Array} filters
-   * @returns {Promise<string|null>} Selected file path or null.
-   */
-  openFile: (filters) => ipcRenderer.invoke('open-file', { filters }),
 });

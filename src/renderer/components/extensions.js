@@ -10,6 +10,7 @@
 
 import { Extension, Mark, Node, mergeAttributes } from '@tiptap/core';
 import { mediaKindForUrl } from '../lib/editor-actions.js';
+import { MEDIA_SCHEMES, safeUrl } from '../../shared/html-serializer.js';
 
 /* ─────────────────────── Gallery node view helpers ─────────────────────── */
 
@@ -446,13 +447,15 @@ export const MediaBlock = Node.create({
 
   parseHTML() {
     return [
+      // Same filter as the gallery, and for the same reason: the editor must
+      // not show media the serializer will drop.
       {
         tag: 'video[src]',
-        getAttrs: (el) => ({ kind: 'video', src: el.getAttribute('src') || '' }),
+        getAttrs: (el) => ({ kind: 'video', src: safeUrl(el.getAttribute('src'), MEDIA_SCHEMES) }),
       },
       {
         tag: 'audio[src]',
-        getAttrs: (el) => ({ kind: 'audio', src: el.getAttribute('src') || '' }),
+        getAttrs: (el) => ({ kind: 'audio', src: safeUrl(el.getAttribute('src'), MEDIA_SCHEMES) }),
       },
     ];
   },
@@ -501,7 +504,14 @@ export const GalleryBlock = Node.create({
       },
       images: {
         default: [],
-        parseHTML: (el) => (el.getAttribute('data-images') || '').split(',').filter(Boolean),
+        // Filtered on the way in, with the list the serializer uses. Pasted
+        // gallery markup would otherwise show tiles in the editor for URLs the
+        // message silently drops.
+        parseHTML: (el) =>
+          (el.getAttribute('data-images') || '')
+            .split(',')
+            .map((src) => safeUrl(src.trim(), MEDIA_SCHEMES))
+            .filter(Boolean),
         renderHTML: (attrs) => ({ 'data-images': (attrs.images || []).join(',') }),
       },
     };

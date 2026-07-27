@@ -300,29 +300,33 @@ function renderBlock(block, index) {
         </div>
       );
 
+    // The parser blanks a URL the message cannot carry. Showing an empty
+    // <img> for it would be a broken-image icon standing in for something the
+    // recipient will never see, so the block is left out entirely — which is
+    // what the serializer does with it too.
     case BlockType.PHOTO:
-      return (
+      return block.url ? (
         <figure key={key} className="pv-figure">
           <img src={block.url} alt={block.caption || ''} />
           <Figcaption caption={block.caption} credit={block.credit} />
         </figure>
-      );
+      ) : null;
 
     case BlockType.VIDEO:
-      return (
+      return block.url ? (
         <figure key={key} className="pv-figure">
           <video src={block.url} controls />
           <Figcaption caption={block.caption} credit={block.credit} />
         </figure>
-      );
+      ) : null;
 
     case BlockType.AUDIO:
-      return (
+      return block.url ? (
         <figure key={key} className="pv-figure">
           <audio src={block.url} controls />
           <Figcaption caption={block.caption} credit={block.credit} />
         </figure>
-      );
+      ) : null;
 
     case BlockType.SLIDESHOW:
     case BlockType.COLLAGE:

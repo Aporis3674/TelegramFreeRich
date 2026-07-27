@@ -10,6 +10,7 @@
  */
 
 import { InlineType } from './block-types.js';
+import { safeUrl } from './html-serializer.js';
 
 /**
  * Tag name → inline mark. Kept in sync with the editor extensions.
@@ -94,8 +95,13 @@ export function parseInlineSegments(root) {
 
       const mark = markForElement(child);
       const nextMarks = mark ? [...marks, mark] : marks;
+      // Filtered with the serializer's own list, for two reasons. The preview
+      // renders these segments as real <a href> elements inside the app window
+      // — the window that holds the bot token — so a `javascript:` href here
+      // would run there. And a scheme the message cannot carry has no business
+      // looking like a working link in a preview of that message.
       const nextHref =
-        child.tagName === 'A' ? child.getAttribute('href') || href : href;
+        child.tagName === 'A' ? safeUrl(child.getAttribute('href') || '') || href : href;
       walk(child, nextMarks, nextHref);
     }
   }

@@ -1,5 +1,87 @@
 # Changelog
 
+## [5.5.0] - 2026-07-27
+
+A full review of the codebase. No new features — ten defects found and fixed, each one verified
+rather than assumed. The three that can bite a user in normal use are first.
+
+### Fixed — a caption, a credit or a quote's source could be added but never removed
+- Emptying the field and pressing OK resolved to "cancelled" rather than to "empty", so the action
+  returned early and left the old value in place. Clearing a media caption, its credit, or a
+  quote's attribution was impossible once set
+- The same bug swallowed an empty checklist title: the send was silently abandoned instead of using
+  the fallback title that exists for exactly that case
+
+### Fixed — "Test connection" wiped the settings form while you watched
+- Testing saves the token, which updated the stored settings, which re-ran the effect that fills
+  the form — clearing the token field, the proxy password, and any unsaved edits to the chat, edit
+  and business IDs, mid-test. The form is now filled when the panel opens, and only then
+- Testing also announced "Settings saved", which was misleading: only the token is stored. It now
+  reports the test result and nothing else
+
+### Fixed — a cleared Edit ID came back on the next launch
+- The ID was written to storage when set but never removed when cleared, so emptying the field
+  looked like it worked and then reverted at startup. In Edit mode the app would go on rewriting
+  whichever message that stale ID pointed at
+
+### Fixed — the window could be navigated away from the app, taking the bot token with it
+- The preload bridge belongs to the window, not to the page: navigate that window anywhere and the
+  new page keeps `window.app.api()`, which signs every call with the stored token. Electron
+  navigates a window by default when a link or file is dropped onto it
+- The window now stays on its own page. Links meant for a browser (`http`, `https`, `mailto`) are
+  handed to the real browser; `target="_blank"` opens there instead of in a frameless Electron
+  window with no address bar; `<webview>` is refused
+
+### Fixed — the renderer could ask the main process for any Telegram method
+- The method name was checked against `/^[a-zA-Z]{3,64}$/`, which admits `getUpdates` (read
+  everything the bot receives), `setWebhook` (redirect it) and `banChatMember`. Every call is signed
+  with the user's token, so anything reachable was reachable as them. Replaced with an allowlist of
+  the five methods the app actually sends
+
+### Fixed — the preview showed links and media the message would not carry
+- The preview parsed `href` and `src` straight out of the editor with no filter, while the
+  serializer next to it applied a scheme allowlist. So an `ftp:` link looked like a working link in
+  a preview of a message that would not contain it, and a `file:` image was rendered from disk
+- Both parsers now use the serializer's own lists, so the preview shows what will be sent. Media
+  with no usable URL is left out rather than drawn as a broken image
+- The editor gained the same filter: pasting HTML from a web page brought its `<img src="file://…">`
+  along, which the app's own CSP would then load
+
+### Fixed — non-ASCII text from Telegram could come back mangled
+- Response chunks were appended to a string one at a time, so a UTF-8 character split across a
+  chunk boundary became two replacement characters — visible on any Persian bot name or error
+  message, and enough to break the JSON parse when the split landed inside a string. Chunks are now
+  decoded once, at the end
+- An unparseable response now reports the HTTP status with it, so a captive portal or a block page
+  can be told apart from a genuine API error
+
+### Fixed — a map could point off the globe
+- `parseFloat` accepted `999, 999` and `35 degrees, 51`; the coordinates went to Telegram and came
+  back as an API error naming no block. Latitude and longitude are now range-checked where they are
+  typed, and again before they reach the wire
+
+### Fixed — the link filter was a denylist
+- `sanitizeUrl` refused `javascript:`, `data:` and `vbscript:` by prefix. A denylist has to
+  anticipate every dangerous scheme and misses the ones written to defeat it. It is now the same
+  allowlist the serializer uses, and a bare `example.com` is read as `https://example.com` rather
+  than dropped later on the wire
+
+### Removed
+- The `open-file` IPC handler and its `openFile` bridge method. Nothing in the renderer had ever
+  called them; they were an unused way into the main process
+
+### Verified
+- The navigation guard driven in a real Electron window: before the fix, a page the window was
+  navigated to reached `window.app.api()` and the main process ran the call for it. After, the
+  navigation does not happen, `window.open` opens no window, and the app's own page still works
+- The malicious-paste path driven through the real editor: `<a href="javascript:…">` and
+  `<img src="file:///etc/passwd">` are both refused, `https://t.me/ok` and a real image are kept,
+  and no console errors
+- The UTF-8 fix reproduced against the old code, which turned `ربات` into `��بات`
+- The app boots, the UI renders, Persian text types correctly, the bridge exposes exactly seven
+  members, and the settings panel opens with every field
+- 305 unit tests (up from 265), lint clean
+
 ## [5.4.0] - 2026-07-26
 
 ### Added — media can carry a caption

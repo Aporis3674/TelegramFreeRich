@@ -22,6 +22,7 @@ import {
   isActionActive,
   isActionEnabled,
   mediaKindForUrl,
+  parseCoords,
   parseUrlList,
 } from '../../src/renderer/lib/editor-actions.js';
 import en from '../../src/renderer/i18n/en.json';
@@ -157,6 +158,16 @@ describe('the Aa menu', () => {
     const cancelled = mockEditor({ active: ['blockquote'] });
     await action.run(cancelled, mockCtx({ askText: vi.fn(async () => null) }));
     expect(cancelled.calls).toEqual([]);
+  });
+
+  it('can take the attribution back off a quote', async () => {
+    // Emptying the field and pressing OK is '', not null — a real answer, and
+    // a different one from cancelling. Treating them alike left no way to
+    // remove an attribution once it had been set.
+    const action = TEXT_STYLE_ACTIONS.find((a) => a.id === 'attribution');
+    const editor = mockEditor({ active: ['blockquote'], attrs: { attribution: 'Old' } });
+    await action.run(editor, mockCtx({ askText: vi.fn(async () => '') }));
+    expect(editor.calls).toEqual([{ name: 'setQuoteAttribution', args: [''] }]);
   });
 
   it('nests all six heading levels under Heading', () => {
@@ -394,6 +405,21 @@ describe('the media menu', () => {
     expect(atCredit.calls).toEqual([]);
   });
 
+  it('can take a caption and its credit back off', async () => {
+    const action = MEDIA_ACTIONS.find((a) => a.id === 'caption');
+
+    const cleared = mockEditor({ active: ['image'], attrs: { caption: 'Old', credit: 'Ada' } });
+    const empties = ['', ''];
+    await action.run(cleared, mockCtx({ askText: vi.fn(async () => empties.shift()) }));
+    expect(cleared.calls).toEqual([{ name: 'setMediaCaption', args: ['', ''] }]);
+
+    // Dropping only the credit keeps the caption.
+    const creditOnly = mockEditor({ active: ['image'], attrs: { caption: 'Old', credit: 'Ada' } });
+    const mixed = ['Old', ''];
+    await action.run(creditOnly, mockCtx({ askText: vi.fn(async () => mixed.shift()) }));
+    expect(creditOnly.calls).toEqual([{ name: 'setMediaCaption', args: ['Old', ''] }]);
+  });
+
   const photoOrVideo = () => MEDIA_ACTIONS.find((a) => a.id === 'photoOrVideo');
 
   it('inserts a single image', async () => {
@@ -459,6 +485,23 @@ describe('the media menu', () => {
     await location.run(bad, ctx);
     expect(bad.calls).toEqual([]);
     expect(ctx.notify).toHaveBeenCalledWith('toast.invalidCoords', 'error');
+  });
+
+  it('refuses a point that is not on the globe', async () => {
+    const location = MEDIA_ACTIONS.find((a) => a.id === 'location');
+    for (const input of ['999, 0', '0, -181', '-91, 10', '35.6892', '1, 2, 3', '35 degrees, 51']) {
+      const editor = mockEditor();
+      const ctx = mockCtx({ askText: vi.fn(async () => input) });
+      await location.run(editor, ctx);
+      expect(editor.calls, input).toEqual([]);
+      expect(ctx.notify, input).toHaveBeenCalledWith('toast.invalidCoords', 'error');
+    }
+  });
+
+  it('accepts the edges of the globe', () => {
+    expect(parseCoords('-90, 180')).toEqual({ latitude: -90, longitude: 180 });
+    expect(parseCoords(' 0 , 0 ')).toEqual({ latitude: 0, longitude: 0 });
+    expect(parseCoords('90,-180')).toEqual({ latitude: 90, longitude: -180 });
   });
 
   it('does nothing when a prompt is dismissed', async () => {

@@ -377,6 +377,29 @@ export function parseUrlList(raw) {
     .filter(Boolean);
 }
 
+/**
+ * Read a "lat, long" pair, or null when it is not one.
+ *
+ * The range matters: `parseFloat` is happy with `999, 999`, which used to reach
+ * Telegram and come back as an opaque API error long after the user had stopped
+ * thinking about the coordinates they typed.
+ *
+ * @param {string} raw
+ * @returns {{ latitude: number, longitude: number }|null}
+ */
+export function parseCoords(raw) {
+  const parts = String(raw || '').split(',');
+  if (parts.length !== 2) return null;
+  // Number(), not parseFloat(): parseFloat('35 degrees') is 35.
+  const [latitude, longitude] = parts.map((part) => {
+    const text = part.trim();
+    return text === '' ? NaN : Number(text);
+  });
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null;
+  return { latitude, longitude };
+}
+
 export const MEDIA_ACTIONS = [
   {
     id: 'photoOrVideo',
@@ -433,12 +456,12 @@ export const MEDIA_ACTIONS = [
         placeholder: '35.6892, 51.3890',
       });
       if (!raw) return;
-      const [lat, lon] = raw.split(',').map((n) => parseFloat(n.trim()));
-      if (Number.isNaN(lat) || Number.isNaN(lon)) {
+      const coords = parseCoords(raw);
+      if (!coords) {
         ctx.notify('toast.invalidCoords', 'error');
         return;
       }
-      chain(editor).setMapBlock({ latitude: lat, longitude: lon }).run();
+      chain(editor).setMapBlock(coords).run();
     },
   },
   {

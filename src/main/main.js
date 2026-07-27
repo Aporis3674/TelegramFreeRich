@@ -4,7 +4,7 @@
  * Security: token NEVER leaves main process.
  */
 
-const { app, BrowserWindow, ipcMain, dialog, net, safeStorage, session } = require('electron');
+const { app, BrowserWindow, ipcMain, net, safeStorage, session, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const {
@@ -14,6 +14,7 @@ const {
   isValidMethod,
   isValidBusinessConnectionId,
 } = require('./security/validation');
+const { attachNavigationGuards } = require('./security/navigation');
 const {
   buildSessionProxyConfig,
   isValidProxyConfig,
@@ -161,6 +162,12 @@ function createWindow() {
     const source = path.join(__dirname, '..', 'renderer', 'index.html');
     mainWindow.loadFile(fs.existsSync(built) ? built : source);
   }
+
+  attachNavigationGuards(mainWindow.webContents, {
+    isDev,
+    openExternal: (url) => shell.openExternal(url),
+    onBlocked: (what, url) => console.warn('[Security]', what, url),
+  });
 }
 
 /** Bring the existing window forward instead of opening a second copy. */
@@ -350,20 +357,4 @@ ipcMain.handle('window-control', async (event, { action } = {}) => {
     default:
       return false;
   }
-});
-
-/**
- * File dialog for image/media selection.
- */
-ipcMain.handle('open-file', async (_event, { filters } = {}) => {
-  const result = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openFile'],
-    filters: filters || [
-      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] },
-      { name: 'Video', extensions: ['mp4', 'mov', 'webm'] },
-      { name: 'Audio', extensions: ['mp3', 'ogg', 'wav'] },
-      { name: 'All Files', extensions: ['*'] },
-    ],
-  });
-  return result.canceled ? null : result.filePaths[0];
 });

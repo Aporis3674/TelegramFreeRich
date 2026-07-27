@@ -132,11 +132,14 @@ describe('parseBlockElement', () => {
 
   it('parses a slideshow gallery from data-images', () => {
     const result = parseBlockElement(
-      el('<div class="tg-gallery" data-kind="slideshow" data-images="a.jpg,b.jpg"></div>'),
+      el(
+        '<div class="tg-gallery" data-kind="slideshow"' +
+          ' data-images="https://x/a.jpg,https://x/b.jpg"></div>',
+      ),
     );
     expect(result).toEqual({
       type: BlockType.SLIDESHOW,
-      images: ['a.jpg', 'b.jpg'],
+      images: ['https://x/a.jpg', 'https://x/b.jpg'],
       caption: '',
       credit: '',
     });
@@ -144,11 +147,14 @@ describe('parseBlockElement', () => {
 
   it('parses a collage gallery from child images', () => {
     const result = parseBlockElement(
-      el('<div class="tg-gallery" data-kind="collage"><img src="a.jpg"><img src="b.jpg"></div>'),
+      el(
+        '<div class="tg-gallery" data-kind="collage">' +
+          '<img src="https://x/a.jpg"><img src="https://x/b.jpg"></div>',
+      ),
     );
     expect(result).toEqual({
       type: BlockType.COLLAGE,
-      images: ['a.jpg', 'b.jpg'],
+      images: ['https://x/a.jpg', 'https://x/b.jpg'],
       caption: '',
       credit: '',
     });
@@ -170,16 +176,35 @@ describe('parseBlockElement', () => {
     expect(
       parseBlockElement(
         el(
-          '<div class="tg-gallery" data-kind="slideshow" data-images="a.jpg"' +
+          '<div class="tg-gallery" data-kind="slideshow" data-images="https://x/a.jpg"' +
             ' data-caption="Trip" data-credit="Ada"></div>',
         ),
       ),
     ).toEqual({
       type: BlockType.SLIDESHOW,
-      images: ['a.jpg'],
+      images: ['https://x/a.jpg'],
       caption: 'Trip',
       credit: 'Ada',
     });
+  });
+
+  it('shows only the media the message will actually carry', () => {
+    // The preview renders these straight into the app window. A URL the
+    // serializer refuses must not appear in a preview of that message either.
+    expect(parseBlockElement(el('<img src="javascript:alert(1)">')).url).toBe('');
+    expect(parseBlockElement(el('<img src="file:///etc/passwd">')).url).toBe('');
+    expect(parseBlockElement(el('<video src="data:video/mp4;base64,AAAA"></video>')).url).toBe('');
+    // Schemeless is not a URL the message can carry, so it is not previewed.
+    expect(parseBlockElement(el('<img src="a.jpg">')).url).toBe('');
+
+    expect(
+      parseBlockElement(
+        el(
+          '<div class="tg-gallery" data-kind="slideshow"' +
+            ' data-images="https://x/ok.jpg,javascript:alert(1),file:///etc/passwd"></div>',
+        ),
+      ).images,
+    ).toEqual(['https://x/ok.jpg']);
   });
 
   it('parses a map block', () => {

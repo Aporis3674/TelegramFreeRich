@@ -9,7 +9,13 @@ import { EventEmitter } from 'node:events';
 import { createRequester, proxyHint } from '../../src/main/net/request.js';
 
 /**
- * @param {{ body?: string, chunks?: string[], error?: string, silent?: boolean }} script
+ * @param {{
+ *   body?: string,
+ *   chunks?: Array<string|Buffer>,
+ *   status?: number,
+ *   error?: string,
+ *   silent?: boolean,
+ * }} script
  */
 function fakeNet(script = {}) {
   const calls = [];
@@ -32,9 +38,10 @@ function fakeNet(script = {}) {
             return;
           }
           const response = new EventEmitter();
+          if (script.status) response.statusCode = script.status;
           request.emit('response', response);
           for (const chunk of script.chunks || [script.body ?? '{}']) {
-            response.emit('data', Buffer.from(chunk));
+            response.emit('data', Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
           }
           response.emit('end');
         });
@@ -108,6 +115,25 @@ describe('createRequester', () => {
   it('rejects on invalid JSON', async () => {
     const { request } = make({ body: '<html>blocked</html>' });
     await expect(request('https://api.telegram.org/')).rejects.toThrow('Invalid JSON response');
+  });
+
+  it('reports the status with it, so a portal page can be told apart', async () => {
+    const { request } = make({ body: '<html>blocked</html>', status: 403 });
+    await expect(request('https://api.telegram.org/')).rejects.toThrow('(HTTP 403)');
+  });
+
+  it('decodes a UTF-8 character split across two chunks', async () => {
+    // Chromium picks chunk boundaries; they do not respect character
+    // boundaries. Decoding each chunk on its own turns a split character into
+    // replacement characters, and breaks the parse when the split is inside a
+    // JSON string. Persian bot names hit this every time.
+    const body = Buffer.from('{"ok":true,"result":{"first_name":"ربات آزاد"}}', 'utf8');
+    const cut = body.indexOf(Buffer.from('ربات', 'utf8')) + 1; // mid-character
+    const { request } = make({ chunks: [body.subarray(0, cut), body.subarray(cut)] });
+    await expect(request('https://api.telegram.org/botX/getMe')).resolves.toEqual({
+      ok: true,
+      result: { first_name: 'ربات آزاد' },
+    });
   });
 
   it('rejects when the response exceeds the size cap', async () => {

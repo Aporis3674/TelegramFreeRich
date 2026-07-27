@@ -279,6 +279,15 @@ describe('media', () => {
     expect(html('<div class="tg-map"></div>')).toBe('');
   });
 
+  it('drops a map pointing off the globe', () => {
+    // Telegram refuses it, and the error it returns names no block.
+    expect(html('<div class="tg-map" data-lat="999" data-lon="0"></div>')).toBe('');
+    expect(html('<div class="tg-map" data-lat="0" data-lon="-181"></div>')).toBe('');
+    expect(html('<div class="tg-map" data-lat="-90" data-lon="180"></div>')).toBe(
+      '<tg-map lat="-90" long="180" zoom="13"/>',
+    );
+  });
+
   it('counts media', () => {
     const out = ser('<img src="https://a.jpg"><div class="tg-gallery" data-images="https://b.jpg,https://c.jpg"></div>');
     expect(out.media).toBe(3);

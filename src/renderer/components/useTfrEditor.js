@@ -40,6 +40,30 @@ import {
   QuoteAttribution,
   Spoiler,
 } from './extensions.js';
+import { MEDIA_SCHEMES, safeUrl } from '../../shared/html-serializer.js';
+
+/**
+ * `Image` with the same URL filter the rest of the app uses.
+ *
+ * Pasting HTML from a web page brings its `<img>` elements along, and the
+ * upstream extension keeps whatever `src` they carry — `file:///etc/passwd`
+ * included, which the app's own CSP would then happily load. The serializer
+ * drops anything that is not http(s) anyway, so accepting it here only ever
+ * produced an image in the editor that the message would not contain.
+ */
+const SafeImage = Image.extend({
+  parseHTML() {
+    return [
+      {
+        tag: this.options.allowBase64 ? 'img[src]' : 'img[src]:not([src^="data:"])',
+        getAttrs: (el) => {
+          const src = safeUrl(el.getAttribute('src'), MEDIA_SCHEMES);
+          return src ? { src } : false;
+        },
+      },
+    ];
+  },
+});
 
 /**
  * @param {{
@@ -63,7 +87,7 @@ export default function useTfrEditor({ placeholder, onUpdate, t }) {
       TextStyle,
       Color,
       Link.configure({ openOnClick: false, autolink: true, protocols: ['http', 'https', 'tg'] }),
-      Image.configure({ inline: false, allowBase64: false }),
+      SafeImage.configure({ inline: false, allowBase64: false }),
       TaskList,
       TaskItem.configure({ nested: false }),
       Table.configure({ resizable: true }),

@@ -62,9 +62,13 @@ const BLOCK_MAP = {
   LI: 'li',
 };
 
-/** URL schemes allowed on links, and the stricter set allowed on media. */
-const LINK_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:', 'tg:'];
-const MEDIA_SCHEMES = ['http:', 'https:'];
+/**
+ * URL schemes allowed on links, and the stricter set allowed on media.
+ * Exported because the preview parsers apply the same lists — a URL the
+ * message will not carry should not appear in the preview either.
+ */
+export const LINK_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:', 'tg:'];
+export const MEDIA_SCHEMES = ['http:', 'https:'];
 
 /**
  * Escape text for HTML output.
@@ -295,7 +299,10 @@ function nodeToHtml(node, state, inlineOnly) {
     if (el.classList.contains('tg-map')) {
       const lat = parseFloat(el.getAttribute('data-lat'));
       const lon = parseFloat(el.getAttribute('data-lon'));
-      if (Number.isNaN(lat) || Number.isNaN(lon)) return '';
+      // Range as well as NaN: a point off the globe is refused by Telegram, and
+      // the error it sends back says nothing about which block caused it.
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return '';
+      if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return '';
       state.blocks += 1;
       return `<tg-map lat="${lat}" long="${lon}" zoom="${LIMITS.MAP_ZOOM_MIN}"/>`;
     }

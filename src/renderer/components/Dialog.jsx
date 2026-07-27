@@ -89,7 +89,15 @@ export function DialogProvider({ children }) {
     else if (dialog.kind === 'link') {
       if (!linkUrl.trim()) return;
       finish({ text: linkText, url: linkUrl });
-    } else finish(value.trim() ? value : null);
+    } else {
+      // An empty field resolves to '', not null. `null` means "cancelled", and
+      // the two are not the same answer: callers that edit an existing value —
+      // a media caption, its credit, a quote's attribution — read `null` as
+      // "leave it alone", so collapsing the two made those impossible to clear
+      // once set. Callers that only want a new value still test for falsy and
+      // are unaffected.
+      finish(value);
+    }
   };
 
   useEffect(() => {

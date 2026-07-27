@@ -6,6 +6,7 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const {
+  ALLOWED_METHODS,
   isValidToken,
   isValidChatId,
   isValidLang,
@@ -46,15 +47,49 @@ describe('isValidLang', () => {
 });
 
 describe('isValidMethod', () => {
-  it('accepts API method names', () => {
-    expect(isValidMethod('sendRichMessage')).toBe(true);
-    expect(isValidMethod('getMe')).toBe(true);
+  it('accepts every method the app actually sends', () => {
+    for (const method of ALLOWED_METHODS) {
+      expect(isValidMethod(method)).toBe(true);
+    }
+    expect(ALLOWED_METHODS).toContain('sendRichMessage');
+    expect(ALLOWED_METHODS).toContain('getMe');
   });
 
   it('rejects injection attempts', () => {
     expect(isValidMethod('../evil')).toBe(false);
     expect(isValidMethod('send message')).toBe(false);
     expect(isValidMethod('')).toBe(false);
+    expect(isValidMethod(null)).toBe(false);
+  });
+
+  it('refuses real Bot API methods this app has no reason to call', () => {
+    // Every call is signed with the user's bot token, so a method reachable
+    // here is reachable with the user's bot identity. A shape check like
+    // /^[a-zA-Z]+$/ used to let all of these through.
+    for (const method of [
+      'getUpdates',
+      'setWebhook',
+      'deleteWebhook',
+      'banChatMember',
+      'leaveChat',
+      'logOut',
+      'close',
+      'setMyName',
+      'deleteMessage',
+    ]) {
+      expect(isValidMethod(method)).toBe(false);
+    }
+  });
+
+  it('is an exact match, not a prefix or case-insensitive one', () => {
+    expect(isValidMethod('getMeOrSomethingElse')).toBe(false);
+    expect(isValidMethod('getme')).toBe(false);
+    expect(isValidMethod(' getMe')).toBe(false);
+    expect(isValidMethod('getMe ')).toBe(false);
+  });
+
+  it('cannot be widened at runtime', () => {
+    expect(Object.isFrozen(ALLOWED_METHODS)).toBe(true);
   });
 });
 

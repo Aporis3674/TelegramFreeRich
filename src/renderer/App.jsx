@@ -101,8 +101,12 @@ function Shell({ lang, onLangChange }) {
     localStorage.setItem(RTL_KEY, isRtl ? '1' : '0');
   }, [isRtl]);
 
+  // Removed, not skipped, when it is cleared. Only writing on a non-empty value
+  // meant an emptied field came back on the next launch, and "Edit" mode then
+  // silently rewrote whichever message that stale ID pointed at.
   useEffect(() => {
     if (settings.editId) localStorage.setItem(EDIT_ID_KEY, settings.editId);
+    else localStorage.removeItem(EDIT_ID_KEY);
   }, [settings.editId]);
 
   // Load chat ID / token presence / language from the main process on mount.
@@ -335,9 +339,9 @@ function Shell({ lang, onLangChange }) {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         settings={settings}
-        onSaved={(next) => {
+        onSaved={(next, { announce = true } = {}) => {
           setSettings(next);
-          notify('toast.settingsSaved', 'success');
+          if (announce) notify('toast.settingsSaved', 'success');
         }}
         theme={theme}
         onThemeChange={setTheme}

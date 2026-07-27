@@ -32,8 +32,16 @@ describe('deepClone', () => {
 });
 
 describe('sanitizeUrl', () => {
-  it('allows https urls', () => {
+  it('allows the schemes a message can carry', () => {
     expect(sanitizeUrl('https://example.com')).toBe('https://example.com');
+    expect(sanitizeUrl('http://example.com')).toBe('http://example.com');
+    expect(sanitizeUrl('mailto:someone@example.com')).toBe('mailto:someone@example.com');
+    expect(sanitizeUrl('tel:+15551234')).toBe('tel:+15551234');
+    expect(sanitizeUrl('tg://resolve?domain=telegram')).toBe('tg://resolve?domain=telegram');
+  });
+
+  it('is case-insensitive about the scheme', () => {
+    expect(sanitizeUrl('HTTPS://example.com')).toBe('HTTPS://example.com');
   });
 
   it('blocks javascript: scheme', () => {
@@ -48,9 +56,39 @@ describe('sanitizeUrl', () => {
     expect(sanitizeUrl('vbscript:msgbox')).toBe('');
   });
 
-  it('returns empty for non-string', () => {
+  it('blocks schemes a denylist would not have thought of', () => {
+    expect(sanitizeUrl('file:///etc/passwd')).toBe('');
+    expect(sanitizeUrl('blob:https://example.com/abc')).toBe('');
+    expect(sanitizeUrl('ws://example.com')).toBe('');
+    expect(sanitizeUrl('chrome://settings')).toBe('');
+    expect(sanitizeUrl('JaVaScRiPt:alert(1)')).toBe('');
+  });
+
+  it('assumes https when no scheme was typed', () => {
+    expect(sanitizeUrl('example.com')).toBe('https://example.com');
+    expect(sanitizeUrl('  example.com/path?q=1  ')).toBe('https://example.com/path?q=1');
+  });
+
+  it('keeps in-document anchors as written', () => {
+    expect(sanitizeUrl('#section-2')).toBe('#section-2');
+  });
+
+  it('drops relative and protocol-relative forms', () => {
+    // A sent message has no document to be relative to.
+    expect(sanitizeUrl('/local/path')).toBe('');
+    expect(sanitizeUrl('//evil.example')).toBe('');
+  });
+
+  it('does not guess https for something that tried to be a scheme', () => {
+    expect(sanitizeUrl('java\tscript:alert(1)')).toBe('');
+    expect(sanitizeUrl('1foo:bar')).toBe('');
+  });
+
+  it('returns empty for non-string and empty input', () => {
     expect(sanitizeUrl(null)).toBe('');
     expect(sanitizeUrl(123)).toBe('');
+    expect(sanitizeUrl('')).toBe('');
+    expect(sanitizeUrl('   ')).toBe('');
   });
 });
 

@@ -51,6 +51,39 @@ describe('parseInlineSegments', () => {
     ]);
   });
 
+  it('keeps the text but drops a target the message could not carry', () => {
+    // These segments become real <a href> elements in the preview, inside the
+    // window that holds the bot token. `javascript:` there would run there.
+    for (const href of [
+      'javascript:alert(1)',
+      'JaVaScRiPt:alert(1)',
+      'data:text/html,<script>x</script>',
+      'file:///etc/passwd',
+      'vbscript:msgbox',
+      // Accepted by the editor's link extension, refused on the wire — so it
+      // must not look like a working link in a preview of that message.
+      'ftp://host/file',
+      'xmpp:someone@example.com',
+    ]) {
+      const segments = parseInlineSegments(el(`<p><a href="${href}">click</a></p>`));
+      expect(segments, href).toEqual([{ text: 'click', marks: [InlineType.LINK] }]);
+    }
+  });
+
+  it('keeps every scheme the message can carry', () => {
+    for (const href of [
+      'https://x/a',
+      'http://x/a',
+      'mailto:a@b.c',
+      'tel:+15551234',
+      'tg://resolve?domain=x',
+      '#anchor',
+    ]) {
+      const segments = parseInlineSegments(el(`<p><a href="${href}">click</a></p>`));
+      expect(segments[0].href, href).toBe(href);
+    }
+  });
+
   it('recognises spoiler and inline math spans', () => {
     const segments = parseInlineSegments(
       el('<p><span data-spoiler>shh</span><span data-inline-math>a^2</span></p>'),
